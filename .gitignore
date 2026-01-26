@@ -98,3 +98,17 @@ dmypy.json
 .pytype/
 cython_debug/
 poetry.toml
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+dist/
+dist-ssr/
+*.local
+.npm
+.eslintcache

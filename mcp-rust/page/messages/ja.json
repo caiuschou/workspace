@@ -1,0 +1,447 @@
+{
+  "common": {
+    "home": "ホーム",
+    "docs": "ドキュメント",
+    "examples": "サンプル",
+    "development": "開発",
+    "github": "GitHub",
+    "getStarted": "始める",
+    "quickStart": "クイックスタート",
+    "viewSource": "完全なソースコードを見る：",
+    "features": "機能",
+    "testing": "テスト",
+    "dependencies": "依存関係",
+    "basicExample": "基本的な例",
+    "configurationOptions": "設定オプション",
+    "serverUsage": "サーバーの使用方法",
+    "clientUsage": "クライアントの使用方法",
+    "apiEndpoints": "APIエンドポイント",
+    "running": "実行方法",
+    "sourceCode": "ソースコード",
+    "type": "タイプ",
+    "description": "説明",
+    "method": "メソッド",
+    "path": "パス",
+    "header": "ヘッダー",
+    "feature": "機能",
+    "module": "モジュール",
+    "status": "ステータス",
+    "endpoint": "エンドポイント"
+  },
+  "metadata": {
+    "title": "MCP Rust",
+    "description": "Model Context ProtocolのRust実装"
+  },
+  "nav": {
+    "home": "ホーム",
+    "docs": "ドキュメント",
+    "examples": "サンプル",
+    "development": "開発"
+  },
+  "footer": {
+    "brand": "MCP Rust",
+    "brandDescription": "Model Context ProtocolのRust実装",
+    "documentation": "ドキュメント",
+    "quickStart": "クイックスタート",
+    "architecture": "アーキテクチャ",
+    "examples": "サンプル",
+    "resources": "リソース",
+    "githubRepository": "GitHubリポジトリ",
+    "mcpSpecification": "MCP仕様",
+    "typescriptSdk": "TypeScript SDK",
+    "copyright": "MCP Rust - Model Context Protocol実装"
+  },
+  "home": {
+    "title": "MCP Rust",
+    "subtitle": "Model Context Protocolの高性能Rust実装。複数のトランスポート層をサポートするフル機能SDK。",
+    "features": "機能",
+    "multipleTransports": {
+      "title": "複数のトランスポート",
+      "description": "Stdio、HTTP/SSE（Streamable HTTP）、WebSocket、レガシーSSEトランスポートをサポート。用途に合わせて最適なトランスポートを選択できます。"
+    },
+    "completeMcpSupport": {
+      "title": "完全なMCPサポート",
+      "description": "ツール、リソース、プロンプトの完全な実装。ハンドラーを登録すれば、SDKがプロトコルを処理します。"
+    },
+    "securityBuiltIn": {
+      "title": "組み込みセキュリティ",
+      "description": "PKCEサポートとDNSリバインディング保護を備えたOAuth 2.1認証。デフォルトで安全。"
+    },
+    "realTimeStreaming": {
+      "title": "リアルタイムストリーミング",
+      "description": "双方向メッセージプッシュ、Last-Event-ID再接続リプレイ、CORSサポートを備えた真のSSEストリーミング。"
+    },
+    "asyncAwaitNative": {
+      "title": "ネイティブAsync/Await",
+      "description": "Tokio上に構築され、高性能な非同期処理を提供。全体を通してノンブロッキングI/O。"
+    },
+    "modularDesign": {
+      "title": "モジュラー設計",
+      "description": "独立したcore、client、serverクレート。機能フラグで必要なものだけを使用できます。"
+    },
+    "currentStatus": "現在のステータス",
+    "trackingParity": "TypeScript SDKとの機能対等性を追跡",
+    "viewDetailedProgress": "詳細な進捗を見る →",
+    "quickInstall": "クイックインストール",
+    "seeInstallationGuide": "インストールガイドを見る →",
+    "statusData": {
+      "stdioTransport": "Stdioトランスポート",
+      "httpSseTransport": "HTTP/SSEトランスポート",
+      "websocketTransport": "WebSocketトランスポート",
+      "legacySseTransport": "レガシーSSEトランスポート",
+      "toolsResourcesPrompts": "ツール/リソース/プロンプト",
+      "tasksApi": "Tasks API",
+      "oauthDnsProtection": "OAuth/DNS保護",
+      "samplingElicitation": "サンプリング/引き出し"
+    }
+  },
+  "docs": {
+    "title": "ドキュメント",
+    "subtitle": "MCP Rustを使用してModel Context Protocolアプリケーションを構築する方法を学びます。",
+    "topics": "トピック",
+    "installation": "インストール",
+    "installationDesc": "以下の依存関係を追加してください：",
+    "runExamples": "サンプルの実行",
+    "runExamplesDesc": "MCP Rustの動作を確認するためにサンプルを試してください：",
+    "seeExamplesSection": "完全なサンプルコードとドキュメントについては、",
+    "examplesLink": "サンプルセクション",
+    "forCompleteExamples": "を参照してください。",
+    "externalResources": "外部リソース",
+    "mcpSpecification": "MCP仕様 →",
+    "mcpSpecificationDesc": "公式プロトコル仕様",
+    "typescriptSdk": "TypeScript SDK →",
+    "typescriptSdkDesc": "リファレンス実装",
+    "githubRepository": "GitHubリポジトリ →",
+    "githubRepositoryDesc": "ソースコードとIssues",
+    "links": {
+      "quickStart": {
+        "title": "クイックスタート",
+        "description": "数分でMCP Rustを始める"
+      },
+      "architecture": {
+        "title": "アーキテクチャ",
+        "description": "モジュール構造とコード構成を理解する"
+      },
+      "httpSse": {
+        "title": "HTTP/SSEトランスポート",
+        "description": "Server-Sent Eventsによるリアルタイムストリーミング"
+      },
+      "websocket": {
+        "title": "WebSocketトランスポート",
+        "description": "WebSocketによる全二重通信"
+      },
+      "legacySse": {
+        "title": "レガシーSSE",
+        "description": "古いMCPクライアントとの互換性レイヤー"
+      },
+      "auth": {
+        "title": "OAuth認証",
+        "description": "OAuth 2.1でMCPサーバーを保護する"
+      }
+    }
+  },
+  "quickstart": {
+    "title": "クイックスタート",
+    "subtitle": "数分でMCP Rustを始めましょう。",
+    "prerequisites": "前提条件",
+    "prerequisitesList": {
+      "rust": "Rust 1.70以降",
+      "cargo": "Cargo（Rustに同梱）",
+      "asyncBasics": "Rustのasync/awaitの基本的な理解"
+    },
+    "installation": "インストール",
+    "installationDesc": "以下の依存関係を追加してください：",
+    "createServer": "サーバーの作成",
+    "createServerDesc": "HTTP/SSEトランスポートを使用したシンプルなMCPサーバーを作成します：",
+    "createClient": "クライアントの作成",
+    "createClientDesc": "MCPサーバーに接続してツールを呼び出します：",
+    "buildAndRun": "ビルドと実行",
+    "buildAndRunDesc": "以下のコマンドでMCPアプリケーションをビルドして実行します：",
+    "nextSteps": "次のステップ",
+    "nextStepsLinks": {
+      "architecture": "アーキテクチャ概要 →",
+      "architectureDesc": "コード構造を理解する",
+      "httpSse": "HTTP/SSEトランスポート →",
+      "httpSseDesc": "リアルタイムストリーミングを学ぶ",
+      "auth": "OAuth認証 →",
+      "authDesc": "MCPサーバーを保護する"
+    }
+  },
+  "architecture": {
+    "title": "アーキテクチャ",
+    "subtitle": "MCP Rustのモジュール構造とコード構成を理解します。",
+    "workspaceStructure": "ワークスペース構造",
+    "coreLibrary": "コアライブラリ (mcp_core)",
+    "coreLibraryDesc": "共有型定義、プロトコル、ユーティリティ。",
+    "keyTypes": "主要な型",
+    "serverLibrary": "サーバーライブラリ (mcp_server)",
+    "serverLibraryDesc": "HTTP、WebSocket、レガシーSSEトランスポートをサポートするMCPサーバー実装。",
+    "featureFlags": "機能フラグ",
+    "clientLibrary": "クライアントライブラリ (mcp_client)",
+    "clientLibraryDesc": "複数のトランスポートオプションをサポートするMCPクライアント実装。",
+    "dataFlow": "データフロー",
+    "requestResponseFlow": "リクエスト/レスポンスフロー",
+    "sseStreamingFlow": "SSEストリーミングフロー",
+    "reconnectionFlow": "再接続フロー"
+  },
+  "httpSse": {
+    "title": "HTTP/SSEトランスポート",
+    "subtitle": "HTTP上のServer-Sent Events (SSE)によるリアルタイムストリーミング。",
+    "features": {
+      "trueSse": "真のSSE長時間接続ストリーミング",
+      "bidirectional": "双方向メッセージプッシュ（サーバー起動プッシュ）",
+      "lastEventId": "Last-Event-ID再接続リプレイ",
+      "cors": "CORSサポート",
+      "axum": "axumフレームワーク統合"
+    },
+    "architecture": "アーキテクチャ",
+    "serverInitiatedPush": "サーバー起動プッシュ",
+    "requestHeaders": "リクエストヘッダー",
+    "reconnection": "再接続",
+    "reconnectionDesc": "クライアントは設定可能なバックオフによる自動再接続をサポートします：",
+    "reconnectionSteps": {
+      "step1": "",
+      "step1Code": "Last-Event-ID",
+      "step1End": "ヘッダーを送信",
+      "step2": "サーバーがEventBufferからイベントをリプレイ",
+      "step2Code": "EventBuffer",
+      "step3": "新しいイベントの受信を継続"
+    }
+  },
+  "websocket": {
+    "title": "WebSocketトランスポート",
+    "subtitle": "WebSocketによる全二重双方向通信。",
+    "features": {
+      "fullDuplex": "全二重WebSocket通信",
+      "subprotocol": "MCPサブプロトコルネゴシエーション",
+      "pingPong": "自動ping/pong処理",
+      "cors": "CORSサポート",
+      "axum": "axumフレームワーク統合"
+    },
+    "useCases": "ユースケース",
+    "useCasesList": {
+      "browser": "ブラウザクライアント",
+      "realtime": "リアルタイム双方向通信",
+      "simplified": "簡素化された接続管理（単一接続）"
+    },
+    "comparisonWithHttpSse": "HTTP/SSEとの比較",
+    "serverInitiatedPush": "サーバー起動プッシュ",
+    "protocolDetails": "プロトコル詳細",
+    "subprotocol": "サブプロトコル",
+    "subprotocolDesc": "WebSocket接続はMCPサブプロトコルを使用します：",
+    "messageFormat": "メッセージフォーマット",
+    "messageFormatDesc": "すべてのメッセージはJSON-RPC 2.0形式のテキストメッセージです。",
+    "exampleRequests": "リクエスト例"
+  },
+  "legacySse": {
+    "title": "レガシーHTTP+SSEトランスポート",
+    "subtitle": "プロトコルバージョン2024-11-05との後方互換性トランスポート。",
+    "deprecationNotice": "このトランスポートは非推奨であり、古いMCPクライアントとの後方互換性のみを目的としています。新しい実装はStreamable HTTPを使用してください。",
+    "comparisonWithStreamable": "Streamable HTTPとの比較",
+    "protocolFlow": "プロトコルフロー",
+    "legacySseOnly": "レガシーSSEのみ",
+    "supportBothProtocols": "両方のプロトコルをサポート（推奨）",
+    "supportBothProtocolsDesc": "同じサーバーでStreamable HTTPとレガシーSSEの両方を実行：",
+    "endpoints": "エンドポイント",
+    "compatServerExample": "例：互換サーバー",
+    "compatServerDesc": "両方のプロトコルをサポートする互換サーバーを実行：",
+    "availableEndpoints": "利用可能なエンドポイント："
+  },
+  "auth": {
+    "title": "OAuth認証",
+    "subtitle": "OAuth 2.1とDNSリバインディング保護でMCPサーバーを保護します。",
+    "dnsRebindingProtection": "DNSリバインディング保護",
+    "dnsRebindingDesc": "DNSリバインディング保護は、Hostヘッダーを検証することで悪意のあるウェブサイトがローカルサーバーにアクセスすることを防ぎます。",
+    "viaAxumConfig": "AxumHandlerConfig経由",
+    "oauth21": "OAuth 2.1認証",
+    "oauth21Desc": "以下をサポートする完全なOAuth 2.1認可フロー実装：",
+    "serverOAuthRoutes": "サーバーOAuthルート",
+    "availableEndpoints": "利用可能なエンドポイント",
+    "bearerAuthMiddleware": "Bearer認証ミドルウェア",
+    "bearerAuthDesc": "Bearerトークン認証でMCPエンドポイントを保護：",
+    "clientOAuth": "クライアントOAuth",
+    "clientOAuthDesc": "OAuthでMCPクライアントを認証：",
+    "featuresList": {
+      "pkce": "PKCEサポート（S256コードチャレンジ）",
+      "tokenRefresh": "自動トークン更新",
+      "dynamicRegistration": "動的クライアント登録",
+      "tokenRevocation": "トークン失効",
+      "scopeBased": "スコープベースの認可",
+      "metadataDiscovery": "メタデータ検出（RFC 8414、RFC 9728）"
+    }
+  },
+  "examples": {
+    "title": "サンプル",
+    "subtitle": "MCP Rustの機能を示す完全な動作サンプル。各サンプルには完全なソースコード、ビルド手順、テストコマンドが含まれています。",
+    "serverExamples": "サーバーサンプル",
+    "serverExamplesDesc": "MCPサーバーはツール、リソース、プロンプトをAIアシスタントに公開します。これらのサンプルは異なるトランスポート層とサーバー機能を示しています。",
+    "clientExamples": "クライアントサンプル",
+    "clientExamplesDesc": "MCPクライアントはサーバーに接続し、ツールを呼び出し、リソースを読み取り、プロンプトを使用します。これらのサンプルは異なるトランスポートを使用して接続を確立する方法を示しています。",
+    "runningExamples": "サンプルの実行",
+    "runningExamplesDesc": "すべてのサンプルはリポジトリルートから実行できます：",
+    "servers": {
+      "httpServer": {
+        "title": "HTTPサーバー",
+        "description": "真のSSEストリーミングとLast-Event-IDリプレイを備えたHTTP/SSEトランスポートMCPサーバー"
+      },
+      "websocketServer": {
+        "title": "WebSocketサーバー",
+        "description": "全二重WebSocket通信とMCPサブプロトコルネゴシエーションを備えたMCPサーバー"
+      },
+      "filesystemServer": {
+        "title": "ファイルシステムサーバー",
+        "description": "rootsサポートを備えたstdioトランスポート経由でファイル操作を提供するMCPサーバー"
+      },
+      "promptsServer": {
+        "title": "プロンプトサーバー",
+        "description": "プロンプト登録と動的メッセージ生成を示すMCPサーバー"
+      },
+      "tasksServer": {
+        "title": "タスクサーバー",
+        "description": "ポーリングとキャンセルによる非同期タスク実行を示すMCPサーバー"
+      },
+      "loggingServer": {
+        "title": "ロギングサーバー",
+        "description": "ログ通知と構造化ログレベルを備えたMCPサーバー"
+      },
+      "sseCompatServer": {
+        "title": "SSE互換サーバー",
+        "description": "古いMCPクライアント向けのレガシーSSEトランスポート互換性レイヤー"
+      }
+    },
+    "clients": {
+      "httpClient": {
+        "title": "HTTPクライアント",
+        "description": "自動再接続とSSEストリーミングを備えたHTTP経由で接続するMCPクライアント"
+      },
+      "websocketClient": {
+        "title": "WebSocketクライアント",
+        "description": "全二重通信用のWebSocketトランスポートを備えたMCPクライアント"
+      },
+      "filesystemClient": {
+        "title": "ファイルシステムクライアント",
+        "description": "stdio経由でファイルシステムサーバーに接続するMCPクライアント"
+      }
+    }
+  },
+  "examplePages": {
+    "httpServer": {
+      "title": "HTTPサーバーサンプル",
+      "subtitle": "Axumを使用した完全なMCP HTTP/SSEトランスポートサーバー。このサンプルは双方向通信を備えた真のSSEストリーミングを示しています。",
+      "features": {
+        "trueSse": "真のSSEストリーミング（長時間接続）",
+        "serverPush": "ブロードキャストチャンネル経由のサーバー起動プッシュ",
+        "lastEventId": "再接続用Last-Event-IDリプレイ",
+        "cors": "ブラウザクライアント向けCORSサポート",
+        "toolRegistration": "JSONスキーマ検証を備えたツール登録"
+      },
+      "endpoints": "エンドポイント",
+      "serverSetup": "サーバーセットアップ",
+      "toolRegistration": "ツール登録",
+      "toolRegistrationDesc": "パラメーターを受け取り結果を返すハンドラーを持つツールを登録：",
+      "testingWithCurl": "curlでテスト"
+    },
+    "httpClient": {
+      "title": "HTTPクライアントサンプル",
+      "subtitle": "自動再接続とSSEストリーミングを備えたHTTP経由で接続するMCPクライアント。"
+    },
+    "websocketServer": {
+      "title": "WebSocketサーバーサンプル",
+      "subtitle": "全二重WebSocket通信を備えたMCPサーバー。"
+    },
+    "websocketClient": {
+      "title": "WebSocketクライアントサンプル",
+      "subtitle": "全二重通信用のWebSocketトランスポートを備えたMCPクライアント。"
+    },
+    "filesystemServer": {
+      "title": "ファイルシステムサーバーサンプル",
+      "subtitle": "stdioトランスポート経由でファイル操作を提供するMCPサーバー。"
+    },
+    "filesystemClient": {
+      "title": "ファイルシステムクライアントサンプル",
+      "subtitle": "stdio経由でファイルシステムサーバーに接続するMCPクライアント。"
+    },
+    "promptsServer": {
+      "title": "プロンプトサーバーサンプル",
+      "subtitle": "プロンプト登録と動的メッセージ生成を示すMCPサーバー。"
+    },
+    "tasksServer": {
+      "title": "タスクサーバーサンプル",
+      "subtitle": "ポーリングとキャンセルによる非同期タスク実行を示すMCPサーバー。"
+    },
+    "loggingServer": {
+      "title": "ロギングサーバーサンプル",
+      "subtitle": "ログ通知と構造化ログレベルを備えたMCPサーバー。"
+    },
+    "sseCompatServer": {
+      "title": "SSE互換サーバーサンプル",
+      "subtitle": "後方互換性のためにStreamable HTTPとレガシーSSEプロトコルの両方をサポートするサーバー。"
+    }
+  },
+  "dev": {
+    "title": "開発進捗",
+    "subtitle": "実装状況とTypeScript SDKとの機能対等性を追跡します。",
+    "moduleStatus": "モジュールステータス",
+    "typescriptComparison": "TypeScript SDK比較",
+    "recentChanges": "最近の変更",
+    "futurePlans": "今後の計画",
+    "modules": {
+      "stdioTransport": {
+        "name": "Stdioトランスポート",
+        "description": "クライアント/サーバー利用可能"
+      },
+      "httpSseTransport": {
+        "name": "HTTP/SSEトランスポート",
+        "description": "真のSSEストリーミング、双方向プッシュ、Last-Event-IDリプレイ"
+      },
+      "websocketTransport": {
+        "name": "WebSocketトランスポート",
+        "description": "axumによる全二重通信"
+      },
+      "legacySseTransport": {
+        "name": "レガシーSSEトランスポート",
+        "description": "プロトコルバージョン2024-11-05互換"
+      },
+      "toolsResourcesPrompts": {
+        "name": "ツール/リソース/プロンプト",
+        "description": "登録と呼び出し"
+      },
+      "tasksApi": {
+        "name": "Tasks API",
+        "description": "tasks/get/list/result/cancel"
+      },
+      "oauthDnsProtection": {
+        "name": "OAuth/DNS保護",
+        "description": "OAuth 2.1 + DNSリバインディング保護"
+      },
+      "samplingElicitation": {
+        "name": "サンプリング/引き出し",
+        "description": "サーバーリクエスト + クライアントハンドラー"
+      }
+    },
+    "changelog": {
+      "oauthDns": {
+        "date": "2026-01-19",
+        "title": "OAuth/DNS保護"
+      },
+      "httpSse": {
+        "date": "2026-01-19",
+        "title": "HTTP/SSE完全実装"
+      },
+      "foundation": {
+        "date": "以前",
+        "title": "基盤"
+      }
+    },
+    "futurePlansList": [
+      "実験的タスクストリーミングヘルパー",
+      "サーバーサイドRootsサポート",
+      "Completionsサポート"
+    ]
+  },
+  "languageSwitcher": {
+    "en": "English",
+    "zh": "中文",
+    "ja": "日本語"
+  }
+}

@@ -1,0 +1,473 @@
+{
+  "common": {
+    "home": "Home",
+    "docs": "Docs",
+    "examples": "Examples",
+    "development": "Development",
+    "github": "GitHub",
+    "getStarted": "Get Started",
+    "quickStart": "Quick Start",
+    "viewSource": "View the complete source code at",
+    "features": "Features",
+    "testing": "Testing",
+    "dependencies": "Dependencies",
+    "basicExample": "Basic Example",
+    "configurationOptions": "Configuration Options",
+    "serverUsage": "Server Usage",
+    "clientUsage": "Client Usage",
+    "apiEndpoints": "API Endpoints",
+    "running": "Running the Example",
+    "sourceCode": "Source Code",
+    "type": "Type",
+    "description": "Description",
+    "method": "Method",
+    "path": "Path",
+    "header": "Header",
+    "feature": "Feature",
+    "module": "Module",
+    "status": "Status",
+    "endpoint": "Endpoint"
+  },
+  "metadata": {
+    "title": "MCP Rust",
+    "description": "Rust implementation of Model Context Protocol"
+  },
+  "nav": {
+    "home": "Home",
+    "docs": "Docs",
+    "examples": "Examples",
+    "development": "Development"
+  },
+  "footer": {
+    "brand": "MCP Rust",
+    "brandDescription": "Rust implementation of the Model Context Protocol",
+    "documentation": "Documentation",
+    "quickStart": "Quick Start",
+    "architecture": "Architecture",
+    "examples": "Examples",
+    "resources": "Resources",
+    "githubRepository": "GitHub Repository",
+    "mcpSpecification": "MCP Specification",
+    "typescriptSdk": "TypeScript SDK",
+    "copyright": "MCP Rust - Model Context Protocol Implementation"
+  },
+  "home": {
+    "title": "MCP Rust",
+    "subtitle": "High-performance Rust implementation of the Model Context Protocol. Full-featured SDK with multiple transport layers.",
+    "features": "Features",
+    "multipleTransports": {
+      "title": "Multiple Transports",
+      "description": "Support for Stdio, HTTP/SSE (Streamable HTTP), WebSocket, and legacy SSE transports. Choose the right transport for your use case."
+    },
+    "completeMcpSupport": {
+      "title": "Complete MCP Support",
+      "description": "Full implementation of Tools, Resources, and Prompts. Register handlers and let the SDK handle the protocol."
+    },
+    "securityBuiltIn": {
+      "title": "Security Built-in",
+      "description": "OAuth 2.1 authentication with PKCE support and DNS rebinding protection. Secure by default."
+    },
+    "realTimeStreaming": {
+      "title": "Real-time Streaming",
+      "description": "True SSE streaming with bidirectional message push, Last-Event-ID reconnection replay, and CORS support."
+    },
+    "asyncAwaitNative": {
+      "title": "Async/Await Native",
+      "description": "Built on Tokio for high-performance async operations. Non-blocking I/O throughout."
+    },
+    "modularDesign": {
+      "title": "Modular Design",
+      "description": "Separate core, client, and server crates. Use only what you need with feature flags."
+    },
+    "currentStatus": "Current Status",
+    "trackingParity": "Tracking feature parity with the TypeScript SDK",
+    "viewDetailedProgress": "View detailed progress →",
+    "quickInstall": "Quick Install",
+    "seeInstallationGuide": "See installation guide →",
+    "statusData": {
+      "stdioTransport": "Stdio Transport",
+      "httpSseTransport": "HTTP/SSE Transport",
+      "websocketTransport": "WebSocket Transport",
+      "legacySseTransport": "Legacy SSE Transport",
+      "toolsResourcesPrompts": "Tools/Resources/Prompts",
+      "tasksApi": "Tasks API",
+      "oauthDnsProtection": "OAuth/DNS Protection",
+      "samplingElicitation": "Sampling/Elicitation"
+    }
+  },
+  "docs": {
+    "title": "Documentation",
+    "subtitle": "Learn how to use MCP Rust to build Model Context Protocol applications.",
+    "topics": "Topics",
+    "installation": "Installation",
+    "installationDesc": "Add the following dependencies to your",
+    "runExamples": "Run Examples",
+    "runExamplesDesc": "Try the included examples to see MCP Rust in action:",
+    "seeExamplesSection": "See the",
+    "examplesLink": "Examples section",
+    "forCompleteExamples": "for complete working examples with source code and documentation.",
+    "externalResources": "External Resources",
+    "mcpSpecification": "MCP Specification →",
+    "mcpSpecificationDesc": "Official protocol specification",
+    "typescriptSdk": "TypeScript SDK →",
+    "typescriptSdkDesc": "Reference implementation",
+    "githubRepository": "GitHub Repository →",
+    "githubRepositoryDesc": "Source code and issues",
+    "links": {
+      "quickStart": {
+        "title": "Quick Start",
+        "description": "Get up and running with MCP Rust in minutes"
+      },
+      "architecture": {
+        "title": "Architecture",
+        "description": "Understand the module structure and code organization"
+      },
+      "httpSse": {
+        "title": "HTTP/SSE Transport",
+        "description": "Real-time streaming with Server-Sent Events"
+      },
+      "websocket": {
+        "title": "WebSocket Transport",
+        "description": "Full-duplex communication over WebSocket"
+      },
+      "legacySse": {
+        "title": "Legacy SSE",
+        "description": "Compatibility layer for older MCP clients"
+      },
+      "auth": {
+        "title": "OAuth Authentication",
+        "description": "Secure your MCP server with OAuth 2.1"
+      }
+    }
+  },
+  "quickstart": {
+    "title": "Quick Start",
+    "subtitle": "Get up and running with MCP Rust in minutes.",
+    "prerequisites": "Prerequisites",
+    "prerequisitesList": {
+      "rust": "Rust 1.70 or later",
+      "cargo": "Cargo (included with Rust)",
+      "asyncBasics": "Basic understanding of async/await in Rust"
+    },
+    "installation": "Installation",
+    "installationDesc": "Add the following dependencies to your",
+    "createServer": "Create a Server",
+    "createServerDesc": "Create a simple MCP server with an HTTP/SSE transport:",
+    "createClient": "Create a Client",
+    "createClientDesc": "Connect to an MCP server and call tools:",
+    "buildAndRun": "Build and Run",
+    "buildAndRunDesc": "Use the following commands to build and run your MCP application:",
+    "nextSteps": "Next Steps",
+    "nextStepsLinks": {
+      "architecture": "Architecture Overview →",
+      "architectureDesc": "Understand the code structure",
+      "httpSse": "HTTP/SSE Transport →",
+      "httpSseDesc": "Learn about real-time streaming",
+      "auth": "OAuth Authentication →",
+      "authDesc": "Secure your MCP server"
+    }
+  },
+  "architecture": {
+    "title": "Architecture",
+    "subtitle": "Understand the module structure and code organization of MCP Rust.",
+    "workspaceStructure": "Workspace Structure",
+    "coreLibrary": "Core Library (mcp_core)",
+    "coreLibraryDesc": "Shared type definitions, protocol, and utilities.",
+    "keyTypes": "Key Types",
+    "serverLibrary": "Server Library (mcp_server)",
+    "serverLibraryDesc": "MCP server implementation with HTTP, WebSocket, and legacy SSE transports.",
+    "featureFlags": "Feature Flags",
+    "clientLibrary": "Client Library (mcp_client)",
+    "clientLibraryDesc": "MCP client implementation with multiple transport options.",
+    "dataFlow": "Data Flow",
+    "requestResponseFlow": "Request/Response Flow",
+    "sseStreamingFlow": "SSE Streaming Flow",
+    "reconnectionFlow": "Reconnection Flow"
+  },
+  "httpSse": {
+    "title": "HTTP/SSE Transport",
+    "subtitle": "Real-time streaming with Server-Sent Events (SSE) over HTTP.",
+    "features": {
+      "trueSse": "True SSE long-lived streaming connections",
+      "bidirectional": "Bidirectional message push (server-initiated push)",
+      "lastEventId": "Last-Event-ID reconnection replay",
+      "cors": "CORS support",
+      "axum": "axum framework integration"
+    },
+    "architecture": "Architecture",
+    "serverInitiatedPush": "Server-Initiated Push",
+    "requestHeaders": "Request Headers",
+    "reconnection": "Reconnection",
+    "reconnectionDesc": "The client supports automatic reconnection with configurable backoff:",
+    "reconnectionSteps": {
+      "step1": "Sends the",
+      "step1Code": "Last-Event-ID",
+      "step1End": "header",
+      "step2": "Server replays missed events from",
+      "step2Code": "EventBuffer",
+      "step3": "Continues receiving new events"
+    }
+  },
+  "websocket": {
+    "title": "WebSocket Transport",
+    "subtitle": "Full-duplex bidirectional communication over WebSocket.",
+    "features": {
+      "fullDuplex": "Full-duplex WebSocket communication",
+      "subprotocol": "MCP subprotocol negotiation",
+      "pingPong": "Automatic ping/pong handling",
+      "cors": "CORS support",
+      "axum": "axum framework integration"
+    },
+    "useCases": "Use Cases",
+    "useCasesList": {
+      "browser": "Browser clients",
+      "realtime": "Real-time bidirectional communication",
+      "simplified": "Simplified connection management (single connection)"
+    },
+    "comparisonWithHttpSse": "Comparison with HTTP/SSE",
+    "serverInitiatedPush": "Server-Initiated Push",
+    "protocolDetails": "Protocol Details",
+    "subprotocol": "Subprotocol",
+    "subprotocolDesc": "WebSocket connections use the MCP subprotocol:",
+    "messageFormat": "Message Format",
+    "messageFormatDesc": "All messages are JSON-RPC 2.0 formatted text messages.",
+    "exampleRequests": "Example Requests"
+  },
+  "legacySse": {
+    "title": "Legacy HTTP+SSE Transport",
+    "subtitle": "Backward-compatible transport for protocol version 2024-11-05.",
+    "deprecationNotice": "This transport is deprecated and only intended for backward compatibility with older MCP clients. New implementations should use Streamable HTTP.",
+    "comparisonWithStreamable": "Comparison with Streamable HTTP",
+    "protocolFlow": "Protocol Flow",
+    "legacySseOnly": "Legacy SSE Only",
+    "supportBothProtocols": "Support Both Protocols (Recommended)",
+    "supportBothProtocolsDesc": "Run both Streamable HTTP and legacy SSE on the same server:",
+    "endpoints": "Endpoints",
+    "compatServerExample": "Example: Compat Server",
+    "compatServerDesc": "Run the included compat server that supports both protocols:",
+    "availableEndpoints": "Available endpoints:"
+  },
+  "auth": {
+    "title": "OAuth Authentication",
+    "subtitle": "Secure your MCP server with OAuth 2.1 and DNS rebinding protection.",
+    "dnsRebindingProtection": "DNS Rebinding Protection",
+    "dnsRebindingDesc": "DNS rebinding protection prevents malicious websites from accessing local servers by validating the Host header.",
+    "viaAxumConfig": "Via AxumHandlerConfig",
+    "oauth21": "OAuth 2.1 Authentication",
+    "oauth21Desc": "Complete OAuth 2.1 authorization flow implementation with support for:",
+    "serverOAuthRoutes": "Server OAuth Routes",
+    "availableEndpoints": "Available Endpoints",
+    "bearerAuthMiddleware": "Bearer Auth Middleware",
+    "bearerAuthDesc": "Protect your MCP endpoints with Bearer token authentication:",
+    "clientOAuth": "Client OAuth",
+    "clientOAuthDesc": "Authenticate your MCP client with OAuth:",
+    "featuresList": {
+      "pkce": "PKCE support (S256 code challenge)",
+      "tokenRefresh": "Automatic token refresh",
+      "dynamicRegistration": "Dynamic client registration",
+      "tokenRevocation": "Token revocation",
+      "scopeBased": "Scope-based authorization",
+      "metadataDiscovery": "Metadata discovery (RFC 8414, RFC 9728)"
+    }
+  },
+  "examples": {
+    "title": "Examples",
+    "subtitle": "Complete working examples demonstrating MCP Rust capabilities. Each example includes full source code, build instructions, and test commands.",
+    "serverExamples": "Server Examples",
+    "serverExamplesDesc": "MCP servers expose tools, resources, and prompts to AI assistants. These examples demonstrate different transport layers and server capabilities.",
+    "clientExamples": "Client Examples",
+    "clientExamplesDesc": "MCP clients connect to servers and invoke tools, read resources, and use prompts. These examples show how to establish connections using different transports.",
+    "runningExamples": "Running Examples",
+    "runningExamplesDesc": "All examples can be run from the repository root:",
+    "servers": {
+      "httpServer": {
+        "title": "HTTP Server",
+        "description": "MCP server with HTTP/SSE transport, featuring true SSE streaming and Last-Event-ID replay"
+      },
+      "websocketServer": {
+        "title": "WebSocket Server",
+        "description": "MCP server with full-duplex WebSocket communication and MCP subprotocol negotiation"
+      },
+      "filesystemServer": {
+        "title": "Filesystem Server",
+        "description": "MCP server providing file operations via stdio transport with roots support"
+      },
+      "promptsServer": {
+        "title": "Prompts Server",
+        "description": "MCP server demonstrating prompts registration and dynamic message generation"
+      },
+      "tasksServer": {
+        "title": "Tasks Server",
+        "description": "MCP server showcasing async task execution with polling and cancellation"
+      },
+      "loggingServer": {
+        "title": "Logging Server",
+        "description": "MCP server with logging notifications and structured log levels"
+      },
+      "sseCompatServer": {
+        "title": "SSE Compat Server",
+        "description": "Legacy SSE transport compatibility layer for older MCP clients"
+      }
+    },
+    "clients": {
+      "httpClient": {
+        "title": "HTTP Client",
+        "description": "MCP client connecting via HTTP with auto-reconnection and SSE streaming"
+      },
+      "websocketClient": {
+        "title": "WebSocket Client",
+        "description": "MCP client with WebSocket transport for full-duplex communication"
+      },
+      "filesystemClient": {
+        "title": "Filesystem Client",
+        "description": "MCP client connecting to filesystem server via stdio"
+      }
+    }
+  },
+  "examplePages": {
+    "httpServer": {
+      "title": "HTTP Server Example",
+      "subtitle": "A complete MCP server using HTTP/SSE transport with Axum. This example demonstrates true SSE streaming with bidirectional communication.",
+      "features": {
+        "trueSse": "True SSE streaming (long-lived connections)",
+        "serverPush": "Server-initiated push via broadcast channels",
+        "lastEventId": "Last-Event-ID replay for reconnection",
+        "cors": "CORS support for browser clients",
+        "toolRegistration": "Tool registration with JSON Schema validation"
+      },
+      "endpoints": "Endpoints",
+      "serverSetup": "Server Setup",
+      "toolRegistration": "Tool Registration",
+      "toolRegistrationDesc": "Register tools with handlers that receive parameters and return results:",
+      "testingWithCurl": "Testing with curl"
+    },
+    "httpClient": {
+      "title": "HTTP Client Example",
+      "subtitle": "MCP client connecting via HTTP with auto-reconnection and SSE streaming."
+    },
+    "websocketServer": {
+      "title": "WebSocket Server Example",
+      "subtitle": "MCP server with full-duplex WebSocket communication."
+    },
+    "websocketClient": {
+      "title": "WebSocket Client Example",
+      "subtitle": "MCP client with WebSocket transport for full-duplex communication."
+    },
+    "filesystemServer": {
+      "title": "Filesystem Server Example",
+      "subtitle": "MCP server providing file operations via stdio transport."
+    },
+    "filesystemClient": {
+      "title": "Filesystem Client Example",
+      "subtitle": "MCP client connecting to filesystem server via stdio."
+    },
+    "promptsServer": {
+      "title": "Prompts Server Example",
+      "subtitle": "MCP server demonstrating prompts registration and dynamic message generation."
+    },
+    "tasksServer": {
+      "title": "Tasks Server Example",
+      "subtitle": "MCP server showcasing async task execution with polling and cancellation."
+    },
+    "loggingServer": {
+      "title": "Logging Server Example",
+      "subtitle": "MCP server with logging notifications and structured log levels."
+    },
+    "sseCompatServer": {
+      "title": "SSE Compat Server Example",
+      "subtitle": "Server supporting both Streamable HTTP and legacy SSE protocols for backward compatibility."
+    }
+  },
+  "dev": {
+    "title": "Development Progress",
+    "subtitle": "Track the implementation status and feature parity with the TypeScript SDK.",
+    "moduleStatus": "Module Status",
+    "typescriptComparison": "TypeScript SDK Comparison",
+    "recentChanges": "Recent Changes",
+    "futurePlans": "Future Plans",
+    "modules": {
+      "stdioTransport": {
+        "name": "Stdio Transport",
+        "description": "Client/Server available"
+      },
+      "httpSseTransport": {
+        "name": "HTTP/SSE Transport",
+        "description": "True SSE streaming, bidirectional push, Last-Event-ID replay"
+      },
+      "websocketTransport": {
+        "name": "WebSocket Transport",
+        "description": "Full-duplex communication with axum"
+      },
+      "legacySseTransport": {
+        "name": "Legacy SSE Transport",
+        "description": "Protocol version 2024-11-05 compatible"
+      },
+      "toolsResourcesPrompts": {
+        "name": "Tools/Resources/Prompts",
+        "description": "Registration and invocation"
+      },
+      "tasksApi": {
+        "name": "Tasks API",
+        "description": "tasks/get/list/result/cancel"
+      },
+      "oauthDnsProtection": {
+        "name": "OAuth/DNS Protection",
+        "description": "OAuth 2.1 + DNS rebinding protection"
+      },
+      "samplingElicitation": {
+        "name": "Sampling/Elicitation",
+        "description": "Server request + client handlers"
+      }
+    },
+    "changelog": {
+      "oauthDns": {
+        "date": "2026-01-19",
+        "title": "OAuth/DNS Protection",
+        "items": [
+          "DNS rebinding protection middleware",
+          "OAuth 2.1 core types",
+          "Server OAuth routes (authorize/token/register/revoke/metadata)",
+          "Bearer Token auth middleware",
+          "Client auth middleware",
+          "OAuth metadata discovery (RFC 8414, RFC 9728)",
+          "PKCE support (S256)",
+          "Token refresh",
+          "Dynamic client registration (RFC 7591)"
+        ]
+      },
+      "httpSse": {
+        "date": "2026-01-19",
+        "title": "HTTP/SSE Complete Implementation",
+        "items": [
+          "True SSE long-lived streaming with axum",
+          "Bidirectional message push (SseBroadcaster)",
+          "Last-Event-ID reconnection replay (EventBuffer)",
+          "CORS support",
+          "axum framework integration"
+        ]
+      },
+      "foundation": {
+        "date": "Earlier",
+        "title": "Foundation",
+        "items": [
+          "Stdio transport (client/server)",
+          "MCP core protocol (JSON-RPC)",
+          "Tools/Resources/Prompts registration",
+          "Tasks API",
+          "list_changed notifications",
+          "Logging support"
+        ]
+      }
+    },
+    "futurePlansList": [
+      "Experimental task streaming helpers",
+      "Server-side Roots support",
+      "Completions support"
+    ]
+  },
+  "languageSwitcher": {
+    "en": "English",
+    "zh": "中文",
+    "ja": "日本語"
+  }
+}

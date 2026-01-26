@@ -1,0 +1,53 @@
+[package]
+name = "gitlab-mcp-client"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "gitlab-mcp"
+path = "src/main.rs"
+
+[dependencies]
+# MCP 框架
+mcp_core = { workspace = true }
+mcp_client = { workspace = true }
+
+# 本地 server crate (用于直接调用)
+gitlab-mcp-server = { path = "../mcp-server" }
+
+# 异步运行时
+tokio = { workspace = true }
+async-trait = { workspace = true }
+
+# 序列化
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# CLI
+clap = { workspace = true }
+
+# 输出格式化
+tabled = "0.14"
+console = "0.15"
+
+# 错误处理
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# 日志
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# 配置
+toml = { workspace = true }
+dirs = { workspace = true }
+
+# 环境变量
+dotenv = { workspace = true }
+
+# 工具
+urlencoding = "2.1"
+
+# HTTP 客户端
+reqwest = { workspace = true }
+url = { workspace = true }

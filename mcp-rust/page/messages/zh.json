@@ -1,0 +1,447 @@
+{
+  "common": {
+    "home": "首页",
+    "docs": "文档",
+    "examples": "示例",
+    "development": "开发",
+    "github": "GitHub",
+    "getStarted": "开始使用",
+    "quickStart": "快速开始",
+    "viewSource": "查看完整源代码：",
+    "features": "功能特性",
+    "testing": "测试",
+    "dependencies": "依赖",
+    "basicExample": "基本示例",
+    "configurationOptions": "配置选项",
+    "serverUsage": "服务端用法",
+    "clientUsage": "客户端用法",
+    "apiEndpoints": "API 端点",
+    "running": "运行示例",
+    "sourceCode": "源代码",
+    "type": "类型",
+    "description": "描述",
+    "method": "方法",
+    "path": "路径",
+    "header": "头部",
+    "feature": "功能",
+    "module": "模块",
+    "status": "状态",
+    "endpoint": "端点"
+  },
+  "metadata": {
+    "title": "MCP Rust",
+    "description": "Model Context Protocol 的 Rust 实现"
+  },
+  "nav": {
+    "home": "首页",
+    "docs": "文档",
+    "examples": "示例",
+    "development": "开发"
+  },
+  "footer": {
+    "brand": "MCP Rust",
+    "brandDescription": "Model Context Protocol 的 Rust 实现",
+    "documentation": "文档",
+    "quickStart": "快速开始",
+    "architecture": "架构",
+    "examples": "示例",
+    "resources": "资源",
+    "githubRepository": "GitHub 仓库",
+    "mcpSpecification": "MCP 规范",
+    "typescriptSdk": "TypeScript SDK",
+    "copyright": "MCP Rust - Model Context Protocol 实现"
+  },
+  "home": {
+    "title": "MCP Rust",
+    "subtitle": "Model Context Protocol 的高性能 Rust 实现。功能完整的 SDK，支持多种传输层。",
+    "features": "功能特性",
+    "multipleTransports": {
+      "title": "多种传输层",
+      "description": "支持 Stdio、HTTP/SSE（Streamable HTTP）、WebSocket 和传统 SSE 传输。根据使用场景选择合适的传输方式。"
+    },
+    "completeMcpSupport": {
+      "title": "完整的 MCP 支持",
+      "description": "完整实现工具（Tools）、资源（Resources）和提示词（Prompts）。注册处理器，让 SDK 处理协议细节。"
+    },
+    "securityBuiltIn": {
+      "title": "内置安全性",
+      "description": "OAuth 2.1 认证，支持 PKCE 和 DNS 重绑定保护。默认安全。"
+    },
+    "realTimeStreaming": {
+      "title": "实时流式传输",
+      "description": "真正的 SSE 流式传输，支持双向消息推送、Last-Event-ID 重连回放和 CORS。"
+    },
+    "asyncAwaitNative": {
+      "title": "原生 Async/Await",
+      "description": "基于 Tokio 构建，提供高性能异步操作。全程非阻塞 I/O。"
+    },
+    "modularDesign": {
+      "title": "模块化设计",
+      "description": "独立的 core、client 和 server crate。通过 feature flags 按需使用。"
+    },
+    "currentStatus": "当前状态",
+    "trackingParity": "跟踪与 TypeScript SDK 的功能对等性",
+    "viewDetailedProgress": "查看详细进度 →",
+    "quickInstall": "快速安装",
+    "seeInstallationGuide": "查看安装指南 →",
+    "statusData": {
+      "stdioTransport": "Stdio 传输",
+      "httpSseTransport": "HTTP/SSE 传输",
+      "websocketTransport": "WebSocket 传输",
+      "legacySseTransport": "传统 SSE 传输",
+      "toolsResourcesPrompts": "工具/资源/提示词",
+      "tasksApi": "Tasks API",
+      "oauthDnsProtection": "OAuth/DNS 保护",
+      "samplingElicitation": "采样/引出"
+    }
+  },
+  "docs": {
+    "title": "文档",
+    "subtitle": "学习如何使用 MCP Rust 构建 Model Context Protocol 应用。",
+    "topics": "主题",
+    "installation": "安装",
+    "installationDesc": "添加以下依赖到你的",
+    "runExamples": "运行示例",
+    "runExamplesDesc": "尝试包含的示例，查看 MCP Rust 的实际效果：",
+    "seeExamplesSection": "查看",
+    "examplesLink": "示例部分",
+    "forCompleteExamples": "获取完整的示例代码、源代码和文档。",
+    "externalResources": "外部资源",
+    "mcpSpecification": "MCP 规范 →",
+    "mcpSpecificationDesc": "官方协议规范",
+    "typescriptSdk": "TypeScript SDK →",
+    "typescriptSdkDesc": "参考实现",
+    "githubRepository": "GitHub 仓库 →",
+    "githubRepositoryDesc": "源代码和 Issues",
+    "links": {
+      "quickStart": {
+        "title": "快速开始",
+        "description": "几分钟内开始使用 MCP Rust"
+      },
+      "architecture": {
+        "title": "架构",
+        "description": "了解模块结构和代码组织"
+      },
+      "httpSse": {
+        "title": "HTTP/SSE 传输",
+        "description": "使用 Server-Sent Events 进行实时流式传输"
+      },
+      "websocket": {
+        "title": "WebSocket 传输",
+        "description": "通过 WebSocket 进行全双工通信"
+      },
+      "legacySse": {
+        "title": "传统 SSE",
+        "description": "旧版 MCP 客户端的兼容层"
+      },
+      "auth": {
+        "title": "OAuth 认证",
+        "description": "使用 OAuth 2.1 保护你的 MCP 服务器"
+      }
+    }
+  },
+  "quickstart": {
+    "title": "快速开始",
+    "subtitle": "几分钟内开始使用 MCP Rust。",
+    "prerequisites": "前置条件",
+    "prerequisitesList": {
+      "rust": "Rust 1.70 或更高版本",
+      "cargo": "Cargo（随 Rust 一起安装）",
+      "asyncBasics": "了解 Rust 中的 async/await 基础知识"
+    },
+    "installation": "安装",
+    "installationDesc": "添加以下依赖到你的",
+    "createServer": "创建服务器",
+    "createServerDesc": "创建一个使用 HTTP/SSE 传输的简单 MCP 服务器：",
+    "createClient": "创建客户端",
+    "createClientDesc": "连接到 MCP 服务器并调用工具：",
+    "buildAndRun": "构建和运行",
+    "buildAndRunDesc": "使用以下命令构建和运行你的 MCP 应用：",
+    "nextSteps": "下一步",
+    "nextStepsLinks": {
+      "architecture": "架构概览 →",
+      "architectureDesc": "了解代码结构",
+      "httpSse": "HTTP/SSE 传输 →",
+      "httpSseDesc": "学习实时流式传输",
+      "auth": "OAuth 认证 →",
+      "authDesc": "保护你的 MCP 服务器"
+    }
+  },
+  "architecture": {
+    "title": "架构",
+    "subtitle": "了解 MCP Rust 的模块结构和代码组织。",
+    "workspaceStructure": "工作区结构",
+    "coreLibrary": "核心库 (mcp_core)",
+    "coreLibraryDesc": "共享类型定义、协议和工具函数。",
+    "keyTypes": "关键类型",
+    "serverLibrary": "服务器库 (mcp_server)",
+    "serverLibraryDesc": "MCP 服务器实现，支持 HTTP、WebSocket 和传统 SSE 传输。",
+    "featureFlags": "功能标志",
+    "clientLibrary": "客户端库 (mcp_client)",
+    "clientLibraryDesc": "MCP 客户端实现，支持多种传输选项。",
+    "dataFlow": "数据流",
+    "requestResponseFlow": "请求/响应流程",
+    "sseStreamingFlow": "SSE 流式传输流程",
+    "reconnectionFlow": "重连流程"
+  },
+  "httpSse": {
+    "title": "HTTP/SSE 传输",
+    "subtitle": "基于 HTTP 的 Server-Sent Events (SSE) 实时流式传输。",
+    "features": {
+      "trueSse": "真正的 SSE 长连接流式传输",
+      "bidirectional": "双向消息推送（服务端主动推送）",
+      "lastEventId": "Last-Event-ID 重连回放",
+      "cors": "CORS 支持",
+      "axum": "axum 框架集成"
+    },
+    "architecture": "架构",
+    "serverInitiatedPush": "服务端主动推送",
+    "requestHeaders": "请求头",
+    "reconnection": "重连",
+    "reconnectionDesc": "客户端支持可配置退避策略的自动重连：",
+    "reconnectionSteps": {
+      "step1": "发送",
+      "step1Code": "Last-Event-ID",
+      "step1End": "头部",
+      "step2": "服务器从",
+      "step2Code": "EventBuffer",
+      "step3": "继续接收新事件"
+    }
+  },
+  "websocket": {
+    "title": "WebSocket 传输",
+    "subtitle": "基于 WebSocket 的全双工双向通信。",
+    "features": {
+      "fullDuplex": "全双工 WebSocket 通信",
+      "subprotocol": "MCP 子协议协商",
+      "pingPong": "自动 ping/pong 处理",
+      "cors": "CORS 支持",
+      "axum": "axum 框架集成"
+    },
+    "useCases": "使用场景",
+    "useCasesList": {
+      "browser": "浏览器客户端",
+      "realtime": "实时双向通信",
+      "simplified": "简化的连接管理（单连接）"
+    },
+    "comparisonWithHttpSse": "与 HTTP/SSE 对比",
+    "serverInitiatedPush": "服务端主动推送",
+    "protocolDetails": "协议详情",
+    "subprotocol": "子协议",
+    "subprotocolDesc": "WebSocket 连接使用 MCP 子协议：",
+    "messageFormat": "消息格式",
+    "messageFormatDesc": "所有消息都是 JSON-RPC 2.0 格式的文本消息。",
+    "exampleRequests": "示例请求"
+  },
+  "legacySse": {
+    "title": "传统 HTTP+SSE 传输",
+    "subtitle": "兼容协议版本 2024-11-05 的向后兼容传输。",
+    "deprecationNotice": "此传输已弃用，仅用于与旧版 MCP 客户端的向后兼容。新实现应使用 Streamable HTTP。",
+    "comparisonWithStreamable": "与 Streamable HTTP 对比",
+    "protocolFlow": "协议流程",
+    "legacySseOnly": "仅使用传统 SSE",
+    "supportBothProtocols": "同时支持两种协议（推荐）",
+    "supportBothProtocolsDesc": "在同一服务器上同时运行 Streamable HTTP 和传统 SSE：",
+    "endpoints": "端点",
+    "compatServerExample": "示例：兼容服务器",
+    "compatServerDesc": "运行包含的同时支持两种协议的兼容服务器：",
+    "availableEndpoints": "可用端点："
+  },
+  "auth": {
+    "title": "OAuth 认证",
+    "subtitle": "使用 OAuth 2.1 和 DNS 重绑定保护来保护你的 MCP 服务器。",
+    "dnsRebindingProtection": "DNS 重绑定保护",
+    "dnsRebindingDesc": "DNS 重绑定保护通过验证 Host 头来防止恶意网站访问本地服务器。",
+    "viaAxumConfig": "通过 AxumHandlerConfig 配置",
+    "oauth21": "OAuth 2.1 认证",
+    "oauth21Desc": "完整的 OAuth 2.1 授权流程实现，支持：",
+    "serverOAuthRoutes": "服务端 OAuth 路由",
+    "availableEndpoints": "可用端点",
+    "bearerAuthMiddleware": "Bearer 认证中间件",
+    "bearerAuthDesc": "使用 Bearer token 认证保护你的 MCP 端点：",
+    "clientOAuth": "客户端 OAuth",
+    "clientOAuthDesc": "使用 OAuth 认证你的 MCP 客户端：",
+    "featuresList": {
+      "pkce": "PKCE 支持（S256 code challenge）",
+      "tokenRefresh": "自动令牌刷新",
+      "dynamicRegistration": "动态客户端注册",
+      "tokenRevocation": "令牌撤销",
+      "scopeBased": "基于作用域的授权",
+      "metadataDiscovery": "元数据发现（RFC 8414、RFC 9728）"
+    }
+  },
+  "examples": {
+    "title": "示例",
+    "subtitle": "展示 MCP Rust 功能的完整示例。每个示例都包含完整的源代码、构建说明和测试命令。",
+    "serverExamples": "服务器示例",
+    "serverExamplesDesc": "MCP 服务器向 AI 助手暴露工具、资源和提示词。这些示例展示了不同的传输层和服务器功能。",
+    "clientExamples": "客户端示例",
+    "clientExamplesDesc": "MCP 客户端连接到服务器并调用工具、读取资源和使用提示词。这些示例展示了如何使用不同的传输方式建立连接。",
+    "runningExamples": "运行示例",
+    "runningExamplesDesc": "所有示例都可以从仓库根目录运行：",
+    "servers": {
+      "httpServer": {
+        "title": "HTTP 服务器",
+        "description": "使用 HTTP/SSE 传输的 MCP 服务器，支持真正的 SSE 流式传输和 Last-Event-ID 回放"
+      },
+      "websocketServer": {
+        "title": "WebSocket 服务器",
+        "description": "使用全双工 WebSocket 通信和 MCP 子协议协商的 MCP 服务器"
+      },
+      "filesystemServer": {
+        "title": "文件系统服务器",
+        "description": "通过 stdio 传输提供文件操作的 MCP 服务器，支持 roots"
+      },
+      "promptsServer": {
+        "title": "提示词服务器",
+        "description": "展示提示词注册和动态消息生成的 MCP 服务器"
+      },
+      "tasksServer": {
+        "title": "任务服务器",
+        "description": "展示异步任务执行、轮询和取消的 MCP 服务器"
+      },
+      "loggingServer": {
+        "title": "日志服务器",
+        "description": "带有日志通知和结构化日志级别的 MCP 服务器"
+      },
+      "sseCompatServer": {
+        "title": "SSE 兼容服务器",
+        "description": "为旧版 MCP 客户端提供传统 SSE 传输兼容层"
+      }
+    },
+    "clients": {
+      "httpClient": {
+        "title": "HTTP 客户端",
+        "description": "通过 HTTP 连接的 MCP 客户端，支持自动重连和 SSE 流式传输"
+      },
+      "websocketClient": {
+        "title": "WebSocket 客户端",
+        "description": "使用 WebSocket 传输进行全双工通信的 MCP 客户端"
+      },
+      "filesystemClient": {
+        "title": "文件系统客户端",
+        "description": "通过 stdio 连接到文件系统服务器的 MCP 客户端"
+      }
+    }
+  },
+  "examplePages": {
+    "httpServer": {
+      "title": "HTTP 服务器示例",
+      "subtitle": "使用 Axum 的完整 MCP HTTP/SSE 传输服务器。此示例展示了双向通信的真正 SSE 流式传输。",
+      "features": {
+        "trueSse": "真正的 SSE 流式传输（长连接）",
+        "serverPush": "通过广播通道进行服务端主动推送",
+        "lastEventId": "Last-Event-ID 重连回放",
+        "cors": "为浏览器客户端提供 CORS 支持",
+        "toolRegistration": "带 JSON Schema 验证的工具注册"
+      },
+      "endpoints": "端点",
+      "serverSetup": "服务器设置",
+      "toolRegistration": "工具注册",
+      "toolRegistrationDesc": "注册带有处理器的工具，接收参数并返回结果：",
+      "testingWithCurl": "使用 curl 测试"
+    },
+    "httpClient": {
+      "title": "HTTP 客户端示例",
+      "subtitle": "通过 HTTP 连接的 MCP 客户端，支持自动重连和 SSE 流式传输。"
+    },
+    "websocketServer": {
+      "title": "WebSocket 服务器示例",
+      "subtitle": "使用全双工 WebSocket 通信的 MCP 服务器。"
+    },
+    "websocketClient": {
+      "title": "WebSocket 客户端示例",
+      "subtitle": "使用 WebSocket 传输进行全双工通信的 MCP 客户端。"
+    },
+    "filesystemServer": {
+      "title": "文件系统服务器示例",
+      "subtitle": "通过 stdio 传输提供文件操作的 MCP 服务器。"
+    },
+    "filesystemClient": {
+      "title": "文件系统客户端示例",
+      "subtitle": "通过 stdio 连接到文件系统服务器的 MCP 客户端。"
+    },
+    "promptsServer": {
+      "title": "提示词服务器示例",
+      "subtitle": "展示提示词注册和动态消息生成的 MCP 服务器。"
+    },
+    "tasksServer": {
+      "title": "任务服务器示例",
+      "subtitle": "展示异步任务执行、轮询和取消的 MCP 服务器。"
+    },
+    "loggingServer": {
+      "title": "日志服务器示例",
+      "subtitle": "带有日志通知和结构化日志级别的 MCP 服务器。"
+    },
+    "sseCompatServer": {
+      "title": "SSE 兼容服务器示例",
+      "subtitle": "同时支持 Streamable HTTP 和传统 SSE 协议的服务器，用于向后兼容。"
+    }
+  },
+  "dev": {
+    "title": "开发进度",
+    "subtitle": "跟踪实现状态和与 TypeScript SDK 的功能对等性。",
+    "moduleStatus": "模块状态",
+    "typescriptComparison": "TypeScript SDK 对比",
+    "recentChanges": "最近更改",
+    "futurePlans": "未来计划",
+    "modules": {
+      "stdioTransport": {
+        "name": "Stdio 传输",
+        "description": "客户端/服务端可用"
+      },
+      "httpSseTransport": {
+        "name": "HTTP/SSE 传输",
+        "description": "真正的 SSE 流式传输、双向推送、Last-Event-ID 回放"
+      },
+      "websocketTransport": {
+        "name": "WebSocket 传输",
+        "description": "基于 axum 的全双工通信"
+      },
+      "legacySseTransport": {
+        "name": "传统 SSE 传输",
+        "description": "兼容协议版本 2024-11-05"
+      },
+      "toolsResourcesPrompts": {
+        "name": "工具/资源/提示词",
+        "description": "注册和调用"
+      },
+      "tasksApi": {
+        "name": "Tasks API",
+        "description": "tasks/get/list/result/cancel"
+      },
+      "oauthDnsProtection": {
+        "name": "OAuth/DNS 保护",
+        "description": "OAuth 2.1 + DNS 重绑定保护"
+      },
+      "samplingElicitation": {
+        "name": "采样/引出",
+        "description": "服务端请求 + 客户端处理器"
+      }
+    },
+    "changelog": {
+      "oauthDns": {
+        "date": "2026-01-19",
+        "title": "OAuth/DNS 保护"
+      },
+      "httpSse": {
+        "date": "2026-01-19",
+        "title": "HTTP/SSE 完整实现"
+      },
+      "foundation": {
+        "date": "更早",
+        "title": "基础功能"
+      }
+    },
+    "futurePlansList": [
+      "实验性任务流式传输助手",
+      "服务端 Roots 支持",
+      "Completions 支持"
+    ]
+  },
+  "languageSwitcher": {
+    "en": "English",
+    "zh": "中文",
+    "ja": "日本語"
+  }
+}

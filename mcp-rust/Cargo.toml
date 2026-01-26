@@ -1,0 +1,76 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/mcp-core",
+    "crates/mcp-server",
+    "crates/mcp-client",
+    "examples/mcp-filesystem-client",
+    "examples/mcp-filesystem-server",
+    "examples/http-client",
+    "examples/http-server",
+    "examples/websocket-server",
+    "examples/websocket-client",
+    "examples/sse-compat-server",
+    "examples/prompts-server",
+    "examples/tasks-server",
+    "examples/logging-server",
+    "mcp-impls/github-mcp/crates/mcp-server",
+    "mcp-impls/gitlab-mcp/crates/mcp-server",
+    "mcp-impls/gitlab-mcp/crates/mcp-client",
+    "mcp-impls/gitlab-mcp/crates/api-doc-scraper",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["Your Name <your.email@example.com>"]
+license = "MIT"
+
+[workspace.dependencies]
+mcp_core = { path = "crates/mcp-core" }
+mcp_server = { path = "crates/mcp-server" }
+mcp_client = { path = "crates/mcp-client" }
+
+# 异步运行时
+tokio = { version = "1.0", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3"
+
+# 序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# HTTP 客户端
+reqwest = { version = "0.12", features = ["json", "stream"] }
+url = "2.5"
+
+# 错误处理
+anyhow = "1.0"
+thiserror = "1.0"
+
+# 日志
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# 环境变量
+dotenv = "0.15"
+
+# 配置
+toml = "0.8"
+dirs = "6.0"
+
+# CLI
+clap = { version = "4.0", features = ["derive"] }
+
+# HTML 解析
+scraper = "0.18"
+html2md = "0.2"
+
+# 速率限制
+governor = "0.6"
+
+# 进度条
+indicatif = "0.17"
+
+# 编码
+base64 = "0.22"

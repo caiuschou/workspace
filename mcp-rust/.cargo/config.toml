@@ -1,0 +1,8 @@
+# Windows MSVC configuration (only applies when targeting Windows)
+[target.x86_64-pc-windows-msvc]
+linker = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.42.34433\\bin\\Hostx64\\x64\\link.exe"
+rustflags = ["-C", "link-arg=/NOLOGO"]
+
+# Linux configuration (WSL)
+[target.x86_64-unknown-linux-gnu]
+# Use default linker

@@ -2,7 +2,8 @@ import { Command } from "commander"
 import chalk from "chalk"
 import ora from "ora"
 import { createClient } from "../client.js"
-import { getBaseUrl } from "../config.js"
+import { getBaseUrl, shouldUseAutoStart } from "../config.js"
+import { handleCommandError } from "../utils/error-handler.js"
 
 export const filesCommand = new Command("files")
   .description("File operations with OpenCode")
@@ -16,7 +17,18 @@ filesCommand
     const spinner = ora("Searching...").start()
 
     try {
-      const { client } = await createClient({ baseUrl: getBaseUrl(options.url) })
+      const useAutoStart = shouldUseAutoStart(options.url)
+      const baseUrl = useAutoStart ? undefined : getBaseUrl(options.url)
+
+      const { client, server } = await createClient({
+        baseUrl,
+        autoStart: useAutoStart,
+      })
+
+      if (server) {
+        spinner.text = "OpenCode server started"
+      }
+
       const results = await client.files.search({
         query,
         path: options.path,
@@ -38,11 +50,13 @@ filesCommand
         }
         console.log("")
       }
+
+      if (server) {
+        await server.shutdown()
+      }
     } catch (error) {
       spinner.fail("Error occurred")
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message))
-      }
+      handleCommandError(error, options.url)
       process.exit(1)
     }
   })
@@ -55,7 +69,18 @@ filesCommand
     const spinner = ora("Finding files...").start()
 
     try {
-      const { client } = await createClient({ baseUrl: getBaseUrl(options.url) })
+      const useAutoStart = shouldUseAutoStart(options.url)
+      const baseUrl = useAutoStart ? undefined : getBaseUrl(options.url)
+
+      const { client, server } = await createClient({
+        baseUrl,
+        autoStart: useAutoStart,
+      })
+
+      if (server) {
+        spinner.text = "OpenCode server started"
+      }
+
       const files = await client.files.find({
         pattern,
       })
@@ -72,11 +97,13 @@ filesCommand
       for (const file of files) {
         console.log(chalk.cyan(file))
       }
+
+      if (server) {
+        await server.shutdown()
+      }
     } catch (error) {
       spinner.fail("Error occurred")
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message))
-      }
+      handleCommandError(error, options.url)
       process.exit(1)
     }
   })
@@ -89,7 +116,18 @@ filesCommand
     const spinner = ora("Reading file...").start()
 
     try {
-      const { client } = await createClient({ baseUrl: getBaseUrl(options.url) })
+      const useAutoStart = shouldUseAutoStart(options.url)
+      const baseUrl = useAutoStart ? undefined : getBaseUrl(options.url)
+
+      const { client, server } = await createClient({
+        baseUrl,
+        autoStart: useAutoStart,
+      })
+
+      if (server) {
+        spinner.text = "OpenCode server started"
+      }
+
       const content = await client.files.read({
         path,
       })
@@ -97,11 +135,13 @@ filesCommand
       spinner.stop()
 
       console.log(content)
+
+      if (server) {
+        await server.shutdown()
+      }
     } catch (error) {
       spinner.fail("Error occurred")
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message))
-      }
+      handleCommandError(error, options.url)
       process.exit(1)
     }
   })
@@ -114,7 +154,18 @@ filesCommand
     const spinner = ora("Finding symbols...").start()
 
     try {
-      const { client } = await createClient({ baseUrl: getBaseUrl(options.url) })
+      const useAutoStart = shouldUseAutoStart(options.url)
+      const baseUrl = useAutoStart ? undefined : getBaseUrl(options.url)
+
+      const { client, server } = await createClient({
+        baseUrl,
+        autoStart: useAutoStart,
+      })
+
+      if (server) {
+        spinner.text = "OpenCode server started"
+      }
+
       const symbols = await client.files.symbols({
         query,
       })
@@ -138,11 +189,13 @@ filesCommand
         }
         console.log("")
       }
+
+      if (server) {
+        await server.shutdown()
+      }
     } catch (error) {
       spinner.fail("Error occurred")
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message))
-      }
+      handleCommandError(error, options.url)
       process.exit(1)
     }
   })

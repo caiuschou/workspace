@@ -2,7 +2,8 @@ import { Command } from "commander"
 import chalk from "chalk"
 import ora from "ora"
 import { createClient } from "../client.js"
-import { getBaseUrl } from "../config.js"
+import { getBaseUrl, shouldUseAutoStart } from "../config.js"
+import { handleCommandError } from "../utils/error-handler.js"
 
 export const sessionCommand = new Command("session")
   .description("Manage OpenCode sessions")
@@ -15,7 +16,18 @@ sessionCommand
     const spinner = ora("Fetching sessions...").start()
 
     try {
-      const { client } = await createClient({ baseUrl: getBaseUrl(options.url) })
+      const useAutoStart = shouldUseAutoStart(options.url)
+      const baseUrl = useAutoStart ? undefined : getBaseUrl(options.url)
+
+      const { client, server } = await createClient({
+        baseUrl,
+        autoStart: useAutoStart,
+      })
+
+      if (server) {
+        spinner.text = "OpenCode server started"
+      }
+
       const sessions = await client.session.list()
 
       spinner.stop()
@@ -34,11 +46,13 @@ sessionCommand
         }
         console.log("")
       }
+
+      if (server) {
+        await server.shutdown()
+      }
     } catch (error) {
       spinner.fail("Error occurred")
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message))
-      }
+      handleCommandError(error, options.url)
       process.exit(1)
     }
   })
@@ -52,18 +66,31 @@ sessionCommand
     const spinner = ora("Creating session...").start()
 
     try {
-      const { client } = await createClient({ baseUrl: getBaseUrl(options.url) })
+      const useAutoStart = shouldUseAutoStart(options.url)
+      const baseUrl = useAutoStart ? undefined : getBaseUrl(options.url)
+
+      const { client, server } = await createClient({
+        baseUrl,
+        autoStart: useAutoStart,
+      })
+
+      if (server) {
+        spinner.text = "OpenCode server started"
+      }
+
       const session = await client.session.create({
         agent: options.agent,
       })
 
       spinner.succeed("Session created")
       console.log(chalk.green(`Session ID: ${session.id}`))
+
+      if (server) {
+        await server.shutdown()
+      }
     } catch (error) {
       spinner.fail("Error occurred")
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message))
-      }
+      handleCommandError(error, options.url)
       process.exit(1)
     }
   })
@@ -76,7 +103,18 @@ sessionCommand
     const spinner = ora("Fetching messages...").start()
 
     try {
-      const { client } = await createClient({ baseUrl: getBaseUrl(options.url) })
+      const useAutoStart = shouldUseAutoStart(options.url)
+      const baseUrl = useAutoStart ? undefined : getBaseUrl(options.url)
+
+      const { client, server } = await createClient({
+        baseUrl,
+        autoStart: useAutoStart,
+      })
+
+      if (server) {
+        spinner.text = "OpenCode server started"
+      }
+
       const messages = await client.session.messages(sessionId)
 
       spinner.stop()
@@ -94,11 +132,13 @@ sessionCommand
         console.log(msg.content)
         console.log("")
       }
+
+      if (server) {
+        await server.shutdown()
+      }
     } catch (error) {
       spinner.fail("Error occurred")
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message))
-      }
+      handleCommandError(error, options.url)
       process.exit(1)
     }
   })
@@ -111,15 +151,28 @@ sessionCommand
     const spinner = ora("Deleting session...").start()
 
     try {
-      const { client } = await createClient({ baseUrl: getBaseUrl(options.url) })
+      const useAutoStart = shouldUseAutoStart(options.url)
+      const baseUrl = useAutoStart ? undefined : getBaseUrl(options.url)
+
+      const { client, server } = await createClient({
+        baseUrl,
+        autoStart: useAutoStart,
+      })
+
+      if (server) {
+        spinner.text = "OpenCode server started"
+      }
+
       await client.session.delete(sessionId)
 
       spinner.succeed("Session deleted")
+
+      if (server) {
+        await server.shutdown()
+      }
     } catch (error) {
       spinner.fail("Error occurred")
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message))
-      }
+      handleCommandError(error, options.url)
       process.exit(1)
     }
   })
@@ -132,15 +185,28 @@ sessionCommand
     const spinner = ora("Aborting operation...").start()
 
     try {
-      const { client } = await createClient({ baseUrl: getBaseUrl(options.url) })
+      const useAutoStart = shouldUseAutoStart(options.url)
+      const baseUrl = useAutoStart ? undefined : getBaseUrl(options.url)
+
+      const { client, server } = await createClient({
+        baseUrl,
+        autoStart: useAutoStart,
+      })
+
+      if (server) {
+        spinner.text = "OpenCode server started"
+      }
+
       await client.session.abort(sessionId)
 
       spinner.succeed("Operation aborted")
+
+      if (server) {
+        await server.shutdown()
+      }
     } catch (error) {
       spinner.fail("Error occurred")
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message))
-      }
+      handleCommandError(error, options.url)
       process.exit(1)
     }
   })

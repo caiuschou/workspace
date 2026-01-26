@@ -2,7 +2,8 @@ import { Command } from "commander"
 import chalk from "chalk"
 import ora from "ora"
 import { createClient } from "../client.js"
-import { getBaseUrl } from "../config.js"
+import { getBaseUrl, shouldUseAutoStart } from "../config.js"
+import { handleCommandError } from "../utils/error-handler.js"
 
 export const chatCommand = new Command("chat")
   .description("Send a message to OpenCode and get a response")
@@ -15,9 +16,18 @@ export const chatCommand = new Command("chat")
     const spinner = ora("Connecting to OpenCode...").start()
 
     try {
-      const { client } = await createClient({
-        baseUrl: getBaseUrl(options.url),
+      const useAutoStart = shouldUseAutoStart(options.url)
+      const baseUrl = useAutoStart ? undefined : getBaseUrl(options.url)
+
+      const { client, server } = await createClient({
+        baseUrl,
+        autoStart: useAutoStart,
       })
+
+      // If we started a server, update spinner
+      if (server) {
+        spinner.text = "OpenCode server started"
+      }
 
       spinner.text = "Creating session..."
 
@@ -48,11 +58,14 @@ export const chatCommand = new Command("chat")
       console.log(chalk.green("\nResponse:"))
       console.log(lastMessage?.content || "No response received")
       console.log(chalk.gray(`\nSession ID: ${sessionId}`))
+
+      // Shutdown server if we started it
+      if (server) {
+        await server.shutdown()
+      }
     } catch (error) {
       spinner.fail("Error occurred")
-      if (error instanceof Error) {
-        console.error(chalk.red(error.message))
-      }
+      handleCommandError(error, options.url)
       process.exit(1)
     }
   })

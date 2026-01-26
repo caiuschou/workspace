@@ -22,9 +22,13 @@ for (const envPath of envPaths) {
   }
 }
 
+import { logger } from "./utils/logger.js"
 import { chatCommand } from "./commands/chat.js"
 import { sessionCommand } from "./commands/session.js"
 import { filesCommand } from "./commands/files.js"
+
+// Initialize logger
+logger.init()
 
 const program = new Command()
 

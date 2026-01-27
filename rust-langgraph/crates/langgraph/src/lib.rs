@@ -12,7 +12,8 @@ pub mod state;
 pub mod tool;
 pub mod traits;
 
-pub use agent::EchoAgent;
+pub use agent::{ChatAgent, EchoAgent};
 pub use error::AgentError;
+pub use llm::{ChatRequest, ChatResponse, LlmClient, MockLlmClient, Usage};
 pub use message::UserMessage;
-pub use traits::Agent;
+pub use traits::{Agent, AsyncAgent};

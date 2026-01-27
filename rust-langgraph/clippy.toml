@@ -1,0 +1,3 @@
+# 仅对 rust-langgraph 子目录生效时，需在根 Cargo 或 CI 中通过 --manifest-path 指定。
+# 若在根目录统一跑 clippy，可复用根目录的 clippy 配置或本文件（通过 --config 等）。
+avoid-breaking-exported-api = false

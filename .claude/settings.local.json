@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git rm:*)",
+      "Bash(cargo check:*)",
+      "Bash(pip install:*)",
+      "Bash(pip show:*)",
+      "Bash(wc:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "mcp__web-reader__webReader",
+      "mcp__web-search-prime__webSearchPrime",
+      "Bash(git clone:*)",
+      "Bash(ls:*)",
+      "mcp__zread__search_doc",
+      "Bash(find:*)"
+    ],
+    "additionalDirectories": [
+      "/mnt/c/Users/heycj/dev/workspace/docs"
+    ]
+  }
+}

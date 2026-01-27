@@ -9,9 +9,15 @@ authors.workspace = true
 [lib]
 path = "src/lib.rs"
 
+[features]
+default = []
+# 启用后提供 OpenAiClient，需 reqwest（使用 rustls，不依赖系统 OpenSSL）
+openai = ["dep:reqwest"]
+
 [dependencies]
 tokio = { workspace = true }
 async-trait = { workspace = true }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"], optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

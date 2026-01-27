@@ -15,5 +15,7 @@ pub mod traits;
 pub use agent::{ChatAgent, EchoAgent};
 pub use error::AgentError;
 pub use llm::{ChatRequest, ChatResponse, LlmClient, MockLlmClient, Usage};
+#[cfg(feature = "openai")]
+pub use llm::{OpenAiClient, OpenAiConfig};
 pub use message::UserMessage;
 pub use traits::{Agent, AsyncAgent};

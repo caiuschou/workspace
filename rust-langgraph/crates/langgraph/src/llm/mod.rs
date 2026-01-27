@@ -7,9 +7,13 @@
 mod client;
 mod error;
 mod mock;
+#[cfg(feature = "openai")]
+mod openai;
 mod types;
 
 pub use client::LlmClient;
-pub use mock::MockLlmClient;
 pub use error::LlmError;
+pub use mock::MockLlmClient;
+#[cfg(feature = "openai")]
+pub use openai::{OpenAiClient, OpenAiConfig};
 pub use types::{ChatMessage, ChatRequest, ChatResponse, MessageRole, Usage};

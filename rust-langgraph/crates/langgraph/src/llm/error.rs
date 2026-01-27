@@ -3,7 +3,7 @@
 use thiserror::Error;
 
 /// LLM 调用过程中的错误枚举。
-#[derive(Debug, Error)]
+#[derive(Debug, Clone, Error)]
 pub enum LlmError {
     /// API 返回错误（如 4xx/5xx 或业务错误）。
     #[error("api error: {0}")]

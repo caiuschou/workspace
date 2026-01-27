@@ -1,9 +1,13 @@
 //! Mock LLM 客户端，用于测试与示例（无真实 API 调用）。
 
+use std::pin::Pin;
+
 use async_trait::async_trait;
+use futures::Stream;
 
 use super::client::LlmClient;
 use super::error::LlmError;
+use super::stream::{ChatStreamEvent, LlmStreamClient};
 use super::types::{ChatRequest, ChatResponse, Usage};
 
 /// Mock 客户端：按配置返回固定内容或简单回显最后一条用户消息。
@@ -67,6 +71,31 @@ impl LlmClient for MockLlmClient {
                 completion_tokens,
             },
         })
+    }
+}
+
+impl LlmStreamClient for MockLlmClient {
+    fn chat_stream(
+        &self,
+        req: ChatRequest,
+    ) -> Pin<Box<dyn Stream<Item = ChatStreamEvent> + Send + '_>> {
+        let content = if let Some(ref s) = self.fixed_response {
+            s.clone()
+        } else {
+            req.messages
+                .iter()
+                .rev()
+                .find(|m| matches!(m.role, super::types::MessageRole::User))
+                .map(|m| m.content.clone())
+                .unwrap_or_else(|| "（无用户输入）".to_string())
+        };
+        let full = content.clone();
+        let tokens: Vec<ChatStreamEvent> = content
+            .chars()
+            .map(|c| ChatStreamEvent::Token(c.to_string()))
+            .chain(std::iter::once(ChatStreamEvent::Done(full)))
+            .collect();
+        Box::pin(futures::stream::iter(tokens))
     }
 }
 

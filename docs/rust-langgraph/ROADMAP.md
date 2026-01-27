@@ -73,33 +73,33 @@ S9: 部署+文档          ░░░░░░░░░░░░░░░░░�
 **MVP**：能跑起来的第一个 Agent，输入即回显。
 
 **验收标准**：
-- [ ] `cargo run --example echo "你好"` 输出 `你好`
-- [ ] `cargo test` 通过
-- [ ] `cargo clippy` 无新增告警
+- [x] `cargo run -p langgraph --example echo -- "你好"` 输出 `你好`
+- [x] `cargo test -p langgraph` 通过
+- [x] `cargo clippy -p langgraph` 无新增告警
 
 ### 1.1 项目骨架
 
-- [ ] 根 workspace 的 `members` 中已有 `rust-langgraph/crates/langgraph`（与现有 workspace 一致：`resolver = "3"`、`edition = "2024"` 等）
-- [ ] `rust-langgraph/crates/langgraph/Cargo.toml`、`src/lib.rs` 模块入口已就绪，按需补全目录
-- [ ] 在 `rust-langgraph/crates/langgraph/src/` 下建立占位：`traits.rs`、`message.rs`、`error.rs`、`agent/mod.rs`、`llm/mod.rs`、`tool/mod.rs`、`state.rs`、`memory/mod.rs`、`actor/mod.rs`
-- [ ] `rust-langgraph/` 或仓库根目录的 `.rustfmt.toml`、`clippy.toml`、`.github/workflows/ci.yml`（fmt + clippy + test）
-- [ ] `rust-langgraph/README.md` 已存在；`rust-langgraph/crates/langgraph/` 下可按需增加 `LICENSE-APACHE`、`LICENSE-MIT`、`CHANGELOG.md`
+- [x] 根 workspace 的 `members` 中已有 `rust-langgraph/crates/langgraph`（与现有 workspace 一致：`resolver = "3"`、`edition = "2024"` 等）
+- [x] `rust-langgraph/crates/langgraph/Cargo.toml`、`src/lib.rs` 模块入口已就绪，按需补全目录
+- [x] 在 `rust-langgraph/crates/langgraph/src/` 下建立占位：`traits.rs`、`message.rs`、`error.rs`、`agent/mod.rs`、`llm/mod.rs`、`tool/mod.rs`、`state.rs`、`memory/mod.rs`、`actor/mod.rs`
+- [x] `rust-langgraph/.rustfmt.toml`、`rust-langgraph/clippy.toml`、`.github/workflows/rust-langgraph-ci.yml`（fmt + clippy + test）
+- [x] `rust-langgraph/README.md` 已存在；`rust-langgraph/crates/langgraph/` 下可按需增加 `LICENSE-APACHE`、`LICENSE-MIT`、`CHANGELOG.md`
 
 ### 1.2 最小 Trait 与类型
 
-- [ ] **Agent** trait（本 Sprint 仅需：`name`、`run(Input) -> Result<Output, Error>`，`Input/Output/Error` 关联类型）
-- [ ] **Message**：本 Sprint 仅需 `UserMessage { content }` 或等价最小结构，用于 Echo 输入
-- [ ] **Error**：`AgentError` 最小枚举（如 `ExecutionFailed(String)`），`thiserror` 派生
+- [x] **Agent** trait（本 Sprint 仅需：`name`、`run(Input) -> Result<Output, Error>`，`Input/Output/Error` 关联类型）
+- [x] **Message**：本 Sprint 仅需 `UserMessage { content }` 或等价最小结构，用于 Echo 输入
+- [x] **Error**：`AgentError` 最小枚举（如 `ExecutionFailed(String)`），`thiserror` 派生
 
 ### 1.3 Echo Agent 与示例
 
-- [ ] `EchoAgent` 实现 `Agent`，`Input = String`，`Output = String`，`run` 原样返回
-- [ ] `examples/echo.rs`：从 env/args 取一句话，调 `EchoAgent::run`，打印结果
+- [x] `EchoAgent` 实现 `Agent`，`Input = String`，`Output = String`，`run` 原样返回
+- [x] `examples/echo.rs`：从 env/args 取一句话，调 `EchoAgent::run`，打印结果
 
 ### S1 交付物
 
-- [ ] 可编译、可测试的 `rust-langgraph/crates/langgraph`（即 `-p langgraph`）
-- [ ] 可运行的 `cargo run -p langgraph --example echo -- "你好"` 并输出 `你好`
+- [x] 可编译、可测试的 `rust-langgraph/crates/langgraph`（即 `-p langgraph`）
+- [x] 可运行的 `cargo run -p langgraph --example echo -- "你好"` 并输出 `你好`
 
 ---
 

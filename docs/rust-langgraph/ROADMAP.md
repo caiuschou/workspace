@@ -46,7 +46,7 @@
 
 ```
 S1: Echo Agent        ████████████████████ [MVP: 跑起来的第一个 Agent]
-S2: Chat 单轮          ░░░░░░░░░░░░░░░░░░░░ [MVP: 一问一答]
+S2: Chat 单轮          ████████████████████ [MVP: 一问一答]
 S3: 流式+记忆          ░░░░░░░░░░░░░░░░░░░░ [MVP: 流式 + 多轮]
 S4: ReAct+工具         ░░░░░░░░░░░░░░░░░░░░ [MVP: 思考→调工具→回答]
 S5: 工具+记忆扩展      ░░░░░░░░░░░░░░░░░░░░ [MVP: 多工具 / RAG]
@@ -108,32 +108,32 @@ S9: 部署+文档          ░░░░░░░░░░░░░░░░░�
 **MVP**：调 LLM 完成一问一答（单轮、无记忆）。
 
 **验收标准**：
-- [ ] 运行示例能向 OpenAI（或 mock）发一问并拿到一答
-- [ ] 至少有 `examples/chat.rs` 或等价入口可演示
+- [x] 运行示例能向 OpenAI（或 mock）发一问并拿到一答
+- [x] 至少有 `examples/chat.rs` 或等价入口可演示
 
 ### 2.1 LlmClient 与请求/响应类型
 
-- [ ] `LlmClient` trait：`async fn chat(&self, req: ChatRequest) -> Result<ChatResponse, LlmError>`
-- [ ] `ChatRequest`、`ChatResponse`、`Usage`（prompt_tokens, completion_tokens）
-- [ ] `LlmError` 枚举（ApiError、RateLimit、Auth、InvalidRequest、Network、Parsing、StreamClosed）
-- [ ] 单元测试：序列化/反序列化
+- [x] `LlmClient` trait：`async fn chat(&self, req: ChatRequest) -> Result<ChatResponse, LlmError>`
+- [x] `ChatRequest`、`ChatResponse`、`Usage`（prompt_tokens, completion_tokens）
+- [x] `LlmError` 枚举（ApiError、RateLimit、Auth、InvalidRequest、Network、Parsing、StreamClosed）
+- [x] 单元测试：序列化/反序列化
 
 ### 2.2 OpenAI 实现（或 Mock）
 
-- [ ] `OpenAiConfig`（api_key, base_url, model, default_temperature）
-- [ ] `OpenAiClient` 实现 `LlmClient`，`chat()` 发 HTTP 请求并解析（或本 Sprint 仅做 `MockLlmClient` 返回固定句）
-- [ ] 若用真实 API：`RetryConfig` + `is_retryable(LlmError)` + 简单重试
+- [x] `OpenAiConfig`（api_key, base_url, model, default_temperature）
+- [x] `OpenAiClient` 实现 `LlmClient`，`chat()` 发 HTTP 请求并解析（可选 feature `openai`）；`MockLlmClient` 返回固定句或回显
+- [ ] 若用真实 API：`RetryConfig` + `is_retryable(LlmError)` + 简单重试（放入 Backlog）
 
 ### 2.3 ChatAgent 单轮
 
-- [ ] `ChatAgent<C: LlmClient>`：`llm: C`、`system_prompt: Option<String>`
-- [ ] `ChatInput`、`ChatOutput`（本 Sprint 可仅为 `String` 或最小结构）
-- [ ] 实现 `Agent`，单轮：把用户输入转为 messages，调 `llm.chat()`，返回内容
-- [ ] `examples/chat.rs`：从 stdin/args 读一问，调 ChatAgent，打印回答
+- [x] `ChatAgent<C: LlmClient>`：`llm: C`、`system_prompt: Option<String>`
+- [x] `ChatInput`、`ChatOutput`（本 Sprint 为 `String`）
+- [x] 实现 `AsyncAgent`，单轮：把用户输入转为 messages，调 `llm.chat()`，返回内容
+- [x] `examples/chat.rs`：从 args 读一问，调 ChatAgent，打印回答
 
 ### S2 交付物
 
-- [ ] 可运行的「一问一答」Chat 示例（真实 API 或 mock 均可）
+- [x] 可运行的「一问一答」Chat 示例（Mock 默认；真实 API 需 `--features openai` 与 `OPENAI_API_KEY`）
 
 ---
 
@@ -515,9 +515,9 @@ rust-langgraph/
 
 ## 下一步
 
-1. **Sprint 1 启动**：在根目录下已有 `rust-langgraph/crates/langgraph` 并已加入根 workspace；在本目录内完成骨架与 Echo Agent 示例（`cargo run -p langgraph --example echo -- "你好"`）。
-2. **每个 Sprint 结束**：对照「验收标准」做一次演示或脚本检查，未完成项记入 Backlog。
-3. **计划同步**：若周期固定（如双周），可在 Sprint 规划会中把 Backlog 项纳入下一个 Sprint。
+1. **Sprint 2 已完成**：`LlmClient`、`ChatRequest`/`ChatResponse`/`Usage`、`LlmError`、`MockLlmClient`、`OpenAiClient`（feature `openai`）、`ChatAgent`、`examples/chat.rs` 已就绪。默认 `cargo run -p langgraph --example chat -- "你好"` 使用 Mock 回显；真实 OpenAI 需 `--features openai` 与 `OPENAI_API_KEY`。
+2. **Sprint 3 启动**：流式 Chat + 会话记忆（`StreamAgent`、`chat_stream`、`SessionMemory` 等）。
+3. **每个 Sprint 结束**：对照「验收标准」做一次演示或脚本检查，未完成项记入 Backlog。
 4. **后续新包**：新增实现包时，在 `rust-langgraph/crates/` 下建目录，并在根 `Cargo.toml` 的 `members` 中追加路径，如 `"rust-langgraph/crates/langgraph-openai"`。
 
 ---

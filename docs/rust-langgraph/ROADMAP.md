@@ -1,4 +1,4 @@
-# Rust LangGraph 开发计划
+# Rust LangGraph 开发计划（敏捷版）
 
 ## 项目概述
 
@@ -11,1026 +11,491 @@
 3. **显式优于隐式** - 不魔法字符串，模式匹配
 4. **所有权明确** - Actor 模式，channel 通信
 
+### 敏捷开发方式
+
+- **Sprint**：固定周期（建议 1~2 周），每个 Sprint 结束交付一个 **最小可交付产品（MVP）**。
+- **MVP**：可在本 Sprint 内演示、运行或集成的最小功能集合。
+- **验收**：每个 Sprint 有明确的「可演示结果」和验收清单，通过即视为该 Sprint 完成。
+- **回溯**：Sprint 内未完成项放入 Backlog，可在后续 Sprint 按优先级纳入。
+
+### 包布局
+
+在仓库**根目录**下使用 **`rust-langgraph/`** 作为「rust-langgraph 包」的根目录，所有实现放在其内：
+
+- **`rust-langgraph/`**：与 `crates/`、`examples/`、`mcp-impls/` 平级，作为 LangGraph 相关代码的容器。
+- **`rust-langgraph/crates/langgraph`**：核心库（trait、Agent、状态机、工具、记忆等），由根 workspace 的 `Cargo.toml` 通过 `members = ["rust-langgraph/crates/langgraph", ...]` 引入。
+- **`rust-langgraph/crates/*`**：后续可按需增加 `langgraph-openai`、`langgraph-xxx` 等实现包，均在根 workspace 的 `members` 中追加路径即可。
+
+根 workspace 构建：在仓库根目录执行 `cargo build -p langgraph`；各 Sprint 中涉及「新建 crate / 示例」的路径均指 `rust-langgraph/` 下的路径。
+
 ---
 
-## 里程碑
+## Sprint 总览
+
+| Sprint | MVP（最小可交付产品） | 可演示结果 | 建议周期 |
+|--------|------------------------|------------|----------|
+| S1 | 可运行的 Echo Agent | `cargo run --example echo` 输入即回显 | 1 周 |
+| S2 | 真实 Chat 单轮对话 | 调 LLM 完成一问一答 | 1 周 |
+| S3 | 流式 Chat + 会话记忆 | 流式输出 token，多轮对话带历史 | 1~2 周 |
+| S4 | ReAct + 单工具 | 问「3+5」能调工具并返回 8 | 1~2 周 |
+| S5 | 工具生态 + 记忆扩展 | 多工具协作或简单 RAG 示例 | 1~2 周 |
+| S6 | 多 Agent 雏形 | 发 Task 给 Worker，收到结果 | 1~2 周 |
+| S7 | 工作流 + 研究团队示例 | research-team 示例跑通 | 1~2 周 |
+| S8 | HTTP API 可调 | curl 调通 /chat、/health、/metrics | 1 周 |
+| S9 | 可部署 + 文档 | docker compose up 可访问，文档齐全 | 1~2 周 |
 
 ```
-M0: 项目启动           ████████████████████ 2025-01-27
-M1: 核心 Trait         ░░░░░░░░░░░░░░░░░░░░   [计划中]
-M2: 状态机与 Agent     ░░░░░░░░░░░░░░░░░░░░   [计划中]
-M3: 工具与记忆系统     ░░░░░░░░░░░░░░░░░░░░   [计划中]
-M4: 多 Agent 协作      ░░░░░░░░░░░░░░░░░░░░   [计划中]
-M5: 生产级实现         ░░░░░░░░░░░░░░░░░░░░   [计划中]
+S1: Echo Agent        ████████████████████ [MVP: 跑起来的第一个 Agent]
+S2: Chat 单轮          ░░░░░░░░░░░░░░░░░░░░ [MVP: 一问一答]
+S3: 流式+记忆          ░░░░░░░░░░░░░░░░░░░░ [MVP: 流式 + 多轮]
+S4: ReAct+工具         ░░░░░░░░░░░░░░░░░░░░ [MVP: 思考→调工具→回答]
+S5: 工具+记忆扩展      ░░░░░░░░░░░░░░░░░░░░ [MVP: 多工具 / RAG]
+S6: 多 Agent 雏形     ░░░░░░░░░░░░░░░░░░░░ [MVP: Worker 收发包]
+S7: 工作流+研究团队    ░░░░░░░░░░░░░░░░░░░░ [MVP: 研究团队示例]
+S8: HTTP API          ░░░░░░░░░░░░░░░░░░░░ [MVP: 服务可调]
+S9: 部署+文档          ░░░░░░░░░░░░░░░░░░░░ [MVP: Docker + 文档]
 ```
 
----
+**原里程碑与 Sprint 对应**（便于从旧版 M1–M5 迁移）：
 
-## M1: 核心 Trait (Week 1-2, Day 1-14)
-
-### 目标
-定义核心抽象，建立类型安全的基础架构。
-
----
-
-### 1.1 项目结构 (Day 1-2)
-
-#### 1.1.1 Workspace 配置
-- [ ] 根 `Cargo.toml` 添加 workspace
-  ```toml
-  [workspace]
-  members = ["crates/langgraph"]
-  resolver = "2"
-  [workspace.dependencies]
-  tokio = { version = "1.35", features = ["full"] }
-  serde = { version = "1.0", features = ["derive"] }
-  async-trait = "0.1"
-  thiserror = "1.0"
-  ```
-- [ ] 配置 `crates/langgraph/Cargo.toml`
-- [ ] 设置 `[package.metadata.docs.rs]`
-
-#### 1.1.2 目录结构
-- [ ] `src/lib.rs` 模块入口
-- [ ] `src/traits.rs` 核心 trait
-- [ ] `src/message.rs` 消息类型
-- [ ] `src/error.rs` 错误类型
-- [ ] `src/state.rs` 状态机
-- [ ] `src/agent/mod.rs` Agent 模块
-- [ ] `src/llm/mod.rs` LLM 模块
-- [ ] `src/tool/mod.rs` 工具模块
-- [ ] `src/actor/mod.rs` Actor 模块
-- [ ] `src/memory/mod.rs` 记忆模块
-- [ ] `examples/` 目录
-- [ ] `tests/` 目录
-
-#### 1.1.3 开发工具
-- [ ] `.rustfmt.toml` 配置
-- [ ] `clippy.toml` 配置
-- [ ] `.github/workflows/ci.yml` (fmt + clippy + test + doc)
-
-#### 1.1.4 基础文件
-- [ ] `README.md`
-- [ ] `LICENSE-APACHE` + `LICENSE-MIT`
-- [ ] `CHANGELOG.md`
+| 原里程碑 | 对应 Sprint | 说明 |
+|----------|-------------|------|
+| M1 核心 Trait | S1 + S2 + S3 | 拆成「Echo 最少 trait → Chat 类型 → 流式/记忆」三个可交付阶段 |
+| M2 状态机与 Agent | S3 + S4 | 流式/记忆在 S3，状态机 + ReAct + LLM 在 S4 |
+| M3 工具与记忆 | S4 + S5 | ReAct+单工具在 S4，多工具+记忆扩展在 S5 |
+| M4 多 Agent | S6 + S7 | Actor/Worker 雏形在 S6，工作流+研究团队在 S7 |
+| M5 生产级 | S8 + S9 | HTTP API 在 S8，配置/部署/文档在 S9 |
 
 ---
 
-### 1.2 核心 Trait (`src/traits.rs`) (Day 3-6)
+## Sprint 1：可运行的 Echo Agent
 
-#### 1.2.1 Agent Trait
-- [ ] 定义 `Agent` trait
-  ```rust
-  pub trait Agent: Send + Sync {
-      type Input: Send + Sync;
-      type Output: Send + Sync;
-      type Error: std::error::Error + Send + Sync;
-      fn name(&self) -> &str;
-      async fn run(&self, input: Self::Input) -> Result<Self::Output, Self::Error>;
-  }
-  ```
-- [ ] doc 注释 + 示例
-- [ ] 单元测试：trait 约束
+**MVP**：能跑起来的第一个 Agent，输入即回显。
 
-#### 1.2.2 StreamAgent Trait
-- [ ] 定义 `StreamAgent` trait
-  ```rust
-  #[async_trait]
-  pub trait StreamAgent: Agent {
-      type StreamItem: Send;
-      fn run_stream(&self, input: Self::Input)
-          -> Pin<Box<dyn Stream<Item = Result<Self::StreamItem, Self::Error>> + Send>>;
-  }
-  ```
-- [ ] doc 注释 + 示例
+**验收标准**：
+- [ ] `cargo run --example echo "你好"` 输出 `你好`
+- [ ] `cargo test` 通过
+- [ ] `cargo clippy` 无新增告警
 
-#### 1.2.3 LlmClient Trait
-- [ ] 定义 `LlmClient` trait
-  ```rust
-  #[async_trait]
-  pub trait LlmClient: Send + Sync {
-      async fn chat(&self, req: ChatRequest) -> Result<ChatResponse, LlmError>;
-      async fn chat_stream(&self, req: ChatRequest)
-          -> Result<Pin<Box<dyn Stream<Item = Result<String, LlmError>> + Send>>, LlmError>;
-  }
-  ```
-- [ ] 定义 `ChatRequest` 结构体
-- [ ] 定义 `ChatResponse` 结构体
-- [ ] 定义 `Usage` 结构体 (prompt_tokens, completion_tokens)
-- [ ] 单元测试：序列化
+### 1.1 项目骨架
 
-#### 1.2.4 Tool Trait
-- [ ] 定义 `Tool` trait
-  ```rust
-  #[async_trait]
-  pub trait Tool: Send + Sync {
-      fn name(&self) -> &'static str;
-      fn description(&self) -> &'static str;
-      fn parameters_schema(&self) -> Value;
-      async fn execute(&self, args: Value) -> Result<Value, ToolError>;
-  }
-  ```
-- [ ] doc 注释 + 示例
+- [ ] 根 workspace 的 `members` 中已有 `rust-langgraph/crates/langgraph`（与现有 workspace 一致：`resolver = "3"`、`edition = "2024"` 等）
+- [ ] `rust-langgraph/crates/langgraph/Cargo.toml`、`src/lib.rs` 模块入口已就绪，按需补全目录
+- [ ] 在 `rust-langgraph/crates/langgraph/src/` 下建立占位：`traits.rs`、`message.rs`、`error.rs`、`agent/mod.rs`、`llm/mod.rs`、`tool/mod.rs`、`state.rs`、`memory/mod.rs`、`actor/mod.rs`
+- [ ] `rust-langgraph/` 或仓库根目录的 `.rustfmt.toml`、`clippy.toml`、`.github/workflows/ci.yml`（fmt + clippy + test）
+- [ ] `rust-langgraph/README.md` 已存在；`rust-langgraph/crates/langgraph/` 下可按需增加 `LICENSE-APACHE`、`LICENSE-MIT`、`CHANGELOG.md`
 
-#### 1.2.5 Memory Trait
-- [ ] 定义 `Memory` trait
-  ```rust
-  #[async_trait]
-  pub trait Memory: Send + Sync {
-      async fn add(&self, message: Message) -> Result<(), MemoryError>;
-      async fn get(&self, limit: usize) -> Result<Vec<Message>, MemoryError>;
-      async fn clear(&self) -> Result<(), MemoryError>;
-      async fn count(&self) -> Result<usize, MemoryError>;
-  }
-  ```
-- [ ] 定义 `SemanticMemory` trait (向量检索)
-  ```rust
-  #[async_trait]
-  pub trait SemanticMemory: Send + Sync {
-      async fn add(&self, content: String, embedding: Vec<f32>) -> Result<(), MemoryError>;
-      async fn search(&self, query: Vec<f32>, top_k: usize) -> Result<Vec<MemoryResult>, MemoryError>;
-  }
-  ```
-- [ ] 定义 `MemoryResult` 结构体
+### 1.2 最小 Trait 与类型
 
-#### 1.2.6 StateMachine Trait
-- [ ] 定义 `StateMachine` trait
-  ```rust
-  pub trait StateMachine: Send + Sync {
-      type State: Clone + Send + Sync;
-      type Event: Send + Sync;
-      type Output: Send + Sync;
-      fn transition(&self, state: Self::State, event: Self::Event)
-          -> Result<StateTransition<Self::State, Self::Output>, StateError>;
-  }
-  ```
-- [ ] 定义 `StateTransition<S, O>` 枚举
-  ```rust
-  pub enum StateTransition<S, O> {
-      Continue(S),
-      Output(O, S),
-      Done(O),
-  }
-  ```
+- [ ] **Agent** trait（本 Sprint 仅需：`name`、`run(Input) -> Result<Output, Error>`，`Input/Output/Error` 关联类型）
+- [ ] **Message**：本 Sprint 仅需 `UserMessage { content }` 或等价最小结构，用于 Echo 输入
+- [ ] **Error**：`AgentError` 最小枚举（如 `ExecutionFailed(String)`），`thiserror` 派生
+
+### 1.3 Echo Agent 与示例
+
+- [ ] `EchoAgent` 实现 `Agent`，`Input = String`，`Output = String`，`run` 原样返回
+- [ ] `examples/echo.rs`：从 env/args 取一句话，调 `EchoAgent::run`，打印结果
+
+### S1 交付物
+
+- [ ] 可编译、可测试的 `rust-langgraph/crates/langgraph`（即 `-p langgraph`）
+- [ ] 可运行的 `cargo run -p langgraph --example echo -- "你好"` 并输出 `你好`
 
 ---
 
-### 1.3 消息类型 (`src/message.rs`) (Day 7-8)
+## Sprint 2：真实 Chat 单轮对话
 
-#### 1.3.1 Message 枚举
-- [ ] `Message` 枚举定义
-  ```rust
-  pub enum Message {
-      User(UserMessage),
-      Assistant(AssistantMessage),
-      System(SystemMessage),
-      Tool(ToolMessage),
-  }
-  ```
-- [ ] `UserMessage` 结构体 (content, timestamp)
-- [ ] `AssistantMessage` 结构体 (content, tool_calls, timestamp)
-- [ ] `SystemMessage` 结构体 (content, timestamp)
-- [ ] `ToolMessage` 结构体 (tool_call_id, content, timestamp)
-- [ ] 实现 `From<String>` for `UserMessage`
-- [ ] 实现 `Display` for `Message`
-- [ ] 单元测试
+**MVP**：调 LLM 完成一问一答（单轮、无记忆）。
 
-#### 1.3.2 ToolCall 结构
-- [ ] `ToolCall` 结构体 (id, name, arguments)
-- [ ] `ToolResult` 结构体 (call_id, result)
-- [ ] `Serialize`/`Deserialize` 实现
-- [ ] 单元测试
+**验收标准**：
+- [ ] 运行示例能向 OpenAI（或 mock）发一问并拿到一答
+- [ ] 至少有 `examples/chat.rs` 或等价入口可演示
 
-#### 1.3.3 MessageBuilder
-- [ ] `MessageBuilder` 结构体
-- [ ] `user()` / `assistant()` / `system()` / `tool()` 方法
-- [ ] `build()` 方法
-- [ ] 单元测试
+### 2.1 LlmClient 与请求/响应类型
 
----
+- [ ] `LlmClient` trait：`async fn chat(&self, req: ChatRequest) -> Result<ChatResponse, LlmError>`
+- [ ] `ChatRequest`、`ChatResponse`、`Usage`（prompt_tokens, completion_tokens）
+- [ ] `LlmError` 枚举（ApiError、RateLimit、Auth、InvalidRequest、Network、Parsing、StreamClosed）
+- [ ] 单元测试：序列化/反序列化
 
-### 1.4 错误类型 (`src/error.rs`) (Day 9-10)
+### 2.2 OpenAI 实现（或 Mock）
 
-#### 1.4.1 AgentError
-- [ ] 定义 `AgentError` 枚举
-  ```rust
-  pub enum AgentError {
-      ExecutionFailed(String),
-      LlmError(LlmError),
-      ToolError(ToolError),
-      InvalidState(String),
-      Timeout(String),
-  }
-  ```
-- [ ] `thiserror::Error` 派生
-- [ ] `From<LlmError>` 实现
-- [ ] `From<ToolError>` 实现
+- [ ] `OpenAiConfig`（api_key, base_url, model, default_temperature）
+- [ ] `OpenAiClient` 实现 `LlmClient`，`chat()` 发 HTTP 请求并解析（或本 Sprint 仅做 `MockLlmClient` 返回固定句）
+- [ ] 若用真实 API：`RetryConfig` + `is_retryable(LlmError)` + 简单重试
 
-#### 1.4.2 LlmError
-- [ ] 定义 `LlmError` 枚举
-  ```rust
-  pub enum LlmError {
-      ApiError { code: u16, message: String },
-      RateLimitError { retry_after: Option<u64> },
-      AuthenticationError,
-      InvalidRequest(String),
-      NetworkError(String),
-      ParsingError(String),
-      StreamClosed,
-  }
-  ```
+### 2.3 ChatAgent 单轮
 
-#### 1.4.3 ToolError / MemoryError / StateError
-- [ ] `ToolError` 枚举定义
-- [ ] `MemoryError` 枚举定义
-- [ ] `StateError` 枚举定义
-- [ ] `thiserror::Error` 派生
-- [ ] 单元测试
+- [ ] `ChatAgent<C: LlmClient>`：`llm: C`、`system_prompt: Option<String>`
+- [ ] `ChatInput`、`ChatOutput`（本 Sprint 可仅为 `String` 或最小结构）
+- [ ] 实现 `Agent`，单轮：把用户输入转为 messages，调 `llm.chat()`，返回内容
+- [ ] `examples/chat.rs`：从 stdin/args 读一问，调 ChatAgent，打印回答
+
+### S2 交付物
+
+- [ ] 可运行的「一问一答」Chat 示例（真实 API 或 mock 均可）
 
 ---
 
-### 1.5 测试 (Day 11-14)
+## Sprint 3：流式 Chat + 会话记忆
 
-#### 1.5.1 单元测试
-- [ ] traits.rs 测试 (覆盖率 >80%)
-- [ ] message.rs 测试 (覆盖率 100%)
-- [ ] error.rs 测试 (覆盖率 90%)
-- [ ] 覆盖率报告生成
+**MVP**：流式输出 token，多轮对话带历史。
 
-#### 1.5.2 文档测试
-- [ ] 所有 trait doc 示例
-- [ ] `cargo test --doc` 通过
-- [ ] `cargo doc --open` 无警告
+**验收标准**：
+- [ ] 有接口能流式返回 token（如按 chunk 打印或 SSE）
+- [ ] 多轮对话时，后续轮能看到历史消息（通过 SessionMemory）
 
----
+### 3.1 流式接口
 
-### M1 交付物
-- [ ] 可编译的 `langgraph` crate
-- [ ] 完整的 trait 定义
-- [ ] 单元测试覆盖率 >80%
+- [ ] `StreamAgent` trait：`run_stream(Input) -> Pin<Box<dyn Stream<Item = Result<StreamItem, Error>> + Send>>`
+- [ ] `ChatStreamEvent`：`Token(String)`、`Done(String)`、`Error(LlmError)`
+- [ ] `LlmClient::chat_stream(req) -> Result<Stream, LlmError>`
+- [ ] OpenAI SSE 解析：`SseStream`、`[DONE]` 处理
 
----
+### 3.2 会话记忆
 
-## M2: 状态机与 Agent (Week 3-4, Day 15-28)
+- [ ] `Memory` trait：`add(Message)`、`get(limit)`、`clear()`、`count()`
+- [ ] `Message` 枚举：`User`、`Assistant`、`System`、`Tool`（含 content/timestamp 等最小字段）
+- [ ] `SessionMemory`：`Arc<RwLock<Vec<Message>>>`、FIFO 容量限制、实现 `Memory`
+- [ ] `ToolCall`、`ToolResult`、`MessageBuilder`（user/assistant/system/tool）
 
-### 目标
-实现状态机执行器和基础 Agent。
+### 3.3 ChatAgent 接记忆与流式
 
----
+- [ ] `ChatAgent` 增加 `memory: Option<Arc<dyn Memory>>`、`with_memory()`
+- [ ] 实现 `StreamAgent`，内部调用 `llm.chat_stream()`，映射为 `ChatStreamEvent`
+- [ ] 单轮/多轮均把用户与助手消息写入 Memory，下次请求带 `get(limit)` 作为上下文
+- [ ] `examples/chat_stream.rs` 或扩展示例：演示流式 + 多轮
 
-### 2.1 状态机 (`src/state.rs`) (Day 15-18)
+### S3 交付物
 
-#### 2.1.1 Runner 执行器
-- [ ] `Runner<S, E, O>` 结构体
-  ```rust
-  pub struct Runner<S: Clone, E, O> {
-      machine: Box<dyn StateMachine<State = S, Event = E, Output = O>>,
-      state: S,
-      max_steps: usize,
-  }
-  ```
-- [ ] `new()` 构造函数
-- [ ] `with_max_steps()` 方法
-- [ ] `run()` 方法 (迭代 events)
-- [ ] `run_stream()` 方法
-- [ ] 步数限制检查
-
-#### 2.1.2 类型状态模式 (可选)
-- [ ] `Init` / `Running` / `Done` 标记
-- [ ] `TypeStateMachine<S>` 结构体
-- [ ] `start()` / `finish()` 方法
-- [ ] 编译时状态检查
-
-#### 2.1.3 Checkpoint 持久化
-- [ ] `Checkpoint` trait 定义
-  ```rust
-  #[async_trait]
-  pub trait Checkpoint: Send + Sync {
-      async fn save(&self, key: &str, state: Vec<u8>) -> Result<(), CheckpointError>;
-      async fn load(&self, key: &str) -> Result<Option<Vec<u8>>, CheckpointError>;
-  }
-  ```
-- [ ] `MemoryCheckpoint` 实现 (`RwLock<HashMap>`)
-- [ ] `FileCheckpoint` 实现
-- [ ] 单元测试
+- [ ] 流式 Chat 可演示
+- [ ] 多轮对话带 SessionMemory 可演示
 
 ---
 
-### 2.2 Chat Agent (`src/agent/chat.rs`) (Day 19-22)
+## Sprint 4：ReAct + 单工具
 
-#### 2.2.1 ChatAgent 结构体
-- [ ] `ChatAgent<C>` 结构体
-  ```rust
-  pub struct ChatAgent<C: LlmClient> {
-      llm: C,
-      system_prompt: Option<String>,
-      memory: Option<Arc<dyn Memory>>,
-      max_history: Option<usize>,
-  }
-  ```
-- [ ] `ChatInput` 结构体
-- [ ] `ChatOutput` 结构体
-- [ ] `Agent` trait 实现
-- [ ] `new()` / `builder()` 方法
-- [ ] `with_system_prompt()` / `with_memory()` 方法
+**MVP**：问「3+5 等于几」能调工具并返回 8。
 
-#### 2.2.2 SessionMemory
-- [ ] `SessionMemory` 结构体
-  ```rust
-  pub struct SessionMemory {
-      messages: Arc<RwLock<Vec<Message>>>,
-      capacity: usize,
-  }
-  ```
-- [ ] `Memory` trait 实现
-- [ ] FIFO 容量限制
-- [ ] token 计数估算
+**验收标准**：
+- [ ] 有 ReAct 示例，输入算术式能调用计算工具并输出结果
+- [ ] 状态在「思考 → 动作 → 观察 → 结束」间可区分
 
-#### 2.2.3 流式响应
-- [ ] `StreamAgent` trait 实现
-- [ ] `ChatStreamEvent` 枚举
-  ```rust
-  pub enum ChatStreamEvent {
-      Token(String),
-      Done(String),
-      Error(LlmError),
-  }
-  ```
-- [ ] `run_stream()` 方法
+### 4.1 状态机与执行器
 
-#### 2.2.4 PromptTemplate
-- [ ] `PromptTemplate` 结构体
-- [ ] `render(variables: HashMap)` 方法
-- [ ] 支持 `{{var}}` 语法
-- [ ] 支持 `{{#if}}...{{/if}}` 条件
+- [ ] `StateMachine` trait：`State`、`Event`、`Output`，`transition(state, event) -> Result<StateTransition<State, Output>, StateError>`
+- [ ] `StateTransition<S,O>`：`Continue(S)`、`Output(O,S)`、`Done(O)`
+- [ ] `Runner<S,E,O>`：持有机器和当前状态，`run(events)` 迭代并步数限制
+- [ ] `StateError` 与相关错误类型
+
+### 4.2 Tool 与注册（最小）
+
+- [ ] `Tool` trait：`name()`、`description()`、`parameters_schema()`、`execute(Value) -> Result<Value, ToolError>`
+- [ ] `ToolRegistry`：`register(Box<dyn Tool>)`、`get(name)`、`execute(name, args)`
+- [ ] `ToolError`、参数校验最少支持（如必填字段）
+
+### 4.3 一个内置工具：Calculator
+
+- [ ] `CalculatorTool`，参数 schema 如 `{ "expression": string }`
+- [ ] 使用 `evalexpr` 或简单安全求值，实现 `Tool`
+- [ ] 单元测试（含非法表达式）
+
+### 4.4 ReAct Agent
+
+- [ ] `ReActState`：`Thinking { query, iterations }`、`Acting { tool_calls }`、`Observing { results }`、`Done { answer }`
+- [ ] `ThinkNode`：`build_prompt()`、`parse_thought()`、`extract_tool_calls()`
+- [ ] `ActNode`：`execute(tool_calls)`，调用 `ToolRegistry`
+- [ ] `ObserveNode`：`process(results)`、`should_continue()`
+- [ ] `DEFAULT_REACT_PROMPT`、`build_prompt(query, tools, history)`、`format_tool_description()`
+- [ ] 把 Think/Act/Observe 接到 `StateMachine`/`Runner`，实现 ReAct 循环
+- [ ] `examples/react.rs`：问「3+5」等，输出工具结果与最终答案
+
+### S4 交付物
+
+- [ ] ReAct 示例可调 Calculator 并返回正确算术结果
 
 ---
 
-### 2.3 ReAct Agent (`src/agent/react.rs`) (Day 23-26)
+## Sprint 5：工具生态 + 记忆扩展
 
-#### 2.3.1 ReActState 枚举
-- [ ] `ReActState` 枚举
-  ```rust
-  pub enum ReActState {
-      Thinking { query: String, iterations: u32 },
-      Acting { tool_calls: Vec<ToolCall> },
-      Observing { results: Vec<ToolResult> },
-      Done { answer: String },
-  }
-  ```
-- [ ] `Clone` / `Debug` / `Display` 实现
+**MVP**：多工具协作或简单 RAG 示例可运行。
 
-#### 2.3.2 ThinkNode
-- [ ] `ThinkNode<C>` 结构体
-- [ ] `build_prompt()` 方法
-- [ ] `parse_thought()` 方法 (提取思考内容)
-- [ ] `extract_tool_calls()` 方法 (解析工具调用)
-- [ ] 单元测试
+**验收标准**：
+- [ ] 至少再有两种内置工具（如 HttpRequest、FileOps）可用
+- [ ] 有 SessionMemory 之外的记忆（Profile 或 Vector 至少一种），并有简单示例（如 memory 或 rag）
 
-#### 2.3.3 ActNode
-- [ ] `ActNode` 结构体
-- [ ] `execute(tool_calls)` 方法
-- [ ] 工具并发执行 (`tokio::spawn`)
-- [ ] 错误处理和重试
-- [ ] 单元测试
+### 5.1 内置工具扩充
 
-#### 2.3.4 ObserveNode
-- [ ] `ObserveNode` 结构体
-- [ ] `process(results)` 方法
-- [ ] `should_continue()` 判断
+- [ ] `HttpRequestTool`：url、method、headers、body，实现 `Tool`，单元测试用 mock
+- [ ] `FileOpsTool`：read/write/list/exists，路径安全检查，实现 `Tool`
 
-#### 2.3.5 ReAct Prompt
-- [ ] `DEFAULT_REACT_PROMPT` 常量
-- [ ] `build_prompt(query, tools, history)` 函数
-- [ ] `format_tool_description()` 函数
+### 5.2 工具组合与校验
 
----
+- [ ] `ToolChain`：输出串到下一工具，实现 `Tool`
+- [ ] `validate_args(schema, args)`、`ValidationError`，在 `ToolRegistry::execute` 中使用
+- [ ] （可选）`ParallelTools` 或 `ToolMap` 本 Sprint 做最小实现即可
 
-### 2.4 LLM 实现 (`src/llm/`) (Day 27-28)
+### 5.3 记忆扩展
 
-#### 2.4.1 OpenAI Client
-- [ ] `OpenAiConfig` 结构体
-  ```rust
-  pub struct OpenAiConfig {
-      pub api_key: String,
-      pub base_url: Option<String>,
-      pub model: String,
-      pub default_temperature: f32,
-  }
-  ```
-- [ ] `OpenAiClient` 结构体
-- [ ] `LlmClient` trait 实现
-- [ ] `chat()` 方法 (HTTP 请求 + 解析)
-- [ ] `chat_stream()` 方法
-- [ ] 单元测试 (mock HTTP)
+- [ ] `SemanticMemory` trait：`add(content, embedding)`、`search(query_embedding, top_k) -> Vec<MemoryResult>`
+- [ ] `VectorMemory`：`MemoryEmbedding`（id, content, vector, metadata）、余弦相似度 `search`
+- [ ] `Embedder` trait：`embed(text)`、`embed_batch(texts)`；`OpenAiEmbedder` 实现
+- [ ] `ProfileMemory`（可选本 Sprint）：`add_profile`、`get_profile`、简单持久化或内存版
 
-#### 2.4.2 流式响应
-- [ ] `SseStream` 结构体
-- [ ] SSE 解析器
-- [ ] `Stream` trait 实现
-- [ ] 处理 `[DONE]` 标记
+### 5.4 Memory Agent 或带记忆的 ReAct
 
-#### 2.4.3 重试逻辑
-- [ ] `RetryConfig` 结构体
-  ```rust
-  pub struct RetryConfig {
-      pub max_retries: u32,
-      pub initial_delay: Duration,
-      pub backoff_factor: f64,
-  }
-  ```
-- [ ] `is_retryable()` for `LlmError`
-- [ ] 指数退避 + jitter
-- [ ] 单元测试
+- [ ] `MemoryAgent<C, E>` 或「ReAct + VectorMemory」：检索相关记忆注入 prompt，再回答
+- [ ] `examples/tools.rs`：多工具串联或并行
+- [ ] `examples/memory.rs` 或 `examples/rag.rs`：Session + Vector/Profile 最小示例
+
+### S5 交付物
+
+- [ ] 多工具示例可运行
+- [ ] 至少一个「记忆增强」示例（memory 或 rag）可运行
 
 ---
 
-### 2.5 示例 (Day 28)
+## Sprint 6：多 Agent 雏形
 
-- [ ] `examples/chat.rs` - Chat Agent 示例
-- [ ] `examples/react.rs` - ReAct Agent 示例
-- [ ] 各示例的 `README.md`
+**MVP**：发一个 Task 给 Worker，能收到处理结果。
 
----
+**验收标准**：
+- [ ] 有 API 可「发任务 → 指定或默认 Worker 处理 → 返回结果」
+- [ ] 至少一个 Worker 实现可用（如 EchoWorker 或最小 ResearcherWorker）
 
-### M2 交付物
-- [ ] 可运行的 `ChatAgent`
-- [ ] 可运行的 `ReActAgent`
-- [ ] OpenAI LLM 实现
-- [ ] 2 个示例
+### 6.1 Actor 基础
 
----
+- [ ] `ActorId`、`AgentMessage`（Task、Stop、Ping）、`Task` 结构体
+- [ ] `Handler<S>` trait：`handle(msg, state) -> Result<(), ActorError>`
+- [ ] `ActorAgent<S>`：id、inbox、state、handler，`run()` 消息循环
+- [ ] `AgentChannel`、`ActorRef<S>`：`send`、`send_timeout`、`try_send`、`request()`（请求-响应）
 
-## M3: 工具与记忆系统 (Week 5-6, Day 29-42)
+### 6.2 监督与路由（最小）
 
-### 目标
-实现类型安全的工具调用系统和记忆功能。
+- [ ] `SupervisionStrategy`：OneForOne / OneForAll / AllForOne，重启逻辑最小实现
+- [ ] `Router` trait：`route(task, workers) -> Option<usize>`
+- [ ] `RoundRobinRouter` 或 `LeastBusyRouter` 至少一种
 
----
+### 6.3 Worker 与 Supervisor
 
-### 3.1 工具注册 (`src/tool/registry.rs`) (Day 29-31)
-
-#### 3.1.1 ToolRegistry
-- [ ] `ToolRegistry` 结构体
-  ```rust
-  pub struct ToolRegistry {
-      tools: HashMap<&'static str, Box<dyn Tool>>,
-  }
-  ```
-- [ ] `new()` 构造函数
-- [ ] `register(tool)` 方法
-- [ ] `get(name)` 方法
-- [ ] `list()` 方法
-- [ ] `execute(name, args)` 方法
-- [ ] `execute_all()` 并发执行
-
-#### 3.1.2 DynTool
-- [ ] `DynTool` trait (类型擦除)
-- [ ] `Box<dyn Tool>` 实现
-
-#### 3.1.3 工具验证
-- [ ] JSON Schema 验证
-- [ ] `validate_args(schema, args)` 方法
-- [ ] `ValidationError` 定义
-
----
-
-### 3.2 内置工具 (`src/tool/builtin.rs`) (Day 32-34)
-
-#### 3.2.1 HttpRequest 工具
-- [ ] `HttpRequestTool` 结构体
-- [ ] `Tool` trait 实现
-- [ ] 参数 schema (url, method, headers, body)
-- [ ] HTTP 执行逻辑
-- [ ] 单元测试 (mock)
-
-#### 3.2.2 FileOps 工具
-- [ ] `FileOpsTool` 结构体
-- [ ] `Tool` trait 实现
-- [ ] 参数 schema (operation, path, content)
-- [ ] 支持 read/write/list/exists
-- [ ] 路径安全检查
-- [ ] 单元测试
-
-#### 3.2.3 Calculator 工具
-- [ ] `CalculatorTool` 结构体
-- [ ] `Tool` trait 实现
-- [ ] 使用 `evalexpr` crate
-- [ ] 沙箱执行
-- [ ] 单元测试
-
----
-
-### 3.3 工具组合 (`src/tool/compose.rs`) (Day 35-36)
-
-#### 3.3.1 ToolChain
-- [ ] `ToolChain` 结构体
-- [ ] `Tool` trait 实现
-- [ ] 输出传递给下一个工具
-- [ ] 单元测试
-
-#### 3.3.2 ToolMap
-- [ ] `ToolMap` 结构体
-- [ ] 输入/输出映射函数
-- [ ] 单元测试
-
-#### 3.3.3 并发执行
-- [ ] `ParallelTools` 结构体
-- [ ] `join_all` 并发执行
-- [ ] 结果聚合
-
----
-
-### 3.4 记忆系统 (`src/memory/`) (Day 37-40)
-
-#### 3.4.1 SessionMemory (`session.rs`)
-- [ ] `SessionMemory` 结构体 (消息历史)
-- [ ] `Memory` trait 实现
-- [ ] FIFO 容量限制
-- [ ] 时间窗口限制 (可选)
-- [ ] 单元测试
-
-#### 3.4.2 ProfileMemory (`profile.rs`)
-- [ ] `ProfileMemory` 结构体 (长期记忆)
-  ```rust
-  pub struct ProfileMemory {
-      storage: Arc<dyn StorageBackend>,
-      summarizer: Option<Arc<dyn Summarizer>>,
-  }
-  ```
-- [ ] `add_profile()` 方法
-- [ ] `get_profile()` 方法
-- [ ] `update_profile()` 方法
-- [ ] `summarize()` 方法 (LLM 摘要)
-- [ ] 单元测试
-
-#### 3.4.3 VectorMemory (`vector.rs`)
-- [ ] `VectorMemory` 结构体 (语义记忆)
-  ```rust
-  pub struct VectorMemory {
-      embeddings: Vec<MemoryEmbedding>,
-      dimension: usize,
-  }
-  ```
-- [ ] `MemoryEmbedding` 结构体 (id, content, vector, metadata)
-- [ ] `add(content, embedding)` 方法
-- [ ] `search(query_embedding, top_k)` 方法
-- [ ] 余弦相似度计算
-- [ ] 单元测试
-
-#### 3.4.4 Embedder (`src/llm/embedder.rs`)
-- [ ] `Embedder` trait
-  ```rust
-  #[async_trait]
-  pub trait Embedder: Send + Sync {
-      async fn embed(&self, text: &str) -> Result<Vec<f32>, EmbedError>;
-      async fn embed_batch(&self, texts: &[&str]) -> Result<Vec<Vec<f32>>, EmbedError>;
-  }
-  ```
-- [ ] `OpenAiEmbedder` 实现
-- [ ] 单元测试
-
----
-
-### 3.5 Memory Agent (`src/agent/memory.rs`) (Day 41-42)
-
-#### 3.5.1 MemoryAgent 结构
-- [ ] `MemoryAgent` 结构体
-  ```rust
-  pub struct MemoryAgent<C: LlmClient, E: Embedder> {
-      llm: C,
-      embedder: E,
-      session_memory: Arc<SessionMemory>,
-      profile_memory: Arc<ProfileMemory>,
-      vector_memory: Arc<VectorMemory>,
-  }
-  ```
-- [ ] `Agent` trait 实现
-
-#### 3.5.2 信息提取与存储
-- [ ] `extract_info()` 方法 (LLM 提取实体)
-- [ ] `store_profile()` 方法
-- [ ] `store_vector()` 方法
-
-#### 3.5.3 记忆检索
-- [ ] `retrieve_relevant()` 方法
-- [ ] 语义搜索 + 知识注入
-- [ ] 构建增强 prompt
-
-#### 3.5.4 记忆管理策略
-- [ ] 摘要策略 (消息数量阈值)
-- [ ] 重要性评分
-- [ ] 定期清理
-
----
-
-### 3.6 示例 (Day 42)
-
-- [ ] `examples/tools.rs` - 工具使用示例
-- [ ] `examples/memory.rs` - 记忆系统示例
-- [ ] `examples/rag.rs` - RAG 示例
-- [ ] 各示例的 `README.md`
-
----
-
-### M3 交付物
-- [ ] 完整的工具系统
-- [ ] 3+ 内置工具
-- [ ] 记忆系统 (Session + Profile + Vector)
-- [ ] Memory Agent
-- [ ] 3 个示例
-
----
-
-## M4: 多 Agent 协作 (Week 7-8, Day 43-56)
-
-### 目标
-实现 Actor 模式的多 Agent 系统。
-
----
-
-### 4.1 Actor 框架 (`src/actor/`) (Day 43-46)
-
-#### 4.1.1 ActorId 和 AgentMessage
-- [ ] `ActorId` 新类型
-- [ ] `AgentMessage` 枚举
-  ```rust
-  pub enum AgentMessage {
-      Task(Task),
-      Stop,
-      Ping,
-  }
-  ```
-- [ ] `Task` 结构体
-
-#### 4.1.2 Handler Trait
-- [ ] `Handler<S>` trait
-  ```rust
-  #[async_trait]
-  pub trait Handler<S>: Send + Sync {
-      async fn handle(&mut self, msg: AgentMessage, state: &mut S) -> Result<(), ActorError>;
-  }
-  ```
-
-#### 4.1.3 ActorAgent
-- [ ] `ActorAgent<S>` 结构体
-  ```rust
-  pub struct ActorAgent<S> {
-      id: ActorId,
-      inbox: mpsc::Receiver<AgentMessage>,
-      state: S,
-      handler: Box<dyn Handler<S>>,
-  }
-  ```
-- [ ] `run()` 方法 (消息循环)
-
-#### 4.1.4 Channel 通信
-- [ ] `AgentChannel` 结构体
-- [ ] `send()` / `send_timeout()` / `try_send()` 方法
-- [ ] `ActorRef<S>` 引用类型
-- [ ] `request()` 方法 (请求-响应模式)
-
-#### 4.1.5 监督策略
-- [ ] `SupervisionStrategy` 枚举
-- [ ] `OneForOne` / `OneForAll` / `AllForOne` 策略
-- [ ] 重启逻辑
-
----
-
-### 4.2 Supervisor (`src/supervisor.rs`) (Day 47-49)
-
-#### 4.2.1 Supervisor 结构
-- [ ] `Supervisor` 结构体
-  ```rust
-  pub struct Supervisor {
-      workers: Vec<ActorRef<WorkerState>>,
-      router: Box<dyn Router>,
-      llm: Arc<dyn LlmClient>,
-  }
-  ```
+- [ ] `Worker` trait：`name`、`description`、`async fn handle(Task) -> TaskResult`
 - [ ] `TaskResult` 结构体
+- [ ] 一个具体 Worker（如 `EchoWorker` 或 `ResearcherWorker` 雏形）实现 `Worker`
+- [ ] `Supervisor`：持有一组 `ActorRef<WorkerState>` 和 `Router`，能接收 Task 并派发到 Worker，返回 TaskResult
+- [ ] `WorkerActor<S>`：把 `Worker` 包装成可被 `ActorAgent` 驱动的 Handler（本 Sprint 做最小适配即可）
 
-#### 4.2.2 Router Trait
-- [ ] `Router` trait
-  ```rust
-  pub trait Router: Send + Sync {
-      fn route(&self, task: &Task, workers: &[ActorRef<WorkerState>]) -> Option<usize>;
-  }
-  ```
+### 6.4 示例
 
-#### 4.2.3 路由策略
-- [ ] `RoundRobinRouter` 实现
-- [ ] `LeastBusyRouter` 实现
-- [ ] `SemanticRouter` 实现 (LLM 决策)
-- [ ] 单元测试
+- [ ] `examples/multi-agent.rs` 或等价：创建 Supervisor + 一个 Worker，发一个 Task，打印 TaskResult
 
-#### 4.2.4 负载均衡
-- [ ] `WorkerMetrics` 结构体
-- [ ] 指标收集
-- [ ] `get_least_busy()` 方法
+### S6 交付物
+
+- [ ] 「发 Task → Worker 处理 → 得结果」可演示
 
 ---
 
-### 4.3 Worker 实现 (`src/worker/`) (Day 50-53)
+## Sprint 7：工作流 + 研究团队示例
 
-#### 4.3.1 Worker Trait
-- [ ] `Worker` trait
-  ```rust
-  #[async_trait]
-  pub trait Worker: Send + Sync {
-      fn name(&self) -> &str;
-      fn description(&self) -> &str;
-      async fn handle(&self, task: Task) -> TaskResult;
-  }
-  ```
+**MVP**：research-team 示例跑通，多 Worker 按流程协作。
 
-#### 4.3.2 ResearcherWorker
-- [ ] `ResearcherWorker` 结构体
-- [ ] `Worker` trait 实现
-- [ ] 搜索 + 聚合 + 验证逻辑
-- [ ] 单元测试
+**验收标准**：
+- [ ] `examples/research-team.rs`（或等价）能跑通：例如「研究 → 分析 → 写作」等步骤
+- [ ] 工作流支持顺序、并行、分支中的至少两种
 
-#### 4.3.3 AnalystWorker
-- [ ] `AnalystWorker` 结构体
-- [ ] `Worker` trait 实现
-- [ ] 分析 + 比较 + 洞察生成
-- [ ] 单元测试
+### 7.1 工作流引擎
 
-#### 4.3.4 WriterWorker
-- [ ] `WriterWorker` 结构体
-- [ ] `WritingStyle` 枚举
-- [ ] `Worker` trait 实现
-- [ ] 草稿 + 修订 + 格式化
-- [ ] 单元测试
+- [ ] `Step` 枚举：`Execute { agent, input }`、`Parallel { steps }`、`Sequence { steps }`、`Branch { condition, then, else }`、`Loop { condition, body, max_iterations }`
+- [ ] `Condition` 类型
+- [ ] `WorkflowExecutor`：`execute(step)`，实现串行、并发、分支、循环
+- [ ] `WorkflowBuilder`：`execute`/`parallel`/`sequence`/`branch`/`loop`、`build()`
 
-#### 4.3.5 Worker Actor 包装
-- [ ] `WorkerActor<S>` 结构体
-- [ ] `Worker` → `ActorAgent` 转换
+### 7.2 研究团队 Worker
 
----
+- [ ] `ResearcherWorker`：搜索/聚合/验证逻辑，实现 `Worker`
+- [ ] `AnalystWorker`：分析/比较/洞察，实现 `Worker`
+- [ ] `WriterWorker`：草稿/修订/格式，`WritingStyle` 枚举，实现 `Worker`
+- [ ] 将三者接入 Supervisor + Workflow，组成 research-team 流程
 
-### 4.4 工作流 (`src/workflow.rs`) (Day 54-55)
+### 7.3 路由与负载（若 S6 未做完）
 
-#### 4.4.1 Step 枚举
-- [ ] `Step` 枚举
-  ```rust
-  pub enum Step {
-      Execute { agent: ActorRef<()>, input: Value },
-      Parallel { steps: Vec<Step> },
-      Sequence { steps: Vec<Step> },
-      Branch { condition: Condition, then: Box<Step>, else: Box<Step> },
-      Loop { condition: Condition, body: Box<Step>, max_iterations: Option<usize> },
-  }
-  ```
-- [ ] `Condition` 类型定义
+- [ ] `LeastBusyRouter` / `SemanticRouter`（可先做简单版）
+- [ ] `WorkerMetrics`、`get_least_busy()` 等按需实现
 
-#### 4.4.2 WorkflowExecutor
-- [ ] `WorkflowExecutor` 结构体
-- [ ] `execute(step)` 方法
-- [ ] 串行执行逻辑
-- [ ] 并发执行逻辑 (`join_all`)
-- [ ] 条件分支逻辑
-- [ ] 循环执行逻辑
-- [ ] 单元测试
+### 7.4 示例与文档
 
-#### 4.4.3 WorkflowBuilder
-- [ ] `WorkflowBuilder` 结构体
-- [ ] `execute()` / `parallel()` / `sequence()` 方法
-- [ ] `branch()` / `loop()` 方法
-- [ ] `build()` 方法
-- [ ] 单元测试
+- [ ] `examples/research-team.rs` 可运行，README 说明如何运行与预期输出
+
+### S7 交付物
+
+- [ ] research-team 示例跑通，工作流可见（顺序/并行/分支等）
 
 ---
 
-### 4.5 示例 (Day 56)
+## Sprint 8：HTTP API 可调
 
-- [ ] `examples/multi-agent.rs` - 多 Agent 示例
-- [ ] `examples/research-team.rs` - 研究团队示例
-- [ ] 各示例的 `README.md`
+**MVP**：通过 HTTP 调用 chat、健康检查与指标。
 
----
+**验收标准**：
+- [ ] `curl` 能调通 `POST /api/v1/chat`、`GET /health`、`GET /metrics`
+- [ ] 流式 Chat 可用 SSE（如 `POST /api/v1/chat/stream`）
 
-### M4 交付物
-- [ ] Actor 框架
-- [ ] Supervisor 实现
-- [ ] 3 个内置 Worker
-- [ ] 工作流引擎
-- [ ] 2 个示例
+### 8.1 路由与状态
 
----
+- [ ] `ApiState` 持有要暴露的 Agent / LlmClient 等
+- [ ] `create_router()`：挂载 `/health`、`/metrics`、`/api/v1/chat`、`/api/v1/chat/stream`
+- [ ] `GET /health` 返回 200 与简单 JSON
+- [ ] `GET /metrics` 返回 Prometheus 文本格式（可先返回占位或少量指标）
 
-## M5: 生产级实现 (Week 9-10, Day 57-70)
+### 8.2 Chat 端点
 
-### 目标
-HTTP API、可观测性、部署支持。
+- [ ] `POST /api/v1/chat`：body 为 ChatRequest，返回 ChatResponse，内部调 ChatAgent
+- [ ] `POST /api/v1/chat/stream`：SSE 流式返回 token
+- [ ] 请求/响应结构体与现有 `ChatRequest`/`ChatResponse` 对齐
 
----
+### 8.3 中间件与可观测性最小
 
-### 5.1 HTTP API (`src/api/`) (Day 57-59)
+- [ ] CORS、请求 ID、请求日志中间件
+- [ ] （可选）速率限制（如 tower_governor）可放在 S9
+- [ ] 指标：`agent_requests_total`、`agent_duration_seconds`、`llm_tokens_total` 等至少声明并可在 `/metrics` 中暴露
 
-#### 5.1.1 路由配置
-- [ ] `ApiState` 结构体
-- [ ] `create_router()` 函数
-- [ ] `GET /health` 健康检查
-- [ ] `GET /metrics` Prometheus 指标
+### 8.4 其它 Agent 端点（可选）
 
-#### 5.1.2 Chat 端点
-- [ ] `POST /api/v1/chat` 单轮对话
-  - [ ] `ChatRequest` / `ChatResponse` 结构体
-  - [ ] `chat_handler()` 函数
-- [ ] `POST /api/v1/chat/stream` 流式对话
-  - [ ] SSE 支持
-  - [ ] `stream_chat_handler()` 函数
+- [ ] `POST /api/v1/react`、`POST /api/v1/workflow`、`GET /api/v1/agents` 可做最小占位，在 S9 完善
 
-#### 5.1.3 Agent 端点
-- [ ] `POST /api/v1/react` ReAct 执行
-- [ ] `POST /api/v1/workflow` 工作流执行
-- [ ] `GET /api/v1/agents` 列出 Agent
+### S8 交付物
 
-#### 5.1.4 中间件
-- [ ] CORS 中间件
-- [ ] 速率限制中间件 (tower_governor)
-- [ ] 请求 ID 中间件
-- [ ] 日志中间件
+- [ ] 服务启动后，`curl` 能调通 `/health`、`/metrics`、`/api/v1/chat`（及流式）
 
 ---
 
-### 5.2 配置 (`src/config.rs`) (Day 60)
+## Sprint 9：可部署 + 文档
 
-#### 5.2.1 AppConfig
-- [ ] `AppConfig` 结构体
-  ```rust
-  pub struct AppConfig {
-      pub server: ServerConfig,
-      pub llm: LlmConfig,
-      pub logging: LoggingConfig,
-      pub telemetry: TelemetryConfig,
-  }
-  ```
-- [ ] `ServerConfig` (host, port, workers)
-- [ ] `LlmConfig` (provider, api_key, model)
-- [ ] `LoggingConfig` (level, format)
-- [ ] `TelemetryConfig` (metrics, tracing, jaeger_endpoint)
+**MVP**：Docker 跑起服务，文档与示例齐全，便于他人使用。
 
-#### 5.2.2 环境变量加载
-- [ ] `from_env()` 方法
-- [ ] `LANGGRAPH_` 前缀支持
-- [ ] 配置文件支持 (TOML)
+**验收标准**：
+- [ ] `docker compose up` 后可访问 HTTP 服务（含 /health）
+- [ ] 有「从零到跑起来」的 getting-started 文档
+- [ ] 所有示例带 README 或顶层说明，且可运行
 
-#### 5.2.3 多环境支持
-- [ ] `Profile` 枚举
-- [ ] `Dev` / `Test` / `Prod` 配置
+### 9.1 配置与多环境
 
----
+- [ ] `AppConfig`：server、llm、logging、telemetry
+- [ ] `ServerConfig`、`LlmConfig`、`LoggingConfig`、`TelemetryConfig`
+- [ ] 环境变量加载（如 `LANGGRAPH_*`）、TOML 配置文件
+- [ ] Profile：Dev / Test / Prod
 
-### 5.3 可观测性 (`src/telemetry/`) (Day 61-63)
+### 9.2 可观测性
 
-#### 5.3.1 Metrics
-- [ ] `prometheus` 集成
-- [ ] 指标定义
-  - `agent_requests_total` (Counter)
-  - `agent_duration_seconds` (Histogram)
-  - `llm_tokens_total` (Counter)
-  - `llm_duration_seconds` (Histogram)
-  - `tool_calls_total` (Counter)
-  - `active_agents` (Gauge)
-- [ ] `/metrics` 端点
+- [ ] Prometheus 指标完善并挂到 `/metrics`
+- [ ] OpenTelemetry + Jaeger 或 stdout，Span 层级（agent_execution、llm_call、tool_execution）
+- [ ] 结构化日志（JSON 生产、pretty 开发），请求 ID 注入
 
-#### 5.3.2 Tracing
-- [ ] `opentelemetry` 集成
-- [ ] Span 层级 (agent_execution, llm_call, tool_execution)
-- [ ] Jaeger 导出器
-- [ ] Stdout 导出器 (开发)
+### 9.3 部署
 
-#### 5.3.3 结构化日志
-- [ ] `tracing-subscriber` 配置
-- [ ] JSON 格式 (生产)
-- [ ] Pretty 格式 (开发)
-- [ ] 请求 ID 注入
+- [ ] Dockerfile：多阶段、非 root、健康检查
+- [ ] docker-compose：langgraph 服务，可选 PostgreSQL/Redis，网络与依赖说明
+
+### 9.4 健康与就绪
+
+- [ ] `HealthStatus`、`check_liveness()`、`check_readiness()`，依赖检查（若有时）
+- [ ] `/health` 可返回详细状态（可选）
+
+### 9.5 文档与示例
+
+- [ ] `docs/getting-started.md`：环境、安装、快速开始
+- [ ] `docs/agents.md`、`docs/tools.md`、`docs/memory.md`、`docs/multi-agent.md`、`docs/deployment.md` 覆盖主要能力
+- [ ] OpenAPI/Swagger（如 utoipa）：`/api/docs`、`/api/openapi.json`
+- [ ] 各示例 README：如何跑、预期输出、必要环境变量
+
+### S9 交付物
+
+- [ ] `docker compose up` 可访问服务
+- [ ] getting-started 与各模块文档可用，示例均可按文档运行
 
 ---
 
-### 5.4 部署 (Day 64-65)
+## Backlog（按需纳入后续 Sprint）
 
-#### 5.4.1 Dockerfile
-- [ ] 多阶段构建
-- [ ] 非 root 用户
-- [ ] 健康检查
+以下在对应 Sprint 未做完时可写入 Backlog，按优先级在后续 Sprint 中实现：
 
-#### 5.4.2 docker-compose.yml
-- [ ] langgraph 服务
-- [ ] 可选 PostgreSQL
-- [ ] 可选 Redis
-- [ ] 网络配置
-
-#### 5.4.3 健康检查
-- [ ] `HealthStatus` 结构体
-- [ ] `check_liveness()` 方法
-- [ ] `check_readiness()` 方法
-- [ ] 依赖检查
+- **类型状态机**：`Init`/`Running`/`Done` 标记、`TypeStateMachine<S>`、编译时状态约束
+- **Checkpoint**：`Checkpoint` trait、`MemoryCheckpoint`、`FileCheckpoint`，与状态机/Agent 集成
+- **PromptTemplate**：`{{var}}`、`{{#if}}...{{/if}}`，与 ChatAgent/ReAct 集成
+- **ToolMap / ParallelTools**：输入输出映射、并发执行聚合
+- **SemanticRouter**：基于 LLM 的 Worker 路由
+- **速率限制**：tower_governor 等在 API 层
+- **完整 OpenAPI**：所有端点带 `utoipa::path` 与示例请求/响应
 
 ---
 
-### 5.5 文档 (Day 66-70)
+## Crate 结构（目标形态）
 
-#### 5.5.1 API 文档
-- [ ] `utoipa` 集成
-- [ ] `#[utoipa::path]` 标注
-- [ ] Swagger UI (`/api/docs`)
-- [ ] ReDoc (`/api/redoc`)
-- [ ] OpenAPI spec (`/api/openapi.json`)
-
-#### 5.5.2 教程
-- [ ] `docs/getting-started.md`
-  - 环境要求 / 安装 / 快速开始
-- [ ] `docs/agents.md`
-  - Chat Agent / ReAct Agent / 自定义 Agent
-- [ ] `docs/tools.md`
-  - 内置工具 / 自定义工具 / 工具组合
-- [ ] `docs/memory.md`
-  - Session / Profile / Vector 记忆
-- [ ] `docs/multi-agent.md`
-  - Worker / Supervisor / 工作流
-- [ ] `docs/deployment.md`
-  - Docker / 配置 / 监控
-
-#### 5.5.3 示例更新
-- [ ] 所有示例添加 `README.md`
-- [ ] 确保可运行
-- [ ] 添加详细注释
-
----
-
-### M5 交付物
-- [ ] HTTP API 服务
-- [ ] 配置系统
-- [ ] 可观测性集成
-- [ ] Docker 部署
-- [ ] 完整文档
-
----
-
-## Crate 结构
+以下为全量完成后的目标结构，各 Sprint 只创建与本 Sprint MVP 相关的目录与文件。所有路径均相对于 **`rust-langgraph/`** 根目录。
 
 ```
-crates/langgraph/
-├── Cargo.toml
-├── src/
-│   ├── lib.rs
-│   ├── traits.rs         # 核心 trait
-│   ├── message.rs        # 消息类型
-│   ├── error.rs          # 错误类型
-│   ├── state.rs          # 状态机
-│   ├── agent/
-│   │   ├── mod.rs
-│   │   ├── chat.rs       # Chat Agent
-│   │   ├── react.rs      # ReAct Agent
-│   │   └── memory.rs     # Memory Agent
-│   ├── tool/
-│   │   ├── mod.rs
-│   │   ├── registry.rs   # 工具注册
-│   │   ├── builtin.rs    # 内置工具
-│   │   └── compose.rs    # 工具组合
-│   ├── memory/
-│   │   ├── mod.rs
-│   │   ├── session.rs    # 会话记忆
-│   │   ├── profile.rs    # 长期记忆
-│   │   └── vector.rs     # 语义记忆
-│   ├── actor/
-│   │   ├── mod.rs
-│   │   ├── channel.rs    # Channel 通信
-│   │   └── supervise.rs  # 监督策略
-│   ├── supervisor.rs     # Supervisor
-│   ├── worker/
-│   │   ├── mod.rs
-│   │   ├── researcher.rs
-│   │   ├── analyst.rs
-│   │   └── writer.rs
-│   ├── workflow.rs       # 工作流
-│   ├── llm/
-│   │   ├── mod.rs
-│   │   ├── openai.rs
-│   │   ├── stream.rs
-│   │   ├── retry.rs
-│   │   └── embedder.rs   # 向量嵌入
-│   ├── config.rs         # 配置
-│   ├── telemetry.rs      # 可观测性
-│   └── api/              # HTTP API
-│       ├── mod.rs
-│       ├── routes.rs
-│       ├── handlers.rs
-│       ├── sse.rs
-│       └── middleware.rs
-├── examples/
-│   ├── chat/
-│   ├── react/
-│   ├── tools/
-│   ├── memory/
-│   ├── rag/
-│   ├── multi-agent/
-│   └── research-team/
-├── tests/
-└── benches/
+rust-langgraph/
+├── README.md
+├── crates/
+│   ├── langgraph/
+│   │   ├── Cargo.toml
+│   │   ├── src/
+│   │   │   ├── lib.rs
+│   │   │   ├── traits.rs
+│   │   │   ├── message.rs
+│   │   │   ├── error.rs
+│   │   │   ├── state.rs
+│   │   │   ├── agent/
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── chat.rs
+│   │   │   │   ├── react.rs
+│   │   │   │   └── memory.rs
+│   │   │   ├── tool/
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── registry.rs
+│   │   │   │   ├── builtin.rs
+│   │   │   │   └── compose.rs
+│   │   │   ├── memory/
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── session.rs
+│   │   │   │   ├── profile.rs
+│   │   │   │   └── vector.rs
+│   │   │   ├── actor/
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── channel.rs
+│   │   │   │   └── supervise.rs
+│   │   │   ├── supervisor.rs
+│   │   │   ├── worker/
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── researcher.rs
+│   │   │   │   ├── analyst.rs
+│   │   │   │   └── writer.rs
+│   │   │   ├── workflow.rs
+│   │   │   ├── llm/
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── openai.rs
+│   │   │   │   ├── stream.rs
+│   │   │   │   ├── retry.rs
+│   │   │   │   └── embedder.rs
+│   │   │   ├── config.rs
+│   │   │   ├── telemetry.rs
+│   │   │   └── api/
+│   │   │       ├── mod.rs
+│   │   │       ├── routes.rs
+│   │   │       ├── handlers.rs
+│   │   │       ├── sse.rs
+│   │   │       └── middleware.rs
+│   │   ├── examples/
+│   │   │   ├── echo.rs      (S1)
+│   │   │   ├── chat.rs      (S2)
+│   │   │   ├── react.rs     (S4)
+│   │   │   ├── tools.rs     (S5)
+│   │   │   ├── memory.rs    (S5)
+│   │   │   ├── rag.rs       (S5)
+│   │   │   ├── multi-agent.rs (S6)
+│   │   │   └── research-team.rs (S7)
+│   │   ├── tests/
+│   │   └── benches/
+│   └── (可选) langgraph-openai/ 等实现包
 ```
 
 ---
@@ -1050,10 +515,11 @@ crates/langgraph/
 
 ## 下一步
 
-1. **立即 (Day 1)**: 创建 `crates/langgraph/` 目录，配置 workspace
-2. **本周 (Day 1-5)**: 实现核心 trait 和消息类型
-3. **下周 (Day 6-10)**: 实现状态机和第一个 Agent
+1. **Sprint 1 启动**：在根目录下已有 `rust-langgraph/crates/langgraph` 并已加入根 workspace；在本目录内完成骨架与 Echo Agent 示例（`cargo run -p langgraph --example echo -- "你好"`）。
+2. **每个 Sprint 结束**：对照「验收标准」做一次演示或脚本检查，未完成项记入 Backlog。
+3. **计划同步**：若周期固定（如双周），可在 Sprint 规划会中把 Backlog 项纳入下一个 Sprint。
+4. **后续新包**：新增实现包时，在 `rust-langgraph/crates/` 下建目录，并在根 `Cargo.toml` 的 `members` 中追加路径，如 `"rust-langgraph/crates/langgraph-openai"`。
 
 ---
 
-*最后更新: 2025-01-27*
+*最后更新: 2026-01-27*

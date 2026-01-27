@@ -1,0 +1,11 @@
+[package]
+name = "bun-unpack"
+version = "0.1.0"
+edition = "2021"
+description = "Unpack .bun section from Bun standalone executables (PE/Linux/Mach-O)"
+
+[dependencies]
+anyhow = "1.0"
+thiserror = "1.0"
+goblin = "0.10"
+clap = { version = "4", features = ["derive"] }

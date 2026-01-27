@@ -20,6 +20,7 @@ members = [
     "mcp-impls/gitlab-mcp/crates/mcp-client",
     "mcp-impls/gitlab-mcp/crates/api-doc-scraper",
     "crates/workspace-api",
+    "tools/bun-unpack",
 ]
 
 [workspace.package]

@@ -15,6 +15,7 @@
 | [09-memory-chat-case.md](09-memory-chat-case.md) | **案例**：带记忆的对话 Agent（含 Telegram Bot 对接） |
 | [10-memory-deep-dive.md](10-memory-deep-dive.md) | **深度研究**：LangGraph 记忆与持久化（Checkpoint / Store，代码在 thridparty） |
 | [11-langchain-memory.md](11-langchain-memory.md) | **深度研究**：LangChain 记忆模块（chat_history + memory，参考 thridparty 代码） |
+| [13-langchain-vs-langgraph-memory.md](13-langchain-vs-langgraph-memory.md) | **深度比较**：LangChain 与 LangGraph 记忆（架构、数据模型、API、选型与迁移） |
 | [12-context-compaction.md](12-context-compaction.md) | **参考**：上下文压缩（以 Claude Code Auto-Compact 为例，对应本系列摘要压缩） |
 | [07-production.md](07-production.md) | 生产级实现 |
 | [08-best-practices.md](08-best-practices.md) | 最佳实践 |
@@ -34,6 +35,7 @@
 |------|------|
 | 深度研究 LangGraph 记忆（代码在 thridparty） | 已完成 → [10-memory-deep-dive.md](10-memory-deep-dive.md) |
 | 为 LangChain 记忆模块写文档（参考 thridparty） | 已完成 → [11-langchain-memory.md](11-langchain-memory.md) |
+| 深度比较 LangChain 与 LangGraph 记忆 | 已完成 → [13-langchain-vs-langgraph-memory.md](13-langchain-vs-langgraph-memory.md) |
 
 ## 参考资料
 

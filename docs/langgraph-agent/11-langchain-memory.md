@@ -108,6 +108,8 @@ LangChain 的「记忆」在经典链路里主要由两部分组成：
 
 ## 与 LangGraph 记忆的对比
 
+更详细的架构、数据模型、API 与迁移对照见 **[13-langchain-vs-langgraph-memory.md](13-langchain-vs-langgraph-memory.md)**。以下为摘要：
+
 | 维度 | LangChain（经典 Memory） | LangGraph（本系列 06/09/10） |
 |------|---------------------------|-------------------------------|
 | 会话粒度 | 通常由「session_id / chat_memory」区分，需在链或 Runnable 配置里传入 | 由 `thread_id` + Checkpointer 区分，每次 invoke 在 config 中传 `thread_id` |

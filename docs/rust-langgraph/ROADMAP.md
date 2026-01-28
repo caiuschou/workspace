@@ -48,7 +48,7 @@
 S1: Echo Agent        ████████████████████ [MVP: 跑起来的第一个 Agent]
 S2: Chat 单轮          ████████████████████ [MVP: 一问一答]
 S3: 流式+记忆          ████████████████████ [MVP: 流式 + 多轮]
-S4: ReAct+工具         ░░░░░░░░░░░░░░░░░░░░ [MVP: 思考→调工具→回答]
+S4: ReAct+工具         ████████████████████ [MVP: 思考→调工具→回答]
 S5: 工具+记忆扩展      ░░░░░░░░░░░░░░░░░░░░ [MVP: 多工具 / RAG]
 S6: 多 Agent 雏形     ░░░░░░░░░░░░░░░░░░░░ [MVP: Worker 收发包]
 S7: 工作流+研究团队    ░░░░░░░░░░░░░░░░░░░░ [MVP: 研究团队示例]
@@ -178,41 +178,41 @@ S9: 部署+文档          ░░░░░░░░░░░░░░░░░�
 **MVP**：问「3+5 等于几」能调工具并返回 8。
 
 **验收标准**：
-- [ ] 有 ReAct 示例，输入算术式能调用计算工具并输出结果
-- [ ] 状态在「思考 → 动作 → 观察 → 结束」间可区分
+- [x] 有 ReAct 示例，输入算术式能调用计算工具并输出结果
+- [x] 状态在「思考 → 动作 → 观察 → 结束」间可区分
 
 ### 4.1 状态机与执行器
 
-- [ ] `StateMachine` trait：`State`、`Event`、`Output`，`transition(state, event) -> Result<StateTransition<State, Output>, StateError>`
-- [ ] `StateTransition<S,O>`：`Continue(S)`、`Output(O,S)`、`Done(O)`
-- [ ] `Runner<S,E,O>`：持有机器和当前状态，`run(events)` 迭代并步数限制
-- [ ] `StateError` 与相关错误类型
+- [x] `StateMachine` trait：`State`、`Event`、`Output`，`transition(state, event) -> Result<StateTransition<State, Output>, StateError>`
+- [x] `StateTransition<S,O>`：`Continue(S)`、`Output(O,S)`、`Done(O)`
+- [x] `Runner<S,E,O>`：持有机器和当前状态，`run(events)` 迭代并步数限制
+- [x] `StateError` 与相关错误类型
 
 ### 4.2 Tool 与注册（最小）
 
-- [ ] `Tool` trait：`name()`、`description()`、`parameters_schema()`、`execute(Value) -> Result<Value, ToolError>`
-- [ ] `ToolRegistry`：`register(Box<dyn Tool>)`、`get(name)`、`execute(name, args)`
-- [ ] `ToolError`、参数校验最少支持（如必填字段）
+- [x] `Tool` trait：`name()`、`description()`、`parameters_schema()`、`execute(Value) -> Result<Value, ToolError>`
+- [x] `ToolRegistry`：`register(Box<dyn Tool>)`、`get(name)`、`execute(name, args)`
+- [x] `ToolError`、参数校验最少支持（如必填字段）
 
 ### 4.3 一个内置工具：Calculator
 
-- [ ] `CalculatorTool`，参数 schema 如 `{ "expression": string }`
-- [ ] 使用 `evalexpr` 或简单安全求值，实现 `Tool`
-- [ ] 单元测试（含非法表达式）
+- [x] `CalculatorTool`，参数 schema 如 `{ "expression": string }`
+- [x] 使用 `evalexpr` 或简单安全求值，实现 `Tool`
+- [x] 单元测试（含非法表达式）
 
 ### 4.4 ReAct Agent
 
-- [ ] `ReActState`：`Thinking { query, iterations }`、`Acting { tool_calls }`、`Observing { results }`、`Done { answer }`
-- [ ] `ThinkNode`：`build_prompt()`、`parse_thought()`、`extract_tool_calls()`
-- [ ] `ActNode`：`execute(tool_calls)`，调用 `ToolRegistry`
-- [ ] `ObserveNode`：`process(results)`、`should_continue()`
-- [ ] `DEFAULT_REACT_PROMPT`、`build_prompt(query, tools, history)`、`format_tool_description()`
-- [ ] 把 Think/Act/Observe 接到 `StateMachine`/`Runner`，实现 ReAct 循环
-- [ ] `examples/react.rs`：问「3+5」等，输出工具结果与最终答案
+- [x] `ReActState`：`Thinking { query, iterations }`、`Acting { tool_calls }`、`Observing { results }`、`Done { answer }`
+- [x] `ThinkNode`：`build_prompt()`、`parse_thought()`、`extract_tool_calls()`
+- [x] `ActNode`：`execute(tool_calls)`，调用 `ToolRegistry`
+- [x] `ObserveNode`：`process(results)`、`should_continue()`
+- [x] `DEFAULT_REACT_PROMPT`、`build_prompt(query, tools, history)`、`format_tool_description()`
+- [x] 把 Think/Act/Observe 接到 `StateMachine`/`Runner`，实现 ReAct 循环
+- [x] `examples/react.rs`：问「3+5」等，输出工具结果与最终答案
 
 ### S4 交付物
 
-- [ ] ReAct 示例可调 Calculator 并返回正确算术结果
+- [x] ReAct 示例可调 Calculator 并返回正确算术结果
 
 ---
 
@@ -516,8 +516,8 @@ rust-langgraph/
 
 ## 下一步
 
-1. **Sprint 3 已完成**：`StreamAgent`、`ChatStreamEvent`、`LlmStreamClient`（Mock 与 OpenAiClient 均已实现）、`Memory`/`SessionMemory`、`Message`/`MessageRole`/`ToolCall`/`ToolResult`、`ChatAgent::with_memory()`、`examples/chat_stream.rs` 已就绪。流式示例：`cargo run -p langgraph --example chat_stream -- "你好"`；多轮示例：`cargo run -p langgraph --example chat_stream -- --multi "第一句" "第二句"`。OpenAiClient 已实现 `LlmStreamClient`（SSE 解析、`data: [DONE]` 结束），启用 `--features openai` 并设置 `OPENAI_API_KEY` 后可用真实 API 流式对话。
-2. **Sprint 4 启动**：ReAct + 单工具（状态机、Tool trait、Calculator、ReAct Agent、`examples/react.rs`）。
+1. **Sprint 4 已完成**：`StateMachine`/`StateTransition`/`Runner`/`StateError`、`Tool`/`ToolRegistry`/`ToolError`、`CalculatorTool`（evalexpr）在 langgraph；ReAct 已拆为独立包 `langgraph-react`（`ReActState`/`ReActAgent`、`build_prompt`/`parse_thought`/`format_tool_description`）。ReAct 示例：`cargo run -p langgraph-react --example react -- "3+5等于几"` 输出 `8`；使用 `SequenceMockLlmClient` 按序返回 Action 与 Answer。
+2. **Sprint 5 启动**：工具生态 + 记忆扩展（多工具、ToolChain、VectorMemory/ProfileMemory、memory/rag 示例）。
 3. **每个 Sprint 结束**：对照「验收标准」做一次演示或脚本检查，未完成项记入 Backlog。
 4. **后续新包**：新增实现包时，在 `rust-langgraph/crates/` 下建目录，并在根 `Cargo.toml` 的 `members` 中追加路径，如 `"rust-langgraph/crates/langgraph-openai"`。
 

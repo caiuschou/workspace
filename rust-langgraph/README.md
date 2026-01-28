@@ -12,6 +12,7 @@ rust-langgraph/
 ├── Cargo.toml          # 本包内 workspace（可选，便于在本目录独立构建）
 ├── crates/
 │   ├── langgraph/      # 核心库：trait、Agent、状态机、工具、记忆等
+│   ├── langgraph-react/    # ReAct Agent：Think → Act → Observe 循环（依赖 langgraph）
 │   ├── langgraph-openai/   # （可选）OpenAI LLM/Embedder 实现
 │   └── ...             # 其他实现包按需在此追加
 ├── examples/           # （可选）顶层示例，或放在各 crate 的 examples/

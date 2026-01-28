@@ -12,13 +12,14 @@ path = "src/lib.rs"
 [features]
 default = []
 # 启用后提供 OpenAiClient，需 reqwest（使用 rustls，不依赖系统 OpenSSL）
-openai = ["dep:reqwest"]
+openai = ["dep:reqwest", "dep:tokio-stream"]
 
 [dependencies]
 tokio = { workspace = true }
 async-trait = { workspace = true }
 futures = "0.3"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"], optional = true }
+tokio-stream = { version = "0.1", optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

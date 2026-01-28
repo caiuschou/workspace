@@ -1,13 +1,20 @@
-//! 记忆类型与会话记忆。
+//! 记忆类型与会话记忆、向量语义记忆。
 //!
 //! - `Memory`: 消息存储 trait（add/get/clear/count）
 //! - `SessionMemory`: FIFO 容量限制的进程内会话记忆（S3）
+//! - `SemanticMemory`: 按向量存储与相似度检索（S5）
+//! - `VectorMemory`: 实现 SemanticMemory，余弦相似度
+//! - `Embedder`: 文本向量化，`MockEmbedder` 测试用
 
+mod embedder;
 mod session;
+mod vector;
 
 use crate::message::Message;
 
+pub use embedder::{Embedder, EmbedderError, MockEmbedder};
 pub use session::SessionMemory;
+pub use vector::{MemoryEmbedding, MemoryResult, SemanticMemory, VectorMemory};
 
 /// 会话记忆 trait：按顺序追加消息，支持按条数读取与清空。
 pub trait Memory: Send + Sync {

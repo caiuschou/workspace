@@ -14,7 +14,7 @@ mod types;
 
 pub use client::LlmClient;
 pub use error::LlmError;
-pub use mock::MockLlmClient;
+pub use mock::{MockLlmClient, SequenceMockLlmClient};
 #[cfg(feature = "openai")]
 pub use openai::{OpenAiClient, OpenAiConfig};
 pub use stream::{ChatStreamEvent, LlmStreamClient};

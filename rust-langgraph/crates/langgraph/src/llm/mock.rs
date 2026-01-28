@@ -1,6 +1,7 @@
 //! Mock LLM 客户端，用于测试与示例（无真实 API 调用）。
 
 use std::pin::Pin;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use async_trait::async_trait;
 use futures::Stream;
@@ -9,6 +10,47 @@ use super::client::LlmClient;
 use super::error::LlmError;
 use super::stream::{ChatStreamEvent, LlmStreamClient};
 use super::types::{ChatRequest, ChatResponse, Usage};
+
+/// 按调用顺序返回预设回复的 Mock，用于 ReAct 等多轮调用示例。
+#[derive(Debug)]
+pub struct SequenceMockLlmClient {
+    responses: Vec<String>,
+    index: AtomicUsize,
+}
+
+impl SequenceMockLlmClient {
+    /// 新建：每次 `chat` 返回 `responses[i % responses.len()]`。
+    pub fn new(responses: Vec<String>) -> Self {
+        Self {
+            responses,
+            index: AtomicUsize::new(0),
+        }
+    }
+
+    /// 从字符串切片构造。
+    pub fn from_slice(responses: &[&str]) -> Self {
+        Self::new(responses.iter().map(|s| (*s).to_string()).collect())
+    }
+}
+
+#[async_trait]
+impl LlmClient for SequenceMockLlmClient {
+    async fn chat(&self, _req: ChatRequest) -> Result<ChatResponse, LlmError> {
+        let i = self.index.fetch_add(1, Ordering::Relaxed);
+        let content = self
+            .responses
+            .get(i % self.responses.len())
+            .cloned()
+            .unwrap_or_default();
+        Ok(ChatResponse {
+            content,
+            usage: Usage {
+                prompt_tokens: 0,
+                completion_tokens: 0,
+            },
+        })
+    }
+}
 
 /// Mock 客户端：按配置返回固定内容或简单回显最后一条用户消息。
 #[derive(Debug)]

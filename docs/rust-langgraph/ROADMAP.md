@@ -260,37 +260,37 @@ S9: 部署+文档          ░░░░░░░░░░░░░░░░░�
 **MVP**：发一个 Task 给 Worker，能收到处理结果。
 
 **验收标准**：
-- [ ] 有 API 可「发任务 → 指定或默认 Worker 处理 → 返回结果」
-- [ ] 至少一个 Worker 实现可用（如 EchoWorker 或最小 ResearcherWorker）
+- [x] 有 API 可「发任务 → 指定或默认 Worker 处理 → 返回结果」
+- [x] 至少一个 Worker 实现可用（如 EchoWorker 或最小 ResearcherWorker）
 
 ### 6.1 Actor 基础
 
-- [ ] `ActorId`、`AgentMessage`（Task、Stop、Ping）、`Task` 结构体
-- [ ] `Handler<S>` trait：`handle(msg, state) -> Result<(), ActorError>`
-- [ ] `ActorAgent<S>`：id、inbox、state、handler，`run()` 消息循环
-- [ ] `AgentChannel`、`ActorRef<S>`：`send`、`send_timeout`、`try_send`、`request()`（请求-响应）
+- [x] `ActorId`、`AgentMessage`（Task、Stop、Ping）、`Task` 结构体
+- [x] `Handler<S>` trait：`handle(msg, state) -> Result<(), ActorError>`
+- [x] `ActorAgent<S>`：id、inbox、state、handler，`run()` 消息循环
+- [x] `AgentChannel`、`ActorRef<S>`：`send`、`send_timeout`、`try_send`、`request()`（请求-响应）
 
 ### 6.2 监督与路由（最小）
 
-- [ ] `SupervisionStrategy`：OneForOne / OneForAll / AllForOne，重启逻辑最小实现
-- [ ] `Router` trait：`route(task, workers) -> Option<usize>`
-- [ ] `RoundRobinRouter` 或 `LeastBusyRouter` 至少一种
+- [x] `SupervisionStrategy`：OneForOne / OneForAll / AllForOne，重启逻辑最小实现
+- [x] `Router` trait：`route(task, workers) -> Option<usize>`
+- [x] `RoundRobinRouter` 或 `LeastBusyRouter` 至少一种
 
 ### 6.3 Worker 与 Supervisor
 
-- [ ] `Worker` trait：`name`、`description`、`async fn handle(Task) -> TaskResult`
-- [ ] `TaskResult` 结构体
-- [ ] 一个具体 Worker（如 `EchoWorker` 或 `ResearcherWorker` 雏形）实现 `Worker`
-- [ ] `Supervisor`：持有一组 `ActorRef<WorkerState>` 和 `Router`，能接收 Task 并派发到 Worker，返回 TaskResult
-- [ ] `WorkerActor<S>`：把 `Worker` 包装成可被 `ActorAgent` 驱动的 Handler（本 Sprint 做最小适配即可）
+- [x] `Worker` trait：`name`、`description`、`async fn handle(Task) -> TaskResult`
+- [x] `TaskResult` 结构体
+- [x] 一个具体 Worker（如 `EchoWorker` 或 `ResearcherWorker` 雏形）实现 `Worker`
+- [x] `Supervisor`：持有一组 `ActorRef<WorkerState>` 和 `Router`，能接收 Task 并派发到 Worker，返回 TaskResult
+- [x] `WorkerActor<S>`：把 `Worker` 包装成可被 `ActorAgent` 驱动的 Handler（本 Sprint 做最小适配即可）
 
 ### 6.4 示例
 
-- [ ] `examples/multi-agent.rs` 或等价：创建 Supervisor + 一个 Worker，发一个 Task，打印 TaskResult
+- [x] `examples/multi-agent.rs` 或等价：创建 Supervisor + 一个 Worker，发一个 Task，打印 TaskResult
 
 ### S6 交付物
 
-- [ ] 「发 Task → Worker 处理 → 得结果」可演示
+- [x] 「发 Task → Worker 处理 → 得结果」可演示
 
 ---
 
@@ -518,7 +518,7 @@ rust-langgraph/
 
 1. **Sprint 4 已完成**：`StateMachine`/`StateTransition`/`Runner`/`StateError`、`Tool`/`ToolRegistry`/`ToolError`、`CalculatorTool`（evalexpr）在 langgraph；ReAct 已拆为独立包 `langgraph-react`（`ReActState`/`ReActAgent`、`build_prompt`/`parse_thought`/`format_tool_description`）。ReAct 示例：`cargo run -p langgraph-react --example react -- "3+5等于几"` 输出 `8`；使用 `SequenceMockLlmClient` 按序返回 Action 与 Answer。
 2. **Sprint 5 已完成**：`HttpRequestTool`/`FileOpsTool`、`ToolChain`、`validate_args`/`ValidationError`；`SemanticMemory`/`VectorMemory`/`Embedder`/`MockEmbedder`；`examples/tools.rs`、`examples/memory.rs` 可运行。多工具示例：`cargo run -p langgraph --example tools`；记忆示例：`cargo run -p langgraph --example memory`。
-3. **Sprint 6 启动**：多 Agent 雏形（Actor、Worker、Supervisor、发 Task 收结果）。
+3. **Sprint 6 已完成**：多 Agent 雏形已实现；`ActorId`/`Task`/`TaskResult`/`AgentMessage`、`Handler`/`ActorAgent`、`AgentChannel`/`ActorRef`、`SupervisionStrategy`/`Router`/`RoundRobinRouter`、`Worker`/`EchoWorker`/`WorkerActor`、`Supervisor`；示例：`cargo run -p langgraph --example multi_agent -- "你好"` 输出 `success=true output=你好`。
 4. **每个 Sprint 结束**：对照「验收标准」做一次演示或脚本检查，未完成项记入 Backlog。
 5. **后续新包**：新增实现包时，在 `rust-langgraph/crates/` 下建目录，并在根 `Cargo.toml` 的 `members` 中追加路径，如 `"rust-langgraph/crates/langgraph-openai"`。
 

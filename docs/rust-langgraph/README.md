@@ -29,6 +29,7 @@
 | [04-agent.md](04-agent.md) | Agent 实现 |
 | [05-tools.md](05-tools.md) | 工具调用系统 |
 | [06-memory-agent.md](06-memory-agent.md) | **记忆 Agent** |
+| [MEMORY_VS_LANGGRAPH_STORE.md](MEMORY_VS_LANGGRAPH_STORE.md) | rust-langgraph Memory 与 LangGraph MemoryStore 对照 |
 | [07-multi-agent.md](07-multi-agent.md) | 多 Agent 协作 |
 | [08-production.md](08-production.md) | 生产级实现 |
 

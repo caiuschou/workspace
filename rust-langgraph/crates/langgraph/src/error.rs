@@ -3,6 +3,7 @@
 //! - `AgentError`: 通用 Agent 执行错误（S1）
 //! - `StateError`: 状态机转换错误（S4）
 //! - `ToolError`: 工具执行与校验错误（S4）
+//! - `ActorError`: Actor/Worker 通信与处理错误（S6）
 
 use thiserror::Error;
 
@@ -58,4 +59,23 @@ impl From<ValidationError> for ToolError {
     fn from(e: ValidationError) -> Self {
         ToolError::ValidationFailed(e.0)
     }
+}
+
+/// Actor 与 Worker 通信、处理、超时等错误。
+///
+/// 与 `Handler::handle`、`ActorRef::request`、`Supervisor` 等配合使用。
+#[derive(Debug, Error)]
+pub enum ActorError {
+    /// 处理消息时失败（如 Worker 执行异常）。
+    #[error("handle failed: {0}")]
+    HandleFailed(String),
+    /// 发送超时（如 `send_timeout` 或 `request` 在限定时间内未完成）。
+    #[error("send timeout")]
+    SendTimeout,
+    /// 信道已关闭，无法发送。
+    #[error("channel closed")]
+    ChannelClosed,
+    /// 请求-响应时对方未返回或返回错误。
+    #[error("request failed: {0}")]
+    RequestFailed(String),
 }

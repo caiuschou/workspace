@@ -9,11 +9,19 @@ pub mod llm;
 pub mod memory;
 pub mod message;
 pub mod state;
+pub mod supervisor;
 pub mod tool;
 pub mod traits;
+pub mod worker;
 
 pub use agent::{ChatAgent, EchoAgent};
-pub use error::{AgentError, StateError, ToolError, ValidationError};
+pub use error::{ActorError, AgentError, StateError, ToolError, ValidationError};
+pub use actor::{
+    ActorAgent, ActorId, AgentChannel, AgentMessage, ActorRef, Handler, RoundRobinRouter, Router,
+    SupervisionStrategy, Task, TaskResult,
+};
+pub use supervisor::Supervisor;
+pub use worker::{EchoWorker, Worker, WorkerActor};
 pub use state::{Runner, StateMachine, StateTransition, DEFAULT_MAX_STEPS};
 pub use llm::{ChatRequest, ChatResponse, ChatStreamEvent, LlmClient, LlmStreamClient, MockLlmClient, SequenceMockLlmClient, Usage};
 #[cfg(feature = "openai")]

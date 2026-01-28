@@ -150,7 +150,7 @@ S9: 部署+文档          ░░░░░░░░░░░░░░░░░�
 - [x] `StreamAgent` trait：`run_stream(Input) -> Pin<Box<dyn Stream<Item = Result<StreamItem, Error>> + Send>>`
 - [x] `ChatStreamEvent`：`Token(String)`、`Done(String)`、`Error(LlmError)`
 - [x] `LlmStreamClient::chat_stream(req)`：Mock 已实现；`LlmClient` 扩展为可选流式
-- [ ] OpenAI SSE 解析：`SseStream`、`[DONE]` 处理（放入 Backlog，OpenAiClient 尚未实现 `LlmStreamClient`）
+- [x] OpenAI SSE 解析：`SseStream`、`[DONE]` 处理（OpenAiClient 已实现 `LlmStreamClient`，流式请求 + SSE 解析 + `data: [DONE]` 结束）
 
 ### 3.2 会话记忆
 
@@ -418,7 +418,7 @@ S9: 部署+文档          ░░░░░░░░░░░░░░░░░�
 
 以下在对应 Sprint 未做完时可写入 Backlog，按优先级在后续 Sprint 中实现：
 
-- **OpenAI SSE 流式**：`OpenAiClient` 实现 `LlmStreamClient`，解析 SseStream、`[DONE]`
+- ~~**OpenAI SSE 流式**~~：已完成。`OpenAiClient` 已实现 `LlmStreamClient`，解析 SSE、`data: [DONE]` 结束。
 - **类型状态机**：`Init`/`Running`/`Done` 标记、`TypeStateMachine<S>`、编译时状态约束
 - **Checkpoint**：`Checkpoint` trait、`MemoryCheckpoint`、`FileCheckpoint`，与状态机/Agent 集成
 - **PromptTemplate**：`{{var}}`、`{{#if}}...{{/if}}`，与 ChatAgent/ReAct 集成
@@ -516,11 +516,11 @@ rust-langgraph/
 
 ## 下一步
 
-1. **Sprint 3 已完成**：`StreamAgent`、`ChatStreamEvent`、`LlmStreamClient`（Mock 已实现）、`Memory`/`SessionMemory`、`Message`/`MessageRole`/`ToolCall`/`ToolResult`、`ChatAgent::with_memory()`、`examples/chat_stream.rs` 已就绪。流式示例：`cargo run -p langgraph --example chat_stream -- "你好"`；多轮示例：`cargo run -p langgraph --example chat_stream -- --multi "第一句" "第二句"`。OpenAiClient 的 SSE 流式（`LlmStreamClient`）已放入 Backlog。
+1. **Sprint 3 已完成**：`StreamAgent`、`ChatStreamEvent`、`LlmStreamClient`（Mock 与 OpenAiClient 均已实现）、`Memory`/`SessionMemory`、`Message`/`MessageRole`/`ToolCall`/`ToolResult`、`ChatAgent::with_memory()`、`examples/chat_stream.rs` 已就绪。流式示例：`cargo run -p langgraph --example chat_stream -- "你好"`；多轮示例：`cargo run -p langgraph --example chat_stream -- --multi "第一句" "第二句"`。OpenAiClient 已实现 `LlmStreamClient`（SSE 解析、`data: [DONE]` 结束），启用 `--features openai` 并设置 `OPENAI_API_KEY` 后可用真实 API 流式对话。
 2. **Sprint 4 启动**：ReAct + 单工具（状态机、Tool trait、Calculator、ReAct Agent、`examples/react.rs`）。
 3. **每个 Sprint 结束**：对照「验收标准」做一次演示或脚本检查，未完成项记入 Backlog。
 4. **后续新包**：新增实现包时，在 `rust-langgraph/crates/` 下建目录，并在根 `Cargo.toml` 的 `members` 中追加路径，如 `"rust-langgraph/crates/langgraph-openai"`。
 
 ---
 
-*最后更新: 2026-01-27*
+*最后更新: 2026-01-28*

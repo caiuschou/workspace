@@ -13,12 +13,20 @@ pub mod tool;
 pub mod traits;
 
 pub use agent::{ChatAgent, EchoAgent};
-pub use error::{AgentError, StateError, ToolError};
+pub use error::{AgentError, StateError, ToolError, ValidationError};
 pub use state::{Runner, StateMachine, StateTransition, DEFAULT_MAX_STEPS};
 pub use llm::{ChatRequest, ChatResponse, ChatStreamEvent, LlmClient, LlmStreamClient, MockLlmClient, SequenceMockLlmClient, Usage};
 #[cfg(feature = "openai")]
 pub use llm::{OpenAiClient, OpenAiConfig};
 pub use message::{Message, MessageRole, ToolCall, ToolResult, UserMessage};
-pub use memory::{Memory, SessionMemory};
-pub use tool::{CalculatorTool, Tool, ToolRegistry};
+pub use memory::{
+    Embedder, EmbedderError, Memory, MemoryEmbedding, MemoryResult, MockEmbedder, SemanticMemory,
+    SessionMemory, VectorMemory,
+};
+pub use tool::{
+    CalculatorTool, FileOpsTool, HttpFetcher, HttpRequestTool, MockHttpFetcher, Tool, ToolChain,
+    ToolRegistry, validate_args,
+};
+#[cfg(feature = "http")]
+pub use tool::ReqwestHttpFetcher;
 pub use traits::{Agent, AsyncAgent, StreamAgent, StreamItem};

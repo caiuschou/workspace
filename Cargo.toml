@@ -17,6 +17,7 @@ members = [
     "examples/tasks-server",
     "examples/logging-server",
     "mcp-impls/github-mcp/crates/mcp-server",
+    "mcp-impls/zoekt-mcp/crates/mcp-server",
     "mcp-impls/gitlab-mcp/crates/mcp-server",
     "mcp-impls/gitlab-mcp/crates/mcp-client",
     "mcp-impls/gitlab-mcp/crates/api-doc-scraper",

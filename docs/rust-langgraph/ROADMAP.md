@@ -221,37 +221,37 @@ S9: 部署+文档          ░░░░░░░░░░░░░░░░░�
 **MVP**：多工具协作或简单 RAG 示例可运行。
 
 **验收标准**：
-- [ ] 至少再有两种内置工具（如 HttpRequest、FileOps）可用
-- [ ] 有 SessionMemory 之外的记忆（Profile 或 Vector 至少一种），并有简单示例（如 memory 或 rag）
+- [x] 至少再有两种内置工具（如 HttpRequest、FileOps）可用
+- [x] 有 SessionMemory 之外的记忆（Profile 或 Vector 至少一种），并有简单示例（如 memory 或 rag）
 
 ### 5.1 内置工具扩充
 
-- [ ] `HttpRequestTool`：url、method、headers、body，实现 `Tool`，单元测试用 mock
-- [ ] `FileOpsTool`：read/write/list/exists，路径安全检查，实现 `Tool`
+- [x] `HttpRequestTool`：url、method、headers、body，实现 `Tool`，单元测试用 mock
+- [x] `FileOpsTool`：read/write/list/exists，路径安全检查，实现 `Tool`
 
 ### 5.2 工具组合与校验
 
-- [ ] `ToolChain`：输出串到下一工具，实现 `Tool`
-- [ ] `validate_args(schema, args)`、`ValidationError`，在 `ToolRegistry::execute` 中使用
+- [x] `ToolChain`：输出串到下一工具，实现 `Tool`
+- [x] `validate_args(schema, args)`、`ValidationError`，在 `ToolRegistry::execute` 中使用
 - [ ] （可选）`ParallelTools` 或 `ToolMap` 本 Sprint 做最小实现即可
 
 ### 5.3 记忆扩展
 
-- [ ] `SemanticMemory` trait：`add(content, embedding)`、`search(query_embedding, top_k) -> Vec<MemoryResult>`
-- [ ] `VectorMemory`：`MemoryEmbedding`（id, content, vector, metadata）、余弦相似度 `search`
-- [ ] `Embedder` trait：`embed(text)`、`embed_batch(texts)`；`OpenAiEmbedder` 实现
+- [x] `SemanticMemory` trait：`add(content, embedding)`、`search(query_embedding, top_k) -> Vec<MemoryResult>`
+- [x] `VectorMemory`：`MemoryEmbedding`（id, content, vector, metadata）、余弦相似度 `search`
+- [x] `Embedder` trait：`embed(text)`、`embed_batch(texts)`；`MockEmbedder` 已实现，`OpenAiEmbedder` 可后续加 feature
 - [ ] `ProfileMemory`（可选本 Sprint）：`add_profile`、`get_profile`、简单持久化或内存版
 
 ### 5.4 Memory Agent 或带记忆的 ReAct
 
-- [ ] `MemoryAgent<C, E>` 或「ReAct + VectorMemory」：检索相关记忆注入 prompt，再回答
-- [ ] `examples/tools.rs`：多工具串联或并行
-- [ ] `examples/memory.rs` 或 `examples/rag.rs`：Session + Vector/Profile 最小示例
+- [ ] `MemoryAgent<C, E>` 或「ReAct + VectorMemory」：检索相关记忆注入 prompt，再回答（放入 Backlog）
+- [x] `examples/tools.rs`：多工具串联或并行
+- [x] `examples/memory.rs` 或 `examples/rag.rs`：Session + Vector/Profile 最小示例
 
 ### S5 交付物
 
-- [ ] 多工具示例可运行
-- [ ] 至少一个「记忆增强」示例（memory 或 rag）可运行
+- [x] 多工具示例可运行
+- [x] 至少一个「记忆增强」示例（memory 或 rag）可运行
 
 ---
 
@@ -517,9 +517,10 @@ rust-langgraph/
 ## 下一步
 
 1. **Sprint 4 已完成**：`StateMachine`/`StateTransition`/`Runner`/`StateError`、`Tool`/`ToolRegistry`/`ToolError`、`CalculatorTool`（evalexpr）在 langgraph；ReAct 已拆为独立包 `langgraph-react`（`ReActState`/`ReActAgent`、`build_prompt`/`parse_thought`/`format_tool_description`）。ReAct 示例：`cargo run -p langgraph-react --example react -- "3+5等于几"` 输出 `8`；使用 `SequenceMockLlmClient` 按序返回 Action 与 Answer。
-2. **Sprint 5 启动**：工具生态 + 记忆扩展（多工具、ToolChain、VectorMemory/ProfileMemory、memory/rag 示例）。
-3. **每个 Sprint 结束**：对照「验收标准」做一次演示或脚本检查，未完成项记入 Backlog。
-4. **后续新包**：新增实现包时，在 `rust-langgraph/crates/` 下建目录，并在根 `Cargo.toml` 的 `members` 中追加路径，如 `"rust-langgraph/crates/langgraph-openai"`。
+2. **Sprint 5 已完成**：`HttpRequestTool`/`FileOpsTool`、`ToolChain`、`validate_args`/`ValidationError`；`SemanticMemory`/`VectorMemory`/`Embedder`/`MockEmbedder`；`examples/tools.rs`、`examples/memory.rs` 可运行。多工具示例：`cargo run -p langgraph --example tools`；记忆示例：`cargo run -p langgraph --example memory`。
+3. **Sprint 6 启动**：多 Agent 雏形（Actor、Worker、Supervisor、发 Task 收结果）。
+4. **每个 Sprint 结束**：对照「验收标准」做一次演示或脚本检查，未完成项记入 Backlog。
+5. **后续新包**：新增实现包时，在 `rust-langgraph/crates/` 下建目录，并在根 `Cargo.toml` 的 `members` 中追加路径，如 `"rust-langgraph/crates/langgraph-openai"`。
 
 ---
 

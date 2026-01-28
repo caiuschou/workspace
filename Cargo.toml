@@ -5,6 +5,7 @@ members = [
     "crates/mcp-server",
     "crates/mcp-client",
     "rust-langgraph/crates/langgraph",
+    "rust-langgraph/crates/langgraph-react",
     "examples/mcp-filesystem-client",
     "examples/mcp-filesystem-server",
     "examples/http-client",

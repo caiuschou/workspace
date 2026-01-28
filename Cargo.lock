@@ -611,6 +611,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "evalexpr"
+version = "13.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25929004897f2bbab309121a60400d36992f6d911d09baa6c172f6cc55706601"
+
+[[package]]
 name = "fancy-regex"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1389,6 +1395,7 @@ name = "langgraph"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "evalexpr",
  "futures",
  "reqwest",
  "serde",
@@ -1396,6 +1403,17 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "tokio-stream",
+]
+
+[[package]]
+name = "langgraph-react"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "evalexpr",
+ "langgraph",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -2215,7 +2233,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]

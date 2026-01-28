@@ -1,0 +1,23 @@
+[package]
+name = "langgraph-react"
+version.workspace = true
+edition.workspace = true
+description = "ReAct (Reasoning + Acting) agent for langgraph: Think → Act → Observe loop"
+license.workspace = true
+authors.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+langgraph = { path = "../langgraph" }
+async-trait = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+evalexpr = "13"
+
+[[example]]
+name = "react"
+path = "examples/react.rs"

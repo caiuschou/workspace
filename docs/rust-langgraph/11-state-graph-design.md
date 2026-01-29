@@ -176,8 +176,8 @@ let state = compiled.invoke(initial_state).await?;
 
 | 项 | 状态 | 说明 |
 |----|------|------|
-| Node trait | 待实现 | `langgraph/src/graph/node.rs` 或 `graph/mod.rs` |
-| StateGraph<S> | 待实现 | `add_node` / `add_edge` / `compile` |
-| CompiledStateGraph<S> | 待实现 | `invoke(state)` |
-| Agent as Node<S> | 待实现 | 适配器或 blanket impl（同 State 时） |
-| 线性链示例 | 待实现 | `examples/state_graph_echo.rs` 或扩展现有 echo |
+| Node trait | 已完成 | `langgraph/src/graph/node.rs` |
+| StateGraph<S> | 已完成 | `add_node` / `add_edge` / `compile` |
+| CompiledStateGraph<S> | 已完成 | `invoke(state)` |
+| Agent as Node<S> | 已完成 | blanket impl（`traits.rs`，同 State 时） |
+| 线性链示例 | 已完成 | `examples/state_graph_echo.rs`，测试 `tests/state_graph.rs` |

@@ -126,11 +126,11 @@ ReActState {
 
 | 序号 | 任务 | 交付物 / 子项 | 状态 | 依赖与说明 |
 |------|------|----------------|------|------------|
-| 1.1 | ReActState 定义 | `struct ReActState { messages, tool_calls, tool_results }`，满足 `Clone + Send + Sync + 'static` | 待实现 | 复用现有 `Message`；新字段见 §2.1 |
-| 1.2 | ToolCall 类型 | `name: String`, `arguments: serde_json::Value`（或 `String`），与 MCP `tools/call` 对齐 | 待实现 | 可选：`id` 与 tool_result 对应 |
-| 1.3 | ToolResult 类型 | `call_id` 或 `name` + `content: String`，与 MCP `result.content[].text` 对齐 | 待实现 | 与 ToolCall 一一对应便于 Observe 合并 |
-| 1.4 | 模块与导出 | 新模块如 `state/react_state.rs` 或 `react/state.rs`，在 `lib.rs` 中导出 | 待实现 | 与现有 `message.rs`、`graph/` 并列 |
-| 1.5 | 单元测试 | 构造 ReActState / ToolCall / ToolResult，序列化或合并逻辑（若有） | 待实现 | 无外部依赖 |
+| 1.1 | ReActState 定义 | `struct ReActState { messages, tool_calls, tool_results }`，满足 `Clone + Send + Sync + 'static` | 已完成 | 复用现有 `Message`；新字段见 §2.1 |
+| 1.2 | ToolCall 类型 | `name: String`, `arguments: serde_json::Value`（或 `String`），与 MCP `tools/call` 对齐 | 已完成 | 可选：`id` 与 tool_result 对应 |
+| 1.3 | ToolResult 类型 | `call_id` 或 `name` + `content: String`，与 MCP `result.content[].text` 对齐 | 已完成 | 与 ToolCall 一一对应便于 Observe 合并 |
+| 1.4 | 模块与导出 | 新模块如 `state/react_state.rs` 或 `react/state.rs`，在 `lib.rs` 中导出 | 已完成 | 与现有 `message.rs`、`graph/` 并列 |
+| 1.5 | 单元测试 | 构造 ReActState / ToolCall / ToolResult，序列化或合并逻辑（若有） | 已完成 | 无外部依赖 |
 
 ### 8.2 阶段二：Mock 与基础设施
 

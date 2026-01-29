@@ -1,18 +1,21 @@
 //! Graph node trait: one step in a StateGraph.
 //!
-//! Receives state `S`, returns updated `S` (full or partial in future).
+//! Receives state `S`, returns updated `S` and `Next` (continue, jump, or end).
 //! Used by `StateGraph` and `CompiledStateGraph`. Aligns with LangGraph node
 //! `(state) -> partial`. Agents can implement `Node<S>` when `Agent::State == S`.
+//! Conditional edges: see `Next` and 13-react-agent-design §8.5.
 
 use async_trait::async_trait;
 
 use crate::error::AgentError;
 
-/// One step in a graph: state in, state out.
+use super::Next;
+
+/// One step in a graph: state in, (state out, next step).
 ///
-/// Used by `StateGraph` to run a single step. The graph runner passes the
-/// result to the next node or returns. Aligns with LangGraph node
-/// `(state) -> partial`; this minimal version returns full `S`.
+/// Used by `StateGraph` to run a single step. The graph runner uses `Next` to
+/// choose the next node (Continue = linear order, Node(id) = jump, End = stop).
+/// Aligns with LangGraph node `(state) -> partial`; returns full `S` and routing.
 ///
 /// **Interaction**: Implemented by graph nodes and by agents via blanket impl
 /// when `Agent::State == S`. See `StateGraph::add_node` and `CompiledStateGraph::invoke`.
@@ -24,10 +27,9 @@ where
     /// Node id (e.g. `"chat"`, `"tool"`). Must be unique within a graph.
     fn id(&self) -> &str;
 
-    /// One step: state in, state out.
+    /// One step: state in, (state out, next step).
     ///
-    /// The graph runner passes the returned state to the next node or returns
-    /// it as the final result. Currently full state only; partial updates
-    /// (with merge) are a future extension.
-    async fn run(&self, state: S) -> Result<S, AgentError>;
+    /// Return `Next::Continue` to follow the linear edge order; `Next::Node(id)` to
+    /// jump to a node; `Next::End` to stop. The runner uses this for conditional edges.
+    async fn run(&self, state: S) -> Result<(S, Next), AgentError>;
 }

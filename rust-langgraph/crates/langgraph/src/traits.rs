@@ -7,7 +7,7 @@
 use async_trait::async_trait;
 
 use crate::error::AgentError;
-use crate::graph::Node;
+use crate::graph::{Next, Node};
 
 /// Minimal agent: state in, state out. Aligns with LangGraph (no Input/Output).
 ///
@@ -50,7 +50,9 @@ where
         self.name()
     }
 
-    async fn run(&self, state: S) -> Result<S, AgentError> {
-        Agent::run(self, state).await
+    async fn run(&self, state: S) -> Result<(S, Next), AgentError> {
+        Agent::run(self, state)
+            .await
+            .map(|s| (s, Next::Continue))
     }
 }

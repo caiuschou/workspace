@@ -1,176 +1,109 @@
-# 最简单的 Rust 版 Agent 设计方案
+# 最简单的 Rust 版 Agent 与 StateGraph 设计
 
-参考 LangGraph，给出**最小可用**的 Rust agent 实现，便于先跑通再迭代。
+参考 LangGraph，给出**最小可用**的 Rust agent 与图编排实现，先跑通再迭代。
 
 ---
 
-## 1. LangGraph 与 Rust 的对应关系
+## 1. 对应关系与目标
 
 | 要素 | LangGraph | Rust 最简 |
 |------|-----------|-----------|
-| **State** | `TypedDict`（如 `messages`） | 当前会话数据；无单独 Input/Output，`invoke(state)` 入、返回 state 出 |
-| **Node** | `(state) -> partial state` | 一个可执行单元：接收状态、返回状态更新 |
-| **Edge** | `START -> node -> END` | 调用方执行一次 `run(state)` 即完成一步 |
+| **State** | `TypedDict`（如 `messages`） | 调用方持有；`invoke(state)` 入、返回 state 出 |
+| **Node** | `(state) -> partial state` | 可执行单元：接收状态、返回状态（完整或 partial） |
+| **Edge** | `START -> node -> END`（或多节点链） | 单节点：一次 `run(state)`；多节点：StateGraph 按边顺序执行 |
+| **记忆** | Checkpointer / 调用方持 state | 调用方在多次 invoke 间持有同一 state，`messages` 即会话历史 |
 
-最简 agent = **一个状态（消息列表）+ 一个节点（如 chatbot）+ 固定边**。调用方把本轮输入放进 state 后 invoke，再从返回的 state 里取输出。
-
----
-
-## 2. 设计目标
-
-- **不先引入「图」类型**：用 trait 抽象「可执行的 agent」，等价于单节点 + 固定边。
-- **仅 State，无 Input/Output**：与 LangGraph 对齐，签名为「state 进、state 出」。
-- **最小类型**：统一错误、最小消息类型，便于后续接 LLM/Tools。
+设计目标：**仅 State，无 Input/Output**；先 trait 抽象单节点（Agent），再引入最简图（StateGraph 线性链）；最小类型（Message、AgentError）。
 
 ---
 
-## 3. 最简 Agent 抽象
+## 2. 最简 Agent
 
-### 3.1 核心 Trait
+### 2.1 Trait 与类型
 
 ```rust
-/// Minimal agent: state in, state out. Aligns with LangGraph (no Input/Output).
 #[async_trait]
 pub trait Agent: Send + Sync {
     fn name(&self) -> &str;
-
     type State: Clone + Send + Sync + 'static;
-
-    /// One step: receive state, return updated state.
+    /// One step: state in, state out.
     async fn run(&self, state: Self::State) -> Result<Self::State, AgentError>;
 }
 ```
 
-- `run(state)` = 执行当前唯一节点一次；入参、返回值均为 State。
-- **State 由实现方定义**：`Agent::State` 的关联类型及字段由每个 Agent 实现自己决定；框架不强制统一 State 结构。
-- 暂不引入：流式、工具、多节点图。
+框架提供 `Message`（System/User/Assistant）、`AgentError`。State 由实现方定义（例：`AgentState { messages: Vec<Message> }` 在 example 中，见 `examples/echo.rs`）。
 
-### 3.2 最小状态、消息与错误
-
-- **State 的字段由实现方定义**：实现 `Agent` 时通过 `type State = YourStruct` 指定自己的状态类型（可含任意字段）。框架不提供 State 类型；`AgentState`（仅 `messages`）由 Example 实现，见 `examples/echo.rs`。
+### 2.2 Echo Agent 示例
 
 ```rust
-// 框架内：Message、AgentError
-#[derive(Debug, Clone)]
-pub enum Message {
-    System(String),   // 系统提示，通常放消息列表最前
-    User(String),     // 用户输入
-    Assistant(String), // 模型/agent 回复
-}
-
-// AgentState 在 Example 中定义（examples/echo.rs），框架内无 State 类型
-#[derive(Debug, Clone, Default)]
-struct AgentState {
-    pub messages: Vec<Message>,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum AgentError {
-    #[error("execution failed: {0}")]
-    ExecutionFailed(String),
-}
-```
-
-与 LangGraph/LangChain 一致：System / User / Assistant 三种角色。
-
-实现方自定义 State 示例（可选，不用框架的 `AgentState`）：
-
-```rust
-// 实现方自己定义状态字段
-#[derive(Debug, Clone)]
-struct MyState {
-    pub messages: Vec<Message>,
-    pub turn_count: u32,
-}
-
-impl Agent for MyAgent {
-    type State = MyState;  // 由实现方定义
-    // ...
-}
-```
-
----
-
-## 4. 最简实现：Echo Agent
-
-对应 ROADMAP **Sprint 1**，验证 trait 与类型设计。
-
-```rust
-pub struct EchoAgent;
-
-impl EchoAgent {
-    pub fn new() -> Self { Self }
-}
+struct EchoAgent;
+type State = AgentState; // { messages: Vec<Message> }
 
 #[async_trait]
 impl Agent for EchoAgent {
     fn name(&self) -> &str { "echo" }
     type State = AgentState;
-
     async fn run(&self, state: Self::State) -> Result<Self::State, AgentError> {
         let mut messages = state.messages;
-        let last = messages.last().and_then(|m| {
-            if let Message::User(s) = m { Some(s.clone()) } else { None }
-        });
-        if let Some(content) = last {
-            messages.push(Message::Assistant(content));
+        if let Some(Message::User(s)) = messages.last() {
+            messages.push(Message::Assistant(s.clone()));
         }
         Ok(AgentState { messages })
     }
 }
 ```
 
-**使用方式**（与 LangGraph 一致：无 Input/Output，只有 State 进、State 出）：
-
-```rust
-let mut state = AgentState::default();
-state.messages.push(Message::User("你好".into()));
-state = agent.run(state).await?;
-let output = state.messages.last(); // e.g. Assistant("你好")
-```
+使用：`state.messages.push(Message::User(...)); state = agent.run(state).await?;` 调用方在多次 `run` 间持有同一 `state`，即最简单记忆（无持久化）。详见 §4。
 
 ---
 
-## 5. 与 LangGraph 的逐层对应
+## 3. StateGraph 最简方案
 
-| 层级 | LangGraph | 本方案（Rust） |
-|------|-----------|----------------|
-| 入/出 | `invoke(state)` 入、返回 state 出 | `run(state) -> State` |
-| 状态 | `ChatState(messages)` | `AgentState { messages }` |
-| 消息 | System / Human / AI | `Message::System` / `User` / `Assistant` |
-| 节点 | `chatbot_node(state) -> partial` | `Agent::run(state) -> State` |
-| 边 | `START -> chatbot -> END` | 调用方一次 `run(state)` |
+在单节点 Agent 之上，引入**图**：多节点 + 边。最简形态 = **线性链**，无条件边、无环。
 
-**差异**：Python 用 channel + reducer 合并 partial state；本方案节点入参即整份 state，出参即整份新 state，合并在节点内部。若后续要做多节点或 partial + 合并，可参考 [10-reducer-design.md](10-reducer-design.md)。
+| 概念 | LangGraph | Rust 最简 |
+|------|-----------|-----------|
+| 图 | `StateGraph(State).add_node().add_edge()` | `StateGraph<S>`：节点列表 + 边序（如 `[n1, n2]`） |
+| 运行 | `compile().invoke(state)` | `invoke(state)` 从 START 按边序执行节点，state 依次传递 |
+| 节点产出 | partial state，按 reducer 合并 | 每节点 `run(state) -> State`；可约定返回完整 state 或 partial，partial 时由运行时 `state.merge(partial)`（见 [10-reducer-design](10-reducer-design.md)） |
+
+**最简 StateGraph**：
+
+- **结构**：`StateGraph<S>` 持有一组命名节点（如 `Vec<(String, Box<dyn Node<S>>)`）和线性边序 `[id_1, id_2, ...]`，表示 `START -> id_1 -> id_2 -> ... -> END`。
+- **执行**：`invoke(state)` 循环 `for id in &edge_order { state = nodes[id].run(state)?; }` 返回最终 state。
+- **与 Agent 关系**：单节点时等价于 Agent；多节点时图负责编排。暂不引入条件边、循环、Checkpointer。
+
+完整设计（节点抽象、编译、扩展路径）见 [11-state-graph-design](11-state-graph-design.md)；条件边、partial + reducer、Checkpointer 见 ROADMAP 与 [10-reducer-design](10-reducer-design.md)。
 
 ---
 
-## 6. 扩展路径
+## 4. 最简单的记忆
 
-在保留最简 Agent 的前提下，按 ROADMAP 逐步加能力：
+不引入 Memory trait：**记忆 = 调用方持有的 State**。每次 `run(state)` 或 `graph.invoke(state)` 传入当前 state，拿回更新后的 state，下一轮再传入；`state.messages` 即会话历史。无持久化、无容量管理；持久化/跨会话见 S3、S5 与 `MEMORY_VS_LANGGRAPH_STORE.md`。
 
-1. **S1**：EchoAgent（如上），无 Input/Output。
-2. **S2**：`ChatAgent<L: LlmClient>`，`run(state)` 内取 messages、调 LLM、追加回复。
-3. **S3**：加重试/流式/会话记忆，State 不变。
-4. **S4**：ReAct，扩展 State（如 `ReActState`），加入工具与循环。
+---
+
+## 5. 扩展路径
+
+1. **S1**：EchoAgent，无 Input/Output。
+2. **S2**：ChatAgent，`run(state)` 内调 LLM、追加回复。
+3. **S3**：流式/会话记忆（State 不变）。
+4. **S4**：ReAct，扩展 State、工具与循环；StateGraph 多节点 + 条件边。
+5. **S5**：工具生态、记忆扩展。
 
 每一步保持「当前可运行的最简形态」。
 
 ---
 
-## 7. 小结与归属
+## 6. 小结与实现说明
 
-- **最简 Rust Agent** = trait `Agent`（`name` + `State` + `run(State)->Result<State, AgentError>`）+ 最小 Message/State/Error + EchoAgent。
-- 与 LangGraph 一致：仅 State 进、State 出；单节点单步，等价于 `START -> node -> END`。
-- 实现归属：ROADMAP **Sprint 1**（最小 Trait、Echo Agent 与示例）；后续 Sprint 按上节扩展。
-
----
-
-## 8. 实现说明
+- **最简 Rust** = trait `Agent`（state 进/出）+ Message/AgentError + EchoAgent；**记忆** = 调用方持 state；**StateGraph 最简** = 线性链、多节点顺序执行、state 传递。
+- 实现归属：Sprint 1（Agent、Echo）；StateGraph 线性链可在 S2/S3 引入；reducer/partial 见 [10-reducer-design](10-reducer-design.md)。
 
 | 项 | 状态 | 说明 |
 |----|------|------|
-| Agent trait（state-in/state-out） | 已完成 | `rust-langgraph/crates/langgraph/src/traits.rs` |
-| Message / AgentError | 已完成 | `message.rs`、`error.rs`（框架内） |
-| AgentState / EchoAgent | 已完成 | 由 **Example** 实现：`examples/echo.rs`（非框架内） |
-| echo 示例 | 已完成 | `cargo run -p langgraph --example echo -- "你好"` 输出 `你好` |
+| Agent trait | 已完成 | `langgraph/src/traits.rs` |
+| Message / AgentError | 已完成 | `message.rs`、`error.rs` |
+| AgentState / EchoAgent | 已完成 | Example：`examples/echo.rs` |
+| echo 示例 | 已完成 | `cargo run -p langgraph --example echo -- "你好"` |
+| StateGraph 线性链 | 待实现 | 多节点编排，见 §3 |

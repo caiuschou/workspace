@@ -106,13 +106,13 @@ ReActState {
 
 | 项 | 状态 | 说明 |
 |----|------|------|
-| ReActState / ToolCall / ToolResult | 待实现 | 新类型，可放在 `state/react_state.rs` 或等价模块 |
-| ThinkNode | 待实现 | 依赖 LLM（先 Mock），写 messages + tool_calls |
-| ActNode | 待实现 | 依赖 ToolSource，读 tool_calls 写 tool_results |
-| ObserveNode | 待实现 | 写回 messages 或合并结果，清空 tool_* |
-| 线性链 think→act→observe | 待实现 | 使用现有 StateGraph，example 跑通一轮 |
-| 条件边 observe→think \| END | 待实现 | 见 11-state-graph-design 扩展 |
-| MockLLM / Mock ToolSource | 待实现 | 用于示例与测试 |
+| ReActState / ToolCall / ToolResult | 已完成 | `state/react_state.rs` |
+| ThinkNode | 已完成 | 依赖 LLM（Mock），写 messages + tool_calls；`react/think_node.rs` |
+| ActNode | 已完成 | 依赖 ToolSource，读 tool_calls 写 tool_results；`react/act_node.rs` |
+| ObserveNode | 已完成 | 写回 messages 或合并结果，清空 tool_*；`react/observe_node.rs`；`new()` 线性 / `with_loop()` 多轮 |
+| 线性链 think→act→observe | 已完成 | `examples/react_linear.rs`，`tests/react_linear_chain.rs` |
+| 条件边 observe→think \| END | 已完成 | Next 类型 + Node 返回 (S, Next)；`ObserveNode::with_loop()`；见 §8.5 |
+| MockLLM / Mock ToolSource | 已完成 | `llm/mock.rs`、`tool_source/mock.rs`；`MockLlm::first_tools_then_end()` 多轮 |
 
 实现归属：在 `langgraph` 或独立 example 中实现 ReActState 与三节点；任务规划与验收见下文开发计划。
 
@@ -145,33 +145,33 @@ ReActState {
 
 | 序号 | 任务 | 交付物 / 子项 | 状态 | 依赖与说明 |
 |------|------|----------------|------|------------|
-| 3.1 | ThinkNode 结构 | 持有 MockLLM（或 `Box<dyn LlmClient>`），实现 `Node<ReActState>`，id 如 `"think"` | 待实现 | 依赖 1.x, 2.1, 2.2 |
-| 3.2 | ThinkNode::run | 读 `state.messages`，调 LLM，写一条 assistant 消息 + 可选 `state.tool_calls`；无工具时 tool_calls 为空 | 待实现 | 先不接 ToolSource::list_tools，prompt 可写死 |
-| 3.3 | ActNode 结构 | 持有 `Box<dyn ToolSource>`，实现 `Node<ReActState>`，id 如 `"act"` | 待实现 | 依赖 1.x, 2.3；ToolSource 见 mcp-integration |
-| 3.4 | ActNode::run | 读 `state.tool_calls`，对每条 `call_tool(name, args)`，写 `state.tool_results`；无 tool_calls 时 results 为空 | 待实现 | 错误处理：单条失败是否短路整图可配置 |
-| 3.5 | ObserveNode 结构 | 无外部依赖，实现 `Node<ReActState>`，id 如 `"observe"` | 待实现 | 依赖 1.x |
-| 3.6 | ObserveNode::run | 读 `state.tool_results`，写回 state（追加到 messages 或内部字段），清空 `tool_calls` / `tool_results`；返回完整 state | 待实现 | 线性链阶段不返回下一跳，仅更新 state |
-| 3.7 | 节点单元测试 | 各节点单独喂入 ReActState，断言输出 state 形状与内容 | 待实现 | 使用 MockLLM / Mock ToolSource |
+| 3.1 | ThinkNode 结构 | 持有 MockLLM（或 `Box<dyn LlmClient>`），实现 `Node<ReActState>`，id 如 `"think"` | 已完成 | 依赖 1.x, 2.1, 2.2；`react/think_node.rs` |
+| 3.2 | ThinkNode::run | 读 `state.messages`，调 LLM，写一条 assistant 消息 + 可选 `state.tool_calls`；无工具时 tool_calls 为空 | 已完成 | 先不接 ToolSource::list_tools，prompt 可写死 |
+| 3.3 | ActNode 结构 | 持有 `Box<dyn ToolSource>`，实现 `Node<ReActState>`，id 如 `"act"` | 已完成 | 依赖 1.x, 2.3；`react/act_node.rs` |
+| 3.4 | ActNode::run | 读 `state.tool_calls`，对每条 `call_tool(name, args)`，写 `state.tool_results`；无 tool_calls 时 results 为空 | 已完成 | 单条失败短路整图；arguments 解析为 JSON |
+| 3.5 | ObserveNode 结构 | 无外部依赖，实现 `Node<ReActState>`，id 如 `"observe"` | 已完成 | 依赖 1.x；`react/observe_node.rs` |
+| 3.6 | ObserveNode::run | 读 `state.tool_results`，写回 state（追加到 messages 或内部字段），清空 `tool_calls` / `tool_results`；返回完整 state | 已完成 | 线性链阶段不返回下一跳；结果以 User 消息形式追加 |
+| 3.7 | 节点单元测试 | 各节点单独喂入 ReActState，断言输出 state 形状与内容 | 已完成 | `tests/react_nodes.rs`；使用 MockLLM / Mock ToolSource |
 
 ### 8.4 阶段四：线性链与示例
 
 | 序号 | 任务 | 交付物 / 子项 | 状态 | 依赖与说明 |
 |------|------|----------------|------|------------|
-| 4.1 | 构建图 | `StateGraph::<ReActState>::new().add_node("think", ...).add_node("act", ...).add_node("observe", ...).add_edge("think").add_edge("act").add_edge("observe")` | 待实现 | 依赖 3.x；使用现有 StateGraph API |
-| 4.2 | compile + invoke | `graph.compile()?` 得到 `CompiledStateGraph`，`invoke(initial_state).await?` 得到最终 state | 待实现 | 与 11-state-graph-design 一致 |
-| 4.3 | Example 程序 | 如 `examples/react_linear.rs`：构造初始 state（一条 User 消息），invoke，打印最终 messages 或最后一条 assistant | 待实现 | 可配置 MockLLM 返回「调用 get_time」 |
-| 4.4 | 集成测试 | 从 User 输入到得到 tool_results 写回 messages 的整条链路；CI 可跑 | 待实现 | 不依赖真实 LLM / MCP Server |
-| 4.5 | 文档与注释 | README 或本文 §5 引用 example 运行方式；代码内注释引用 13-react-agent-design | 待实现 | 便于后续接手 |
+| 4.1 | 构建图 | `StateGraph::<ReActState>::new().add_node("think", ...).add_node("act", ...).add_node("observe", ...).add_edge("think").add_edge("act").add_edge("observe")` | 已完成 | 依赖 3.x；`examples/react_linear.rs` |
+| 4.2 | compile + invoke | `graph.compile()?` 得到 `CompiledStateGraph`，`invoke(initial_state).await?` 得到最终 state | 已完成 | 与 11-state-graph-design 一致 |
+| 4.3 | Example 程序 | 如 `examples/react_linear.rs`：构造初始 state（一条 User 消息），invoke，打印最终 messages 或最后一条 assistant | 已完成 | MockLLM 返回 get_time；`ObserveNode::new()` 线性链 |
+| 4.4 | 集成测试 | 从 User 输入到得到 tool_results 写回 messages 的整条链路；CI 可跑 | 已完成 | `tests/react_linear_chain.rs`；不依赖真实 LLM/MCP |
+| 4.5 | 文档与注释 | README 或本文 §5 引用 example 运行方式；代码内注释引用 13-react-agent-design | 已完成 | example 内注释引用本文；运行：`cargo run -p langgraph --example react_linear -- "What time is it?"` |
 
 ### 8.5 阶段五：条件边与多轮（迭代）
 
 | 序号 | 任务 | 交付物 / 子项 | 状态 | 依赖与说明 |
 |------|------|----------------|------|------------|
-| 5.1 | Next 类型 | 定义 `enum Next { Node(String), End }`，或与现有图 API 统一（如节点返回 `Option<String>` 表示下一跳） | 待实现 | 见 11-state-graph-design 扩展「条件边」 |
-| 5.2 | Node 返回下一跳 | 节点 `run` 返回 `Result<(S, Next), AgentError>` 或图执行器从 state 中读取「下一跳」字段 | 待实现 | 需扩展 Node trait 或 StateGraph 约定 |
-| 5.3 | 图执行器条件边 | `invoke` 循环中根据节点返回的 Next 选择下一节点或结束 | 待实现 | 依赖 5.1, 5.2 |
-| 5.4 | ObserveNode 返回 Next | 若本轮有 tool_calls 且已观察完 → `Next::Node("think")`，否则 `Next::End` | 待实现 | 依赖 3.6 与 5.1 |
-| 5.5 | 多轮示例与测试 | 示例中 MockLLM 首轮返回 tool_calls，Observe 后回到 think，二轮返回无 tool_calls 结束；断言两轮消息与 results | 待实现 | 验收多轮循环 |
+| 5.1 | Next 类型 | 定义 `enum Next { Node(String), End }`，或与现有图 API 统一（如节点返回 `Option<String>` 表示下一跳） | 已完成 | `graph/next.rs`：`Next::Continue` / `Node(String)` / `End`；见 11-state-graph-design 扩展 |
+| 5.2 | Node 返回下一跳 | 节点 `run` 返回 `Result<(S, Next), AgentError>` 或图执行器从 state 中读取「下一跳」字段 | 已完成 | Node trait 返回 `(S, Next)`；Agent 通过 blanket impl 返回 `(s, Next::Continue)` |
+| 5.3 | 图执行器条件边 | `invoke` 循环中根据节点返回的 Next 选择下一节点或结束 | 已完成 | `CompiledStateGraph::invoke` 使用 Next 分支；Continue 沿 edge_order，Node(id) 跳转，End 结束 |
+| 5.4 | ObserveNode 返回 Next | 若本轮有 tool_calls 且已观察完 → `Next::Node("think")`，否则 `Next::End` | 已完成 | `ObserveNode::with_loop()` 启用；线性链用 `ObserveNode::new()` 返回 Continue |
+| 5.5 | 多轮示例与测试 | 示例中 MockLLM 首轮返回 tool_calls，Observe 后回到 think，二轮返回无 tool_calls 结束；断言两轮消息与 results | 已完成 | `MockLlm::first_tools_then_end()`；`tests/react_linear_chain.rs::react_multi_round_loop_then_end` |
 
 ### 8.6 阶段六：可选扩展
 

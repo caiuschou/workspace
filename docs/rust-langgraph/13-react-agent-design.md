@@ -136,10 +136,10 @@ ReActState {
 
 | 序号 | 任务 | 交付物 / 子项 | 状态 | 依赖与说明 |
 |------|------|----------------|------|------------|
-| 2.1 | MockLLM 抽象 | 定义「可调用、返回 assistant 文本 + 可选 tool_calls」的接口（trait 或闭包） | 待实现 | ThinkNode 依赖；先不接真实 LLM |
-| 2.2 | MockLLM 实现 | 固定返回一条 assistant 消息 + 固定一条 ToolCall（如 `get_time`），用于跑通图 | 待实现 | 可配置「无 tool_calls」以测 END 路径 |
-| 2.3 | Mock ToolSource | 实现 `ToolSource`：`list_tools()` 返回固定工具列表，`call_tool(name, args)` 返回固定文本 | 待实现 | 见 [mcp-integration](mcp-integration/README.md)；可先于 McpToolSource 存在 |
-| 2.4 | Mock 单元测试 | MockLLM / Mock ToolSource 行为符合预期，Act 可调 call_tool 并拿到结果 | 待实现 | 无 MCP Server |
+| 2.1 | MockLLM 抽象 | 定义「可调用、返回 assistant 文本 + 可选 tool_calls」的接口（trait 或闭包） | 已完成 | ThinkNode 依赖；先不接真实 LLM；`LlmClient` + `LlmResponse` 见 `llm/mod.rs` |
+| 2.2 | MockLLM 实现 | 固定返回一条 assistant 消息 + 固定一条 ToolCall（如 `get_time`），用于跑通图 | 已完成 | 可配置「无 tool_calls」以测 END 路径；`MockLlm` 见 `llm/mock.rs` |
+| 2.3 | Mock ToolSource | 实现 `ToolSource`：`list_tools()` 返回固定工具列表，`call_tool(name, args)` 返回固定文本 | 已完成 | 见 [mcp-integration](mcp-integration/README.md)；`ToolSource` + `MockToolSource` 见 `tool_source/` |
+| 2.4 | Mock 单元测试 | MockLLM / Mock ToolSource 行为符合预期，Act 可调 call_tool 并拿到结果 | 已完成 | 无 MCP Server；`tests/mock_llm.rs`、`tests/mock_tool_source.rs` |
 
 ### 8.3 阶段三：三节点实现
 

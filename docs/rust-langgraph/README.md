@@ -27,6 +27,8 @@
 | [02-state-machine.md](02-state-machine.md) | 状态机设计 |
 | [03-traits.md](03-traits.md) | Trait 抽象 |
 | [04-agent.md](04-agent.md) | Agent 实现 |
+| [09-minimal-agent-design.md](09-minimal-agent-design.md) | **最简 Rust Agent 设计方案**（参考 LangGraph） |
+| [10-reducer-design.md](10-reducer-design.md) | **Reducer 设计**（partial state 合并、add_messages） |
 | [05-tools.md](05-tools.md) | 工具调用系统 |
 | [06-memory-agent.md](06-memory-agent.md) | **记忆 Agent** |
 | [MEMORY_VS_LANGGRAPH_STORE.md](MEMORY_VS_LANGGRAPH_STORE.md) | rust-langgraph Memory 与 LangGraph MemoryStore 对照 |

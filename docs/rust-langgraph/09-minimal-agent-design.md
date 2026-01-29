@@ -88,8 +88,8 @@ impl Agent for EchoAgent {
 1. **S1**：EchoAgent，无 Input/Output。
 2. **S2**：ChatAgent，`run(state)` 内调 LLM、追加回复。
 3. **S3**：流式/会话记忆（State 不变）。
-4. **S4**：ReAct，扩展 State、工具与循环；StateGraph 多节点 + 条件边。
-5. **S5**：工具生态、记忆扩展。
+4. **S4**：ReAct，扩展 State、工具与循环；StateGraph 多节点 + 条件边。工具来源可采用 **MCP 集成** 代替自建 Tool，见 [mcp-integration/README](mcp-integration/README.md)。
+5. **S5**：工具生态、记忆扩展。优先通过 MCP 接入工具生态，见 [mcp-integration/README](mcp-integration/README.md)。
 
 每一步保持「当前可运行的最简形态」。
 
@@ -106,4 +106,6 @@ impl Agent for EchoAgent {
 | Message / AgentError | 已完成 | `message.rs`、`error.rs` |
 | AgentState / EchoAgent | 已完成 | Example：`examples/echo.rs` |
 | echo 示例 | 已完成 | `cargo run -p langgraph --example echo -- "你好"` |
-| StateGraph 线性链 | 待实现 | 多节点编排，见 §3 |
+| StateGraph 线性链 | 已完成 | 多节点编排，见 §3、[11-state-graph-design](11-state-graph-design.md) |
+| 工具来源（MCP 代替 Tool） | 待实现 | 最简集成见 [mcp-integration](mcp-integration/README.md) |
+| ReAct 最简方案 | 待实现 | 三节点 think→act→observe，见 [13-react-agent-design](13-react-agent-design.md) |

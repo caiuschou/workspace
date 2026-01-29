@@ -2,7 +2,9 @@
 //!
 //! Design: [docs/rust-langgraph/13-react-agent-design.md] §8.2 stage 2.2.
 //! Returns fixed assistant message and optional fixed ToolCall (e.g. get_time);
-//! configurable "no tool_calls" to test END path.
+//! configurable "no tool_calls" to test END path. Optional stateful mode for multi-round.
+
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use async_trait::async_trait;
 
@@ -16,13 +18,18 @@ use crate::state::ToolCall;
 /// Configurable to return one fixed ToolCall (e.g. get_time) or no tool_calls,
 /// so the graph can run one round (think → act → observe → END) or test END
 /// after think. Used by ThinkNode in tests and ReAct linear example.
+/// Optional stateful mode: first call returns tool_calls, second returns no tool_calls (multi-round).
 ///
 /// **Interaction**: Implements `LlmClient`; used by ThinkNode.
 pub struct MockLlm {
-    /// Assistant message content to return.
+    /// Assistant message content to return (or first call when stateful).
     content: String,
-    /// Tool calls to return; empty = no tools, observe → END.
+    /// Tool calls to return (or first call when stateful).
     tool_calls: Vec<ToolCall>,
+    /// When Some, first complete() returns (content, tool_calls), later returns (second_content, []).
+    call_count: Option<AtomicUsize>,
+    /// Second response content (stateful mode).
+    second_content: Option<String>,
 }
 
 impl MockLlm {
@@ -37,6 +44,8 @@ impl MockLlm {
                 arguments: "{}".to_string(),
                 id: Some("call-1".to_string()),
             }],
+            call_count: None,
+            second_content: None,
         }
     }
 
@@ -45,6 +54,8 @@ impl MockLlm {
         Self {
             content: content.into(),
             tool_calls: vec![],
+            call_count: None,
+            second_content: None,
         }
     }
 
@@ -53,6 +64,23 @@ impl MockLlm {
         Self {
             content: content.into(),
             tool_calls,
+            call_count: None,
+            second_content: None,
+        }
+    }
+
+    /// Build a stateful mock: first complete() returns get_time tool_call, second returns no tool_calls.
+    /// Used for multi-round ReAct tests (phase 5).
+    pub fn first_tools_then_end() -> Self {
+        Self {
+            content: "I'll check the time.".to_string(),
+            tool_calls: vec![ToolCall {
+                name: "get_time".to_string(),
+                arguments: "{}".to_string(),
+                id: Some("call-1".to_string()),
+            }],
+            call_count: Some(AtomicUsize::new(0)),
+            second_content: Some("The time is as above.".to_string()),
         }
     }
 
@@ -72,9 +100,23 @@ impl MockLlm {
 #[async_trait]
 impl LlmClient for MockLlm {
     async fn complete(&self, _messages: &[Message]) -> Result<LlmResponse, AgentError> {
-        Ok(LlmResponse {
-            content: self.content.clone(),
-            tool_calls: self.tool_calls.clone(),
-        })
+        let (content, tool_calls) = match &self.call_count {
+            Some(c) => {
+                let n = c.fetch_add(1, Ordering::SeqCst);
+                if n == 0 {
+                    (self.content.clone(), self.tool_calls.clone())
+                } else {
+                    (
+                        self.second_content
+                            .as_deref()
+                            .unwrap_or(&self.content)
+                            .to_string(),
+                        vec![],
+                    )
+                }
+            }
+            None => (self.content.clone(), self.tool_calls.clone()),
+        };
+        Ok(LlmResponse { content, tool_calls })
     }
 }

@@ -1,0 +1,18 @@
+[package]
+name = "langgraph"
+version.workspace = true
+edition.workspace = true
+description = "LangGraph-style minimal agents in Rust: state-in, state-out"
+license.workspace = true
+authors.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = []
+
+[dependencies]
+tokio = { workspace = true }
+async-trait = { workspace = true }
+thiserror = { workspace = true }

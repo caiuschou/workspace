@@ -68,12 +68,12 @@
 | P3.5 | search 实现（LIKE 参数化） | 完成 | 防注入，返回 StoreSearchHit |
 | P3.6 | SqliteStore 集成测试 | 完成 | 临时 DB、持久化、隔离 |
 | **P4** | **LanceStore** | | |
-| P4.1 | Cargo feature `lance` 与 Embedder | 待办 | lancedb，Embedder trait 或复用 |
-| P4.2 | LanceDB 表结构与 (ns,key) 唯一 | 待办 | ns, key, value, vector |
-| P4.3 | put/get/list（put 时 embedding） | 待办 | 提取 text，写 vector |
-| P4.4 | search 有 query（向量相似度） | 待办 | embed query，nearest_to，score |
-| P4.5 | search 无 query 退化 | 待办 | 同 list 或按 limit 取 |
-| P4.6 | LanceStore 集成测试 | 待办 | 语义检索顺序与 score |
+| P4.1 | Cargo feature `lance` 与 Embedder | 完成 | lancedb，Embedder trait |
+| P4.2 | LanceDB 表结构与 (ns,key) 唯一 | 完成 | ns, key, value, vector；put 前 delete 再 add |
+| P4.3 | put/get/list（put 时 embedding） | 完成 | 提取 text，写 vector |
+| P4.4 | search 有 query（向量相似度） | 完成 | embed query，nearest_to，score |
+| P4.5 | search 无 query 退化 | 完成 | 同 list 或按 limit 取 |
+| P4.6 | LanceStore 集成测试 | 完成 | 语义检索顺序与 score |
 | **P5** | **与图集成（可选）** | | |
 | P5.1 | 文档：节点内持有 Store 示例 | 待办 | RunnableConfig::user_id → namespace |
 | P5.2 | （可选）compile_with_store API | 待办 | 图持有 Option<Arc<dyn Store>> |

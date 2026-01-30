@@ -11,3 +11,10 @@ mod think_node;
 pub use act_node::ActNode;
 pub use observe_node::ObserveNode;
 pub use think_node::ThinkNode;
+
+/// Default system prompt for ReAct agents.
+///
+/// Prepend as the first message in `ReActState::messages` when building state
+/// so the LLM follows think → act → observe behavior. Callers can use a custom
+/// system message instead; ThinkNode does not inject this automatically.
+pub const REACT_SYSTEM_PROMPT: &str = "You are a ReAct agent. Think step by step. When you need to use a tool, use it. After observing tool results, continue reasoning or respond to the user.";

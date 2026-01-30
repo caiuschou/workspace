@@ -23,7 +23,7 @@
 
 use langgraph::{
     ActNode, ChatZhipu, CompiledStateGraph, Message, MockToolSource, ObserveNode, ReActState,
-    StateGraph, ThinkNode, ToolSource,
+    REACT_SYSTEM_PROMPT, StateGraph, ThinkNode, ToolSource,
 };
 
 #[tokio::main]
@@ -54,7 +54,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let compiled: CompiledStateGraph<ReActState> = graph.compile()?;
     let state = ReActState {
-        messages: vec![Message::user(user_input.clone())],
+        messages: vec![
+            Message::system(REACT_SYSTEM_PROMPT),
+            Message::user(user_input.clone()),
+        ],
         tool_calls: vec![],
         tool_results: vec![],
     };

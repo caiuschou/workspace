@@ -21,6 +21,6 @@ pub use llm::{LlmClient, LlmResponse, MockLlm};
 pub use llm::{ChatOpenAI, ChatZhipu};
 pub use message::Message;
 pub use state::{ReActState, ToolCall, ToolResult};
-pub use react::{ActNode, ObserveNode, ThinkNode};
+pub use react::{ActNode, ObserveNode, ThinkNode, REACT_SYSTEM_PROMPT};
 pub use tool_source::{MockToolSource, ToolCallContent, ToolSource, ToolSourceError, ToolSpec};
 pub use traits::Agent;

@@ -28,7 +28,9 @@ pub use tool_source::{MockToolSource, ToolCallContent, ToolSource, ToolSourceErr
 pub use tool_source::McpToolSource;
 pub use memory::{
     Checkpoint, CheckpointError, CheckpointListItem, CheckpointMetadata, CheckpointSource,
-    Checkpointer, InMemoryStore, MemorySaver, Namespace, RunnableConfig, Store, StoreError,
-    StoreSearchHit,
+    Checkpointer, InMemoryStore, JsonSerializer, MemorySaver, Namespace, RunnableConfig, Store,
+    StoreError, StoreSearchHit,
 };
+#[cfg(feature = "sqlite")]
+pub use memory::{SqliteSaver, SqliteStore};
 pub use traits::Agent;

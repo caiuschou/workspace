@@ -7,7 +7,7 @@
 ///
 /// Roles match LangGraph: system prompt, user input, assistant reply.
 /// No separate Tool role in this minimal design; extend in later Sprints.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum Message {
     /// System prompt; typically placed first in the message list.
     System(String),

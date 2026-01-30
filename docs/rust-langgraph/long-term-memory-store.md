@@ -76,7 +76,7 @@
 | P4.6 | LanceStore 集成测试 | 完成 | 语义检索顺序与 score |
 | **P5** | **与图集成（可选）** | 进行中 | |
 | P5.1 | 文档：节点内持有 Store 示例 | 完成 | RunnableConfig::user_id → namespace |
-| P5.2 | （可选）compile_with_store API | 待办 | 图持有 Option<Arc<dyn Store>> |
+| P5.2 | （可选）compile_with_store API | 完成 | 图持有 Option<Arc<dyn Store>>；StateGraph::with_store |
 | P5.3 | （可选）config 传 user_id/namespace | 待办 | 节点从 config 取 namespace |
 | P5.4 | （可选）示例或测试 | 待办 | 端到端读写 Store |
 
@@ -433,6 +433,8 @@
 
 **验收**：编译后的图能持有 Store；不破坏现有无 Store 的用法。
 
+**实现**（已完成）：采用 builder 风格。`StateGraph` 增加字段 `store: Option<Arc<dyn Store>>`（默认 `None`）及方法 `fn with_store(self, store: Arc<dyn Store>) -> Self`；`compile()` / `compile_with_checkpointer()` 内部将 `store` 传入 `CompiledStateGraph`。`CompiledStateGraph` 增加字段 `store: Option<Arc<dyn Store>>` 及 getter `fn store(&self) -> Option<&Arc<dyn Store>>`。集成测试见 `tests/state_graph.rs`：`compile_without_store_has_no_store`、`compile_with_store_holds_store`。
+
 ---
 
 ### P5.3：（可选）config 传 user_id / namespace
@@ -545,9 +547,9 @@ let hits = store.search(&ns, Some("主题偏好"), Some(5)).await?; // 语义检
 
 ## 3. 与图的配合方式
 
-- **当前**：图没有 `compile_with_store`，Store 不自动注入编译后的图。
-- **用法**：在业务侧创建 `Arc<dyn Store>`（InMemoryStore 或 SqliteStore），**在 Agent/节点内持有该 Store**，在 `run()` 里根据 `RunnableConfig::user_id`（或业务自己的用户标识）拼 namespace，调用 `store.put` / `store.get` / `store.list` / `store.search`。
-- **设计目标**（见 16-memory-design §5.4）：后续可支持 `compile_with_store(store)`，图持有 `Option<Arc<dyn Store>>`，节点通过 config 拿到 user_id 拼 namespace 做读写。
+- **图级别持有 Store（P5.2）**：`StateGraph::with_store(store)` 在编译前挂载 Store；编译后 `CompiledStateGraph::store()` 返回 `Option<&Arc<dyn Store>>`，节点可通过图拿到 Store 或由业务在构造节点时传入同一 `Arc<dyn Store>`。
+- **用法**：在业务侧创建 `Arc<dyn Store>`（InMemoryStore 或 SqliteStore），可（1）在编译时 `graph.with_store(store).compile()` 让图持有，或（2）**在 Agent/节点内持有该 Store**；在 `run()` 里根据 `RunnableConfig::user_id`（或业务自己的用户标识）拼 namespace，调用 `store.put` / `store.get` / `store.list` / `store.search`。
+- **设计目标**（见 16-memory-design §5.4）：节点通过 config 取 user_id/namespace 的约定见 P5.3；端到端示例见 P5.4。
 
 ### 3.1 节点内持有 Store 示例（P5.1）
 

@@ -47,35 +47,35 @@
 
 | 序号 | 项 | 状态 | 说明 |
 |------|----|------|------|
-| **P1** | **Store trait 与类型定义** | | |
+| **P1** | **Store trait 与类型定义** | 完成 | |
 | P1.1 | Store 错误类型（StoreError） | 完成 | 统一错误，不暴露底层 DB |
 | P1.2 | StoreSearchHit 类型定义 | 完成 | key, value, score? |
 | P1.3 | Store trait 方法签名 | 完成 | put/get/list/search，async |
 | P1.4 | memory 模块与 Cargo 导出 | 完成 | store.rs、mod.rs、lib.rs |
 | P1.5 | Store / StoreSearchHit 文档注释 | 完成 | 英文，namespace/key/search 语义 |
-| **P2** | **InMemoryStore** | | |
+| **P2** | **InMemoryStore** | 完成 | |
 | P2.1 | namespace 序列化与复合 key 约定 | 完成 | 稳定字符串，唯一键 |
 | P2.2 | 内部存储结构（Map + 并发） | 完成 | Arc+RwLock 或 DashMap |
 | P2.3 | put / get 实现 | 完成 | 覆盖写、get 返回 Option |
 | P2.4 | list 实现 | 完成 | 按 namespace 过滤，返回 key 列表 |
 | P2.5 | search 实现（字符串包含） | 完成 | key/value contains，limit，score=None |
 | P2.6 | InMemoryStore 单元测试 | 完成 | put/get/list/search + 隔离 |
-| **P3** | **SqliteStore** | | |
+| **P3** | **SqliteStore** | 完成 | |
 | P3.1 | Cargo feature `sqlite` 与依赖 | 完成 | rusqlite/sqlx，可选 WAL |
 | P3.2 | 表 store_kv 与初始化 | 完成 | CREATE TABLE IF NOT EXISTS |
 | P3.3 | 连接管理与并发 | 完成 | spawn_blocking 每操作新连接 |
 | P3.4 | put / get / list 实现 | 完成 | INSERT OR REPLACE，SELECT |
 | P3.5 | search 实现（LIKE 参数化） | 完成 | 防注入，返回 StoreSearchHit |
 | P3.6 | SqliteStore 集成测试 | 完成 | 临时 DB、持久化、隔离 |
-| **P4** | **LanceStore** | | |
+| **P4** | **LanceStore** | 完成 | |
 | P4.1 | Cargo feature `lance` 与 Embedder | 完成 | lancedb，Embedder trait |
 | P4.2 | LanceDB 表结构与 (ns,key) 唯一 | 完成 | ns, key, value, vector；put 前 delete 再 add |
 | P4.3 | put/get/list（put 时 embedding） | 完成 | 提取 text，写 vector |
 | P4.4 | search 有 query（向量相似度） | 完成 | embed query，nearest_to，score |
 | P4.5 | search 无 query 退化 | 完成 | 同 list 或按 limit 取 |
 | P4.6 | LanceStore 集成测试 | 完成 | 语义检索顺序与 score |
-| **P5** | **与图集成（可选）** | | |
-| P5.1 | 文档：节点内持有 Store 示例 | 待办 | RunnableConfig::user_id → namespace |
+| **P5** | **与图集成（可选）** | 进行中 | |
+| P5.1 | 文档：节点内持有 Store 示例 | 完成 | RunnableConfig::user_id → namespace |
 | P5.2 | （可选）compile_with_store API | 待办 | 图持有 Option<Arc<dyn Store>> |
 | P5.3 | （可选）config 传 user_id/namespace | 待办 | 节点从 config 取 namespace |
 | P5.4 | （可选）示例或测试 | 待办 | 端到端读写 Store |
@@ -548,6 +548,64 @@ let hits = store.search(&ns, Some("主题偏好"), Some(5)).await?; // 语义检
 - **当前**：图没有 `compile_with_store`，Store 不自动注入编译后的图。
 - **用法**：在业务侧创建 `Arc<dyn Store>`（InMemoryStore 或 SqliteStore），**在 Agent/节点内持有该 Store**，在 `run()` 里根据 `RunnableConfig::user_id`（或业务自己的用户标识）拼 namespace，调用 `store.put` / `store.get` / `store.list` / `store.search`。
 - **设计目标**（见 16-memory-design §5.4）：后续可支持 `compile_with_store(store)`，图持有 `Option<Arc<dyn Store>>`，节点通过 config 拿到 user_id 拼 namespace 做读写。
+
+### 3.1 节点内持有 Store 示例（P5.1）
+
+**推荐 namespace 结构**：`[user_id, "memories"]`、`[user_id, "preferences"]` 等，第一段为用户标识，后续为用途。
+
+以下示例：创建 Store、包装为 `Arc<dyn Store>`，在节点函数中持有；从 `RunnableConfig::user_id` 拼 namespace，执行 put/get/search。
+
+```rust
+use std::sync::Arc;
+use langgraph::memory::{InMemoryStore, Namespace, RunnableConfig, Store};
+use langgraph::{AgentError, Next};
+
+// 1. 创建 Store 并包装为 Arc<dyn Store>
+let store: Arc<dyn Store> = Arc::new(InMemoryStore::new());
+
+// 2. 节点函数：从 config 取 user_id，拼 namespace，读写 Store
+async fn my_node_with_store(
+    state: MyState,
+    config: Option<&RunnableConfig>,
+    store: Arc<dyn Store>,
+) -> Result<(MyState, Next), AgentError> {
+    let user_id = config
+        .and_then(|c| c.user_id.as_deref())
+        .unwrap_or("default");
+    let namespace: Namespace = vec![user_id.to_string(), "memories".to_string()];
+
+    // 读取已有偏好（若有）
+    let pref = store.get(&namespace, "pref_theme").await?;
+    if let Some(v) = pref {
+        // 使用 v（serde_json::Value）
+    }
+
+    // 写入一条记忆
+    store
+        .put(
+            &namespace,
+            "mem_1",
+            &serde_json::json!({"text": "用户偏好深色主题"}),
+        )
+        .await?;
+
+    // 按字符串检索
+    let hits = store.search(&namespace, Some("主题"), Some(10)).await?;
+
+    Ok((state, Next::Continue))
+}
+
+// 3. 编译图时：将 store 传入节点（通过闭包或 state 持有）
+// 调用 invoke 时传入 config，例如：
+// let config = RunnableConfig { user_id: Some("u1".into()), ..Default::default() };
+// graph.invoke(initial_state, Some(config)).await?;
+```
+
+**要点**：
+
+- `RunnableConfig::user_id` 为 `Option<String>`，run 时由调用方传入，例如 `configurable: { user_id: "u1" }`。
+- 同一 Store 可被多个节点共享（同一 `Arc<dyn Store>` 传入不同节点）；namespace 用 `user_id` 隔离多用户。
+- 若需「偏好」与「记忆」分开，可使用不同 namespace：`[user_id, "preferences"]` 与 `[user_id, "memories"]`。
 
 ---
 

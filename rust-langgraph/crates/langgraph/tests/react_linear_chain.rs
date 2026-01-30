@@ -27,7 +27,7 @@ async fn react_linear_chain_user_to_tool_result_in_messages() {
         tool_results: vec![],
     };
 
-    let out = compiled.invoke(state).await.unwrap();
+    let out = compiled.invoke(state, None).await.unwrap();
 
     // think: 1 user -> 2 (user + assistant)
     // act: filled tool_results
@@ -64,7 +64,7 @@ async fn react_multi_round_loop_then_end() {
         tool_results: vec![],
     };
 
-    let out = compiled.invoke(state).await.unwrap();
+    let out = compiled.invoke(state, None).await.unwrap();
 
     // Round 1: user, assistant "I'll check.", tool result User message (3).
     // Round 2: think again (no tool_calls), assistant "The time is as above." (4); observe returns End.

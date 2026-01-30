@@ -88,7 +88,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tool_results: vec![],
     };
 
-    let result = compiled.invoke(state).await?;
+    let result = compiled.invoke(state, None).await?;
     for m in &result.messages {
         match m {
             Message::System(x) => println!("[System] {}", x),

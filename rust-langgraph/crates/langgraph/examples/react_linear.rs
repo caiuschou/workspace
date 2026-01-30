@@ -34,7 +34,7 @@ async fn main() {
         tool_results: vec![],
     };
 
-    match compiled.invoke(state).await {
+    match compiled.invoke(state, None).await {
         Ok(s) => {
             for m in &s.messages {
                 match m {

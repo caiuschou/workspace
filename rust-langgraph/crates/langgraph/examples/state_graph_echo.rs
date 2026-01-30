@@ -60,7 +60,7 @@ async fn main() {
     let mut state = AgentState::default();
     state.messages.push(Message::User(input));
 
-    match compiled.invoke(state).await {
+    match compiled.invoke(state, None).await {
         Ok(s) => {
             if let Some(Message::Assistant(content)) = s.messages.last() {
                 println!("{content}");

@@ -39,6 +39,7 @@ zhipu = ["dep:async-openai", "dep:dotenv"]
 tokio = { workspace = true }
 async-trait = { workspace = true }
 thiserror = { workspace = true }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Optional: OpenAI-compatible API for LlmClient (enable with feature "zhipu"; used by ChatZhipu/ChatOpenAI).

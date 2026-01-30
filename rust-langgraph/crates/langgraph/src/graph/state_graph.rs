@@ -1,13 +1,15 @@
 //! State graph: nodes + linear edge order.
 //!
 //! Add nodes with `add_node`, define the chain with `add_edge`, then `compile`
-//! to get a `CompiledStateGraph`. No conditional edges in this minimal version.
+//! or `compile_with_checkpointer` to get a `CompiledStateGraph`. Design: 16-memory-design.md.
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use crate::graph::compile_error::CompilationError;
 use crate::graph::compiled::CompiledStateGraph;
 use crate::graph::node::Node;
+use crate::memory::Checkpointer;
 
 /// State graph: nodes plus linear edge order. No conditional edges in minimal version.
 ///
@@ -66,6 +68,24 @@ where
     /// Returns `CompilationError::NodeNotFound(id)` if any id in the edge order
     /// is not in the node map. On success, the graph is immutable and ready for `invoke`.
     pub fn compile(self) -> Result<CompiledStateGraph<S>, CompilationError> {
+        self.compile_with_checkpointer_opt(None)
+    }
+
+    /// Builds the executable graph with a checkpointer for persistence (thread_id in config).
+    ///
+    /// Aligns with LangGraph `graph.compile(checkpointer=checkpointer)`. When `invoke(state, config)`
+    /// is called with `config.thread_id`, the final state is saved after the run. Design: 16-memory-design.md §4.1.
+    pub fn compile_with_checkpointer(
+        self,
+        checkpointer: Arc<dyn Checkpointer<S>>,
+    ) -> Result<CompiledStateGraph<S>, CompilationError> {
+        self.compile_with_checkpointer_opt(Some(checkpointer))
+    }
+
+    fn compile_with_checkpointer_opt(
+        self,
+        checkpointer: Option<Arc<dyn Checkpointer<S>>>,
+    ) -> Result<CompiledStateGraph<S>, CompilationError> {
         for id in &self.edge_order {
             if !self.nodes.contains_key(id) {
                 return Err(CompilationError::NodeNotFound(id.clone()));
@@ -74,6 +94,7 @@ where
         Ok(CompiledStateGraph {
             nodes: self.nodes,
             edge_order: self.edge_order,
+            checkpointer,
         })
     }
 }

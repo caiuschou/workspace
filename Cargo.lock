@@ -1566,6 +1566,7 @@ dependencies = [
  "dotenv",
  "mcp_client",
  "mcp_core",
+ "serde",
  "serde_json",
  "thiserror 1.0.69",
  "tokio",

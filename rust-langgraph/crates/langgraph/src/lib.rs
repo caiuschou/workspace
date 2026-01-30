@@ -9,6 +9,7 @@ pub mod error;
 pub mod graph;
 pub mod llm;
 pub mod message;
+pub mod memory;
 pub mod react;
 pub mod state;
 pub mod tool_source;
@@ -25,4 +26,9 @@ pub use react::{ActNode, ObserveNode, ThinkNode, REACT_SYSTEM_PROMPT};
 pub use tool_source::{MockToolSource, ToolCallContent, ToolSource, ToolSourceError, ToolSpec};
 #[cfg(feature = "mcp")]
 pub use tool_source::McpToolSource;
+pub use memory::{
+    Checkpoint, CheckpointError, CheckpointListItem, CheckpointMetadata, CheckpointSource,
+    Checkpointer, InMemoryStore, MemorySaver, Namespace, RunnableConfig, Store, StoreError,
+    StoreSearchHit,
+};
 pub use traits::Agent;

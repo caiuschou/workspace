@@ -30,10 +30,12 @@ path = "examples/react_exa.rs"
 required-features = ["zhipu"]
 
 [features]
-default = ["mcp"]
+default = ["mcp", "sqlite"]
 mcp = ["dep:mcp_client", "dep:mcp_core"]
 # 智谱 GLM（async-openai 兼容 API）
 zhipu = ["dep:async-openai", "dep:dotenv"]
+# Persistent checkpoint/store via SQLite (16-memory-design §3.6, §5.2.2)
+sqlite = ["dep:rusqlite"]
 
 [dependencies]
 tokio = { workspace = true }
@@ -49,3 +51,9 @@ dotenv = { workspace = true, optional = true }
 # Optional: MCP client for ToolSource (enable with feature "mcp").
 mcp_client = { path = "../../../crates/mcp-client", optional = true }
 mcp_core = { path = "../../../crates/mcp-core", optional = true }
+# Optional: SQLite for persistent Checkpointer and Store (feature "sqlite").
+rusqlite = { version = "0.31", optional = true, features = ["bundled"] }
+
+[dev-dependencies]
+serde = { version = "1.0", features = ["derive"] }
+tempfile = "3"

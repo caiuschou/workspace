@@ -19,6 +19,11 @@ name = "react_mcp"
 path = "examples/react_mcp.rs"
 required-features = ["mcp"]
 
+[[example]]
+name = "react_mcp_gitlab"
+path = "examples/react_mcp_gitlab.rs"
+required-features = ["mcp"]
+
 [features]
 default = []
 openai = ["dep:async-openai", "dep:dotenv"]

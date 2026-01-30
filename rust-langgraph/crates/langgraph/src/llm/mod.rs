@@ -6,7 +6,13 @@
 
 mod mock;
 
+#[cfg(feature = "openai")]
+mod openai;
+
 pub use mock::MockLlm;
+
+#[cfg(feature = "openai")]
+pub use openai::OpenAILlm;
 
 use async_trait::async_trait;
 
@@ -28,7 +34,7 @@ pub struct LlmResponse {
 /// LLM client: given messages, returns assistant text and optional tool_calls.
 ///
 /// ThinkNode calls this to produce the next assistant message and any tool
-/// invocations. Implementations: `MockLlm` (fixed response), future real API client.
+/// invocations. Implementations: `MockLlm` (fixed response), `OpenAILlm` (real API, feature `openai`).
 ///
 /// **Interaction**: Used by ThinkNode; see 13-react-agent-design §4 and §8.2.
 #[async_trait]

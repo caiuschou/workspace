@@ -32,6 +32,7 @@
 | [11-state-graph-design.md](11-state-graph-design.md) | **StateGraph 设计**（线性链、Node、invoke、扩展路径） |
 | [13-react-agent-design.md](13-react-agent-design.md) | ReAct Agent 设计（Think/Observe、LlmClient、tool_calls） |
 | [14-chat-openai.md](14-chat-openai.md) | **最简单版本 ChatOpenAI 方案**（ChatOpenAI、ChatZhipu、LlmClient、数据流与实现选项） |
+| [15-llm-react-agent.md](15-llm-react-agent.md) | **LLM + ReAct Agent 方案**（ChatOpenAI/ChatZhipu 接入 ReAct 图、with_tools、多轮、任务表） |
 | [mcp-integration/README.md](mcp-integration/README.md) | **用 MCP 替代 Tool 的最简集成**（ToolSource、MCP 客户端、实现说明见 [implementation](mcp-integration/implementation.md)） |
 | [05-tools.md](05-tools.md) | 工具调用系统 |
 | [06-memory-agent.md](06-memory-agent.md) | **记忆 Agent** |

@@ -54,8 +54,7 @@ impl Store for SqliteStore {
     ) -> Result<(), StoreError> {
         let ns = ns_to_key(namespace);
         let key = key.to_string();
-        let value_str =
-            serde_json::to_string(value).map_err(|e| StoreError::Serialization(e.to_string()))?;
+        let value_str = serde_json::to_string(value)?;
         let db_path = self.db_path.clone();
 
         tokio::task::spawn_blocking(move || {
@@ -104,8 +103,7 @@ impl Store for SqliteStore {
             Some(s) => s,
             None => return Ok(None),
         };
-        let value =
-            serde_json::from_str(&value_str).map_err(|e| StoreError::Serialization(e.to_string()))?;
+        let value = serde_json::from_str(&value_str)?;
         Ok(Some(value))
     }
 
@@ -161,7 +159,7 @@ impl Store for SqliteStore {
             for row in rows {
                 let (key, value_str) = row.map_err(|e| StoreError::Storage(e.to_string()))?;
                 let value =
-                    serde_json::from_str(&value_str).map_err(|e| StoreError::Serialization(e.to_string()))?;
+                    serde_json::from_str(&value_str)?;
                 hits.push(StoreSearchHit {
                     key,
                     value,

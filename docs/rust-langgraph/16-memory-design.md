@@ -333,9 +333,9 @@ struct InMemoryStoreInner {
 
 - **存储**：进程内维护 `(namespace, key) -> (value, embedding)`，embedding 由 Embedder 生成后存入内存（如 `Vec<(Namespace, key, value, Vec<f32>)>` 或按 namespace 分片的 `VectorMemory`）。
 - **检索**：对 query 做 embedding，在进程内用余弦相似度做 top-k 检索，不依赖 Qdrant、Milvus 等独立服务。
-- **特点**：无额外部署、延迟低；进程退出后数据不持久化，适合开发与单机/小规模；若需持久化可后续接 Lance 或 SQLite+向量扩展等。
+- **特点**：无额外部署、延迟低；进程退出后数据不持久化，适合开发与单机/小规模；**持久化语义检索采用 LanceStore（5.2.3）**。
 
-#### 5.2.2 SqliteStore（长期记忆持久化）
+#### 5.2.2 SqliteStore（长期记忆持久化，仅 KV）
 
 与 InMemoryStore 同实现 Store trait，但将 key-value 写入本地 SQLite，进程重启后数据保留；适合单机生产或需要跨进程共享配置的场景。
 
@@ -351,6 +351,16 @@ struct InMemoryStoreInner {
 - **put/get/list**：`INSERT OR REPLACE` / `SELECT value WHERE ns = ? AND key = ?` / `SELECT key FROM store_kv WHERE ns = ?`。value 为 `serde_json::Value` 的 `to_string()` 结果。
 - **search**：初版可做「无语义」检索：`list(namespace)` 后在内存中按 `query` 做 key 前缀或 value 包含过滤，返回前 `limit` 条；与 InMemoryStore 的 fallback 一致。后续可加 `store_vectors(ns, key, embedding BLOB)` 与 SQLite 向量扩展（如 sqlite-vec）做语义 search。
 - **连接与迁移**：构造时传入 DB 路径；可与 SqliteSaver 共用同一 DB（不同表）或单独文件（如 `./data/store.db`），按部署需求选择。
+
+#### 5.2.3 LanceStore（长期记忆持久化 + 语义检索，Lance）
+
+与 SqliteStore 同实现 Store trait，但使用 [LanceDB](https://lancedb.com/)（基于 Lance 格式）存储 **向量 + 元数据**，支持持久化语义 search；适合 RAG、长期记忆检索、单机或云上部署。
+
+- **依赖**：可选 feature `lance`，依赖 `lancedb`（Rust SDK，见 docs.rs/lancedb）。
+- **存储**：LanceDB 本地路径（如 `data/lance-store`）或 `s3://`/`gs://`；表结构含 `ns`（namespace JSON）、`key`、`value`（JSON 文本）、`vector`（FixedSizeList\<Float32\>）。put 时对 value 中可嵌入字段（如 `text`）调用 Embedder 生成向量写入。
+- **检索**：有 query 时对 query 做 embedding，调用 LanceDB `nearest_to(vector).limit(limit)`，按 namespace 过滤，返回 `StoreSearchHit { key, value, score }`；无 query 时退化为 list 或 key/value 过滤。
+- **Embedder**：构造时接收 `Arc<dyn Embedder>` 或对接 LanceDB 的 `EmbeddingFunction`（OpenAI、HuggingFace 等），用于写入与查询时的向量化。
+- **特点**：进程重启后数据保留、无需单独向量服务；与 5.2.1 内存向量方案互补，持久化语义检索以 Lance 为主。
 
 ### 5.4 图与 Store 的集成
 
@@ -375,14 +385,16 @@ crates/langgraph/src/
 │   ├── serializer.rs    // Serializer trait, JsonSerializer or default impl
 │   ├── store.rs          // Store trait, StoreError, StoreSearchHit
 │   ├── in_memory_store.rs // InMemoryStore
-│   └── sqlite_store.rs   // SqliteStore（持久化 Store，见 5.2.2）
+│   ├── sqlite_store.rs   // SqliteStore（持久化 KV，见 5.2.2）
+│   └── lance_store.rs    // LanceStore（持久化 + 语义检索，见 5.2.3，feature "lance"）
 ├── graph/
 │   ├── compiled.rs      // 增加 invoke(state, config)、compile_with_checkpointer
 │   └── ...
 ```
 
 - **memory** 不依赖 **graph**；**graph** 依赖 **memory**（config、checkpointer、serializer）。Store 可选依赖，由编译或节点注入。
-- **SqliteSaver / SqliteStore**：可选依赖 `sqlx` 或 `rusqlite`；若以 feature 开关（如 `sqlite`）提供，未开启时可不编译 sqlite_saver / sqlite_store。
+- **SqliteSaver / SqliteStore**：可选依赖 `rusqlite`；以 feature `sqlite` 提供，未开启时可不编译 sqlite_saver / sqlite_store。
+- **LanceStore**：可选依赖 `lancedb`；以 feature `lance` 提供，未开启时可不编译 lance_store。
 
 ---
 
@@ -400,7 +412,7 @@ crates/langgraph/src/
 ## 8. 小结与任务表
 
 - **短期记忆**：RunnableConfig（thread_id, checkpoint_id, checkpoint_ns）+ Checkpoint\<S\> + Checkpointer trait + MemorySaver + **SqliteSaver** + Serializer；图 compile 时注入 checkpointer，invoke 时传 config，自动读/写 checkpoint。
-- **长期记忆**：Store trait（namespace + put/get/list/search）+ InMemoryStore + **SqliteStore**；图或节点持有 Store，按 user_id 等拼 namespace 做跨会话读写与检索；**语义检索采用内存向量数据库**（进程内 embedding + 余弦相似度），不依赖外部向量服务；持久化可选 SqliteStore，语义 search 可后续接 SQLite 向量扩展。
+- **长期记忆**：Store trait（namespace + put/get/list/search）+ InMemoryStore + **SqliteStore**（仅 KV）+ **LanceStore**（持久化 + 语义检索）；图或节点持有 Store，按 user_id 等拼 namespace 做跨会话读写与检索；语义检索：内存用 5.2.1 向量存储，**持久化用 LanceStore（LanceDB）**。
 - **Rust 风格**：trait 与类型分文件、错误类型显式、异步 API；注释英文；测试独立。
 
 | 序号 | 任务 | 交付物 / 子项 | 状态 | 说明 |
@@ -418,5 +430,6 @@ crates/langgraph/src/
 | 11 | 文档与 README | README.md、MEMORY_VS_LANGGRAPH_STORE.md | 已完成 | 增加 16-memory-design 链接与对照说明 |
 | 12 | SqliteSaver | memory/sqlite_saver.rs | 已完成 | 持久化 Checkpointer；SQLite 表 checkpoints；可选 feature `sqlite` |
 | 13 | SqliteStore | memory/sqlite_store.rs | 已完成 | 持久化 Store；SQLite 表 store_kv；put/get/list；search 初版为 key/value 过滤 |
+| 14 | LanceStore | memory/lance_store.rs | 待实现 | 持久化 + 语义检索；LanceDB 表 ns/key/value/vector；feature `lance`；Embedder 注入 |
 
 实现时按上表推进，每项完成后在「状态」列改为「已完成」，并在代码处补充注释引用本文（如 `16-memory-design.md`）。

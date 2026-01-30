@@ -8,14 +8,43 @@ use async_trait::async_trait;
 pub type Namespace = Vec<String>;
 
 /// Error for store operations.
+///
+/// Callers do not depend on underlying backend errors (e.g. rusqlite, lancedb).
+/// Use `?` with `serde_json::Error` via the `From` impl for serialization failures.
 #[derive(Debug, thiserror::Error)]
 pub enum StoreError {
+    /// JSON or namespace serialization/deserialization failed.
     #[error("serialization: {0}")]
     Serialization(String),
+
+    /// Backend storage error (e.g. DB I/O). Message is opaque to avoid leaking backend types.
     #[error("storage: {0}")]
     Storage(String),
+
+    /// Key not found in the given namespace (optional; get may use `Ok(None)` instead).
     #[error("not found")]
     NotFound,
+}
+
+impl From<serde_json::Error> for StoreError {
+    fn from(e: serde_json::Error) -> Self {
+        StoreError::Serialization(e.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn store_error_from_serde_json_error() {
+        let invalid = "not valid json {{{";
+        let err: StoreError = serde_json::from_str::<serde_json::Value>(invalid).unwrap_err().into();
+        match &err {
+            StoreError::Serialization(s) => assert!(s.contains("expected value") || s.len() > 0),
+            _ => panic!("expected Serialization variant"),
+        }
+    }
 }
 
 /// Hit returned by Store::search (key, value, optional score).

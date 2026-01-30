@@ -9,7 +9,7 @@ use std::sync::Arc;
 use crate::graph::compile_error::CompilationError;
 use crate::graph::compiled::CompiledStateGraph;
 use crate::graph::node::Node;
-use crate::memory::Checkpointer;
+use crate::memory::{Checkpointer, Store};
 
 /// State graph: nodes plus linear edge order. No conditional edges in minimal version.
 ///
@@ -21,6 +21,8 @@ pub struct StateGraph<S> {
     nodes: HashMap<String, Box<dyn Node<S>>>,
     /// Linear chain: [id1, id2, ...] => START -> id1 -> id2 -> ... -> END
     edge_order: Vec<String>,
+    /// Optional long-term store; when set, compiled graph holds it for nodes (e.g. via config or node construction). Design: long-term-memory-store.md P5.2.
+    store: Option<Arc<dyn Store>>,
 }
 
 impl<S> Default for StateGraph<S>
@@ -41,6 +43,16 @@ where
         Self {
             nodes: HashMap::new(),
             edge_order: Vec::new(),
+            store: None,
+        }
+    }
+
+    /// Attaches a long-term store to the graph. When compiled, the graph holds `Option<Arc<dyn Store>>`;
+    /// nodes can use it for cross-thread memory (e.g. namespace from `RunnableConfig::user_id`). Design: long-term-memory-store.md P5.2.
+    pub fn with_store(self, store: Arc<dyn Store>) -> Self {
+        Self {
+            store: Some(store),
+            ..self
         }
     }
 
@@ -95,6 +107,7 @@ where
             nodes: self.nodes,
             edge_order: self.edge_order,
             checkpointer,
+            store: self.store,
         })
     }
 }

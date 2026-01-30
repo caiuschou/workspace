@@ -4,6 +4,7 @@
 use langgraph::memory::{
     Checkpoint, CheckpointMetadata, CheckpointSource, MemorySaver, RunnableConfig,
 };
+use langgraph::Checkpointer;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Default)]

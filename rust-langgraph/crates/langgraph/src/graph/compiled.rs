@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::error::AgentError;
-use crate::memory::{Checkpoint, CheckpointSource, Checkpointer, RunnableConfig};
+use crate::memory::{Checkpoint, CheckpointSource, Checkpointer, RunnableConfig, Store};
 
 use super::Next;
 use super::Node;
@@ -16,11 +16,14 @@ use super::Node;
 ///
 /// Created by `StateGraph::compile()` or `compile_with_checkpointer()`. Runs from first node;
 /// uses each node's returned `Next` to choose next node. When checkpointer is set, invoke(state, config)
-/// saves the final state for config.thread_id.
+/// saves the final state for config.thread_id. When store is set (via `with_store` before compile),
+/// nodes can use it for long-term memory (e.g. namespace from config.user_id). Design: long-term-memory-store.md P5.2.
 pub struct CompiledStateGraph<S> {
     pub(super) nodes: HashMap<String, Box<dyn Node<S>>>,
     pub(super) edge_order: Vec<String>,
     pub(super) checkpointer: Option<Arc<dyn Checkpointer<S>>>,
+    /// Optional long-term store; set when graph was built with `with_store`. Nodes use it via config or construction. Design: long-term-memory-store.md P5.2.
+    pub(super) store: Option<Arc<dyn Store>>,
 }
 
 impl<S> CompiledStateGraph<S>
@@ -92,5 +95,12 @@ where
                 }
             }
         }
+    }
+
+    /// Returns the long-term store if the graph was compiled with `with_store(store)`.
+    ///
+    /// Nodes can use it for cross-thread memory (e.g. namespace from `config.user_id`). See long-term-memory-store.md §3.1.
+    pub fn store(&self) -> Option<&Arc<dyn Store>> {
+        self.store.as_ref()
     }
 }

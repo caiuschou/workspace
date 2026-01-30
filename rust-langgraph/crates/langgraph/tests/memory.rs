@@ -1,8 +1,8 @@
-//! Unit tests for memory: RunnableConfig, Checkpoint, MemorySaver, Checkpointer, Store. Design: 16-memory-design.md.
+//! Unit tests for Checkpoint and MemorySaver (Checkpointer). Design: 16-memory-design.md.
+//! InMemoryStore tests live in memory_in_memory.rs.
 
 use langgraph::memory::{
-    Checkpoint, CheckpointMetadata, CheckpointSource, Checkpointer, InMemoryStore, MemorySaver,
-    RunnableConfig,
+    Checkpoint, CheckpointMetadata, CheckpointSource, MemorySaver, RunnableConfig,
 };
 use std::collections::HashMap;
 
@@ -79,33 +79,4 @@ async fn checkpoint_from_state() {
     assert_eq!(cp.channel_values.value, "test");
     assert_eq!(cp.metadata.step, 1);
     assert!(cp.channel_versions.is_empty());
-}
-
-#[tokio::test]
-async fn in_memory_store_put_get_list_search() {
-    use langgraph::memory::Store;
-    use serde_json::json;
-
-    let store = InMemoryStore::new();
-    let ns = vec!["user1".into(), "memories".into()];
-
-    store
-        .put(&ns, "k1", &json!("v1"))
-        .await
-        .unwrap();
-    store
-        .put(&ns, "k2", &json!({"x": 1}))
-        .await
-        .unwrap();
-
-    let v = store.get(&ns, "k1").await.unwrap();
-    assert_eq!(v, Some(json!("v1")));
-
-    let keys = store.list(&ns).await.unwrap();
-    assert!(keys.contains(&"k1".into()));
-    assert!(keys.contains(&"k2".into()));
-
-    let hits = store.search(&ns, Some("v1"), None).await.unwrap();
-    assert_eq!(hits.len(), 1);
-    assert_eq!(hits[0].key, "k1");
 }

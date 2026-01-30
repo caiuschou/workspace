@@ -17,7 +17,7 @@ fn ns_to_key(ns: &Namespace) -> String {
 ///
 /// Persistent; for single-node and dev. Uses spawn_blocking for async.
 ///
-/// **Interaction**: Used as `Arc<dyn Store>` when graph is compiled with store.
+/// **Interaction**: Used as `Arc<dyn Store>` when graph is compiled with store; nodes use it for cross-thread memory.
 pub struct SqliteStore {
     db_path: std::path::PathBuf,
 }

@@ -124,3 +124,50 @@ async fn sqlite_store_put_get_list_search() {
     assert_eq!(hits.len(), 1);
     assert_eq!(hits[0].key, "k1");
 }
+
+#[tokio::test]
+async fn sqlite_store_persistence() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("store.db");
+    let ns = vec!["user1".into(), "memories".into()];
+
+    {
+        let store = SqliteStore::new(&path).unwrap();
+        store
+            .put(&ns, "persisted", &serde_json::json!("survives"))
+            .await
+            .unwrap();
+    }
+
+    let store = SqliteStore::new(&path).unwrap();
+    let v = store.get(&ns, "persisted").await.unwrap();
+    assert_eq!(v, Some(serde_json::json!("survives")));
+}
+
+#[tokio::test]
+async fn sqlite_store_namespace_isolation() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("store.db");
+    let ns1 = vec!["user1".into(), "mem".into()];
+    let ns2 = vec!["user2".into(), "mem".into()];
+
+    let store = SqliteStore::new(&path).unwrap();
+    store
+        .put(&ns1, "key", &serde_json::json!("v1"))
+        .await
+        .unwrap();
+    store
+        .put(&ns2, "key", &serde_json::json!("v2"))
+        .await
+        .unwrap();
+
+    let v1 = store.get(&ns1, "key").await.unwrap();
+    let v2 = store.get(&ns2, "key").await.unwrap();
+    assert_eq!(v1, Some(serde_json::json!("v1")));
+    assert_eq!(v2, Some(serde_json::json!("v2")));
+
+    let keys1 = store.list(&ns1).await.unwrap();
+    let keys2 = store.list(&ns2).await.unwrap();
+    assert_eq!(keys1, vec!["key"]);
+    assert_eq!(keys2, vec!["key"]);
+}

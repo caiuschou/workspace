@@ -47,20 +47,36 @@ mod tests {
     }
 }
 
-/// Hit returned by Store::search (key, value, optional score).
+/// A single hit returned by [`Store::search`].
+///
+/// For key-value or string-filter search (e.g. [`crate::memory::InMemoryStore`], [`crate::memory::SqliteStore`]),
+/// `score` is `None`. For semantic/vector search (e.g. LanceStore), `score` is the similarity (e.g. cosine or L2).
 #[derive(Debug, Clone)]
 pub struct StoreSearchHit {
+    /// The key of the matched entry within the namespace.
     pub key: String,
+    /// The stored value (JSON).
     pub value: serde_json::Value,
+    /// Similarity score when using vector search; `None` for string-filter-only stores.
     pub score: Option<f64>,
 }
 
-/// Cross-thread key-value and optional semantic search.
+/// Long-term cross-session store: namespace-isolated key-value with optional search.
 ///
-/// Aligns with LangGraph BaseStore. Implementations: InMemoryStore (in-memory; semantic search via in-memory vector store).
+/// Used for user preferences, long-term memories, and retrievable facts. Not tied to a single
+/// thread; use [`Namespace`] (e.g. `[user_id, "memories"]`) for multi-tenant isolation. Differs
+/// from [`crate::memory::Checkpointer`], which is per-thread checkpoint state.
+///
+/// - **Namespace**: Keys are unique per `(namespace, key)`. Same key in different namespaces
+///   are separate entries.
+/// - **Put**: Overwrites any existing value for that `(namespace, key)`.
+/// - **Get**: Returns `Ok(None)` when the key does not exist in the namespace.
+/// - **Search**: When `query` is `None` or empty, implementations may degenerate to list-like
+///   behavior (return entries up to `limit`). When `query` is set, behavior is
+///   implementation-defined (string filter or semantic similarity).
 #[async_trait]
 pub trait Store: Send + Sync {
-    /// Put a value under namespace and key.
+    /// Stores `value` under `namespace` and `key`. Replaces any existing value for that key.
     async fn put(
         &self,
         namespace: &Namespace,
@@ -68,17 +84,19 @@ pub trait Store: Send + Sync {
         value: &serde_json::Value,
     ) -> Result<(), StoreError>;
 
-    /// Get value by namespace and key.
+    /// Returns the value for `(namespace, key)`, or `None` if not found.
     async fn get(
         &self,
         namespace: &Namespace,
         key: &str,
     ) -> Result<Option<serde_json::Value>, StoreError>;
 
-    /// List keys in namespace.
+    /// Returns all keys in the given namespace (order is implementation-defined).
     async fn list(&self, namespace: &Namespace) -> Result<Vec<String>, StoreError>;
 
-    /// Search in namespace. With semantic index: query is natural language; otherwise key prefix or full scan.
+    /// Searches within the namespace. If `query` is `None` or empty, may return entries
+    /// up to `limit` (list-like). If `query` is set, filters by string match or semantic
+    /// similarity; `limit` caps the number of results.
     async fn search(
         &self,
         namespace: &Namespace,

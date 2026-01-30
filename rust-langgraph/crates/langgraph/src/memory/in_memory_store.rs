@@ -18,7 +18,7 @@ fn map_key(namespace: &Namespace, key: &str) -> String {
 
 /// In-memory Store. Aligns with LangGraph InMemoryStore. Not persistent.
 ///
-/// **Interaction**: Used as Arc<dyn Store> when graph is compiled with store; nodes use it for cross-thread memory.
+/// **Interaction**: Used as `Arc<dyn Store>` when graph is compiled with store; nodes use it for cross-thread memory.
 pub struct InMemoryStore {
     inner: Arc<RwLock<HashMap<String, serde_json::Value>>>,
 }

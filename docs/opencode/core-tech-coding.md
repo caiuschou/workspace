@@ -1,6 +1,6 @@
 # OpenCode 能写代码的核心技术说明
 
-基于对 `thirdparty/opencode` 代码库的分析，总结其「能写代码」的核心技术栈与流程。
+基于对 `thirdparty/opencode` 代码库的分析，总结其「能写代码」的核心技术栈与流程。**代码级逐模块说明**见 [core-tech-coding-code-detail.md](core-tech-coding-code-detail.md)；**与编程语言无关的论文体描述**见 [paper-agentic-coding-architecture.md](paper-agentic-coding-architecture.md)。
 
 ## 1. 整体架构：Agent + LLM + Tools
 

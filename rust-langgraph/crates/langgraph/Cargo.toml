@@ -14,9 +14,15 @@ name = "react_zhipu"
 path = "examples/react_zhipu.rs"
 required-features = ["openai"]
 
+[[example]]
+name = "react_mcp"
+path = "examples/react_mcp.rs"
+required-features = ["mcp"]
+
 [features]
 default = []
 openai = ["dep:async-openai", "dep:dotenv"]
+mcp = ["dep:mcp_client", "dep:mcp_core"]
 
 [dependencies]
 tokio = { workspace = true }
@@ -28,3 +34,6 @@ serde_json = "1.0"
 async-openai = { version = "0.32", optional = true, features = ["chat-completion"] }
 # Optional: load .env for examples (enable with feature "openai").
 dotenv = { workspace = true, optional = true }
+# Optional: MCP client for ToolSource (enable with feature "mcp").
+mcp_client = { path = "../../../crates/mcp-client", optional = true }
+mcp_core = { path = "../../../crates/mcp-core", optional = true }

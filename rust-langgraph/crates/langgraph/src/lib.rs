@@ -23,4 +23,6 @@ pub use message::Message;
 pub use state::{ReActState, ToolCall, ToolResult};
 pub use react::{ActNode, ObserveNode, ThinkNode, REACT_SYSTEM_PROMPT};
 pub use tool_source::{MockToolSource, ToolCallContent, ToolSource, ToolSourceError, ToolSpec};
+#[cfg(feature = "mcp")]
+pub use tool_source::McpToolSource;
 pub use traits::Agent;

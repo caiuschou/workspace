@@ -2,11 +2,17 @@
 //!
 //! Design: [docs/rust-langgraph/mcp-integration/implementation.md].
 //! ReAct/Agent depends on `ToolSource` instead of a concrete tool registry;
-//! implementations include `MockToolSource` (tests) and future `McpToolSource`.
+//! implementations include `MockToolSource` (tests) and `McpToolSource` (feature mcp).
 
 mod mock;
 
+#[cfg(feature = "mcp")]
+mod mcp;
+
 pub use mock::MockToolSource;
+
+#[cfg(feature = "mcp")]
+pub use mcp::{McpSession, McpSessionError, McpToolSource};
 
 use async_trait::async_trait;
 use serde_json::Value;

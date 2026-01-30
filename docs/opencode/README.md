@@ -45,6 +45,7 @@ OpenCode 采用客户端-服务器架构：
 | [提供商配置](providers.md) | 配置各种 AI 提供商 |
 | [工具系统](tools.md) | 内置工具和自定义工具 |
 | [代理配置](agents.md) | 配置和自定义代理 |
+| [Agent 与 Planner 实现讲解](agent-planner-implementation.md) | Agent（ReAct）与 Planner（Plan-and-Execute）的实现要点与自实现清单 |
 | [插件开发](plugins.md) | 创建和使用插件 |
 | [MCP 集成](mcp.md) | Model Context Protocol 服务器集成 |
 | [命令参考](commands.md) | 内置和自定义命令 |

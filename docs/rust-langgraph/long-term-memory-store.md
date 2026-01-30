@@ -49,24 +49,24 @@
 |------|----|------|------|
 | **P1** | **Store trait 与类型定义** | | |
 | P1.1 | Store 错误类型（StoreError） | 完成 | 统一错误，不暴露底层 DB |
-| P1.2 | StoreSearchHit 类型定义 | 待办 | key, value, score? |
-| P1.3 | Store trait 方法签名 | 待办 | put/get/list/search，async |
-| P1.4 | memory 模块与 Cargo 导出 | 待办 | store.rs、mod.rs、lib.rs |
-| P1.5 | Store / StoreSearchHit 文档注释 | 待办 | 英文，namespace/key/search 语义 |
+| P1.2 | StoreSearchHit 类型定义 | 完成 | key, value, score? |
+| P1.3 | Store trait 方法签名 | 完成 | put/get/list/search，async |
+| P1.4 | memory 模块与 Cargo 导出 | 完成 | store.rs、mod.rs、lib.rs |
+| P1.5 | Store / StoreSearchHit 文档注释 | 完成 | 英文，namespace/key/search 语义 |
 | **P2** | **InMemoryStore** | | |
-| P2.1 | namespace 序列化与复合 key 约定 | 待办 | 稳定字符串，唯一键 |
-| P2.2 | 内部存储结构（Map + 并发） | 待办 | Arc+RwLock 或 DashMap |
-| P2.3 | put / get 实现 | 待办 | 覆盖写、get 返回 Option |
-| P2.4 | list 实现 | 待办 | 按 namespace 过滤，返回 key 列表 |
-| P2.5 | search 实现（字符串包含） | 待办 | key/value contains，limit，score=None |
-| P2.6 | InMemoryStore 单元测试 | 待办 | put/get/list/search + 隔离 |
+| P2.1 | namespace 序列化与复合 key 约定 | 完成 | 稳定字符串，唯一键 |
+| P2.2 | 内部存储结构（Map + 并发） | 完成 | Arc+RwLock 或 DashMap |
+| P2.3 | put / get 实现 | 完成 | 覆盖写、get 返回 Option |
+| P2.4 | list 实现 | 完成 | 按 namespace 过滤，返回 key 列表 |
+| P2.5 | search 实现（字符串包含） | 完成 | key/value contains，limit，score=None |
+| P2.6 | InMemoryStore 单元测试 | 完成 | put/get/list/search + 隔离 |
 | **P3** | **SqliteStore** | | |
-| P3.1 | Cargo feature `sqlite` 与依赖 | 待办 | rusqlite/sqlx，可选 WAL |
-| P3.2 | 表 store_kv 与初始化 | 待办 | CREATE TABLE IF NOT EXISTS |
-| P3.3 | 连接管理与并发 | 待办 | Mutex/RwLock 或连接池 |
-| P3.4 | put / get / list 实现 | 待办 | INSERT OR REPLACE，SELECT |
-| P3.5 | search 实现（LIKE 参数化） | 待办 | 防注入，返回 StoreSearchHit |
-| P3.6 | SqliteStore 集成测试 | 待办 | 临时 DB、持久化、隔离 |
+| P3.1 | Cargo feature `sqlite` 与依赖 | 完成 | rusqlite/sqlx，可选 WAL |
+| P3.2 | 表 store_kv 与初始化 | 完成 | CREATE TABLE IF NOT EXISTS |
+| P3.3 | 连接管理与并发 | 完成 | spawn_blocking 每操作新连接 |
+| P3.4 | put / get / list 实现 | 完成 | INSERT OR REPLACE，SELECT |
+| P3.5 | search 实现（LIKE 参数化） | 完成 | 防注入，返回 StoreSearchHit |
+| P3.6 | SqliteStore 集成测试 | 完成 | 临时 DB、持久化、隔离 |
 | **P4** | **LanceStore** | | |
 | P4.1 | Cargo feature `lance` 与 Embedder | 待办 | lancedb，Embedder trait 或复用 |
 | P4.2 | LanceDB 表结构与 (ns,key) 唯一 | 待办 | ns, key, value, vector |

@@ -1,0 +1,9 @@
+[package]
+name = "chat-openai-example"
+version = "0.1.0"
+edition = "2024"
+description = "ChatOpenAI example: invoke OpenAI Chat Completions API"
+
+[dependencies]
+langgraph = { path = "../../rust-langgraph/crates/langgraph", features = ["openai"] }
+tokio = { workspace = true }

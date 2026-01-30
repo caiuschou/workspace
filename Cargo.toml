@@ -16,6 +16,8 @@ members = [
     "examples/prompts-server",
     "examples/tasks-server",
     "examples/logging-server",
+    "examples/chat-openai",
+    "examples/chat-zhipu",
     "mcp-impls/github-mcp/crates/mcp-server",
     "mcp-impls/zoekt-mcp/crates/mcp-server",
     "mcp-impls/gitlab-mcp/crates/mcp-server",

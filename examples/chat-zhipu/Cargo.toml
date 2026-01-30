@@ -1,0 +1,10 @@
+[package]
+name = "chat-zhipu-example"
+version = "0.1.0"
+edition = "2024"
+description = "ChatZhipu example: invoke Zhipu (智谱) GLM Chat Completions API"
+
+[dependencies]
+langgraph = { path = "../../rust-langgraph/crates/langgraph", features = ["openai"] }
+tokio = { workspace = true }
+dotenv = { workspace = true }

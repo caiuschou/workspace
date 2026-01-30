@@ -1564,6 +1564,8 @@ dependencies = [
  "async-openai",
  "async-trait",
  "dotenv",
+ "mcp_client",
+ "mcp_core",
  "serde_json",
  "thiserror 1.0.69",
  "tokio",

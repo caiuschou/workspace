@@ -36,6 +36,8 @@ mcp = ["dep:mcp_client", "dep:mcp_core"]
 zhipu = ["dep:async-openai", "dep:dotenv"]
 # Persistent checkpoint/store via SQLite (16-memory-design §3.6, §5.2.2)
 sqlite = ["dep:rusqlite"]
+# Persistent store with vector search via LanceDB (16-memory-design §5.2.1, long-term-memory-store P4)
+lance = ["dep:lancedb", "dep:arrow-array", "dep:arrow-schema", "dep:futures"]
 
 [dependencies]
 tokio = { workspace = true }
@@ -53,6 +55,11 @@ mcp_client = { path = "../../../crates/mcp-client", optional = true }
 mcp_core = { path = "../../../crates/mcp-core", optional = true }
 # Optional: SQLite for persistent Checkpointer and Store (feature "sqlite").
 rusqlite = { version = "0.31", optional = true, features = ["bundled"] }
+# Optional: LanceDB for persistent Store with vector search (feature "lance").
+lancedb = { version = "0.23", optional = true }
+arrow-array = { version = "56.2", optional = true }
+arrow-schema = { version = "56.2", optional = true }
+futures = { version = "0.3", optional = true }
 
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }

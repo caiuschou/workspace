@@ -31,6 +31,8 @@ pub use memory::{
     Checkpointer, InMemoryStore, JsonSerializer, MemorySaver, Namespace, RunnableConfig, Store,
     StoreError, StoreSearchHit,
 };
+#[cfg(feature = "lance")]
+pub use memory::{Embedder, LanceStore};
 #[cfg(feature = "sqlite")]
 pub use memory::{SqliteSaver, SqliteStore};
 pub use traits::Agent;

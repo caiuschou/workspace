@@ -34,14 +34,23 @@ impl McpSession {
     /// Creates a new MCP session by spawning the server process and completing
     /// the initialize handshake. Returns `Err` if spawn or initialize fails.
     ///
-    /// **Interaction**: Called by `McpToolSource::new`. Uses `StdioClientTransport`
-    /// from mcp_client; sends `initialize` then `notifications/initialized`.
-    pub fn new(command: impl Into<String>, args: Vec<String>) -> Result<Self, McpSessionError> {
+    /// **Interaction**: Called by `McpToolSource::new` / `new_with_env`. Uses
+    /// `StdioClientTransport` from mcp_client; sends `initialize` then
+    /// `notifications/initialized`. Optional `env` is passed to the child process
+    /// (e.g. GITLAB_TOKEN for GitLab MCP server).
+    pub fn new(
+        command: impl Into<String>,
+        args: Vec<String>,
+        env: Option<impl IntoIterator<Item = (impl Into<String>, impl Into<String>)>>,
+    ) -> Result<Self, McpSessionError> {
         let (tx, rx) = mpsc::channel();
 
-        let params = StdioServerParameters::new(command)
+        let mut params = StdioServerParameters::new(command)
             .args(args)
             .stderr(StdioStream::Inherit);
+        if let Some(env_iter) = env {
+            params = params.env(env_iter);
+        }
 
         let mut transport = StdioClientTransport::new(params);
         transport.on_message(move |msg| {

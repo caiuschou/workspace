@@ -31,12 +31,29 @@ pub struct McpToolSource {
 
 impl McpToolSource {
     /// Creates a new McpToolSource by spawning the MCP server and initializing.
-    /// Returns `Err` if spawn or initialize fails.
+    /// Returns `Err` if spawn or initialize fails. Child process inherits only
+    /// default env (HOME, PATH, etc.); no extra vars.
     ///
     /// **Interaction**: Caller provides `command` (e.g. `cargo`) and `args`
     /// (e.g. `["run", "-p", "mcp-filesystem-server", "--quiet"]`).
     pub fn new(command: impl Into<String>, args: Vec<String>) -> Result<Self, McpSessionError> {
-        let session = McpSession::new(command, args)?;
+        let session = McpSession::new(command, args, None::<Vec<(String, String)>>)?;
+        Ok(Self {
+            session: Mutex::new(session),
+        })
+    }
+
+    /// Like `new`, but passes the given env vars to the MCP server process.
+    /// Use for servers that need credentials (e.g. GITLAB_TOKEN for GitLab MCP).
+    ///
+    /// **Interaction**: Caller provides `command`, `args`, and env key-value pairs
+    /// to be set in the child process environment.
+    pub fn new_with_env(
+        command: impl Into<String>,
+        args: Vec<String>,
+        env: impl IntoIterator<Item = (impl Into<String>, impl Into<String>)>,
+    ) -> Result<Self, McpSessionError> {
+        let session = McpSession::new(command, args, Some(env))?;
         Ok(Self {
             session: Mutex::new(session),
         })

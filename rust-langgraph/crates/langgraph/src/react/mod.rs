@@ -14,7 +14,25 @@ pub use think_node::ThinkNode;
 
 /// Default system prompt for ReAct agents.
 ///
-/// Prepend as the first message in `ReActState::messages` when building state
-/// so the LLM follows think → act → observe behavior. Callers can use a custom
-/// system message instead; ThinkNode does not inject this automatically.
-pub const REACT_SYSTEM_PROMPT: &str = "You are a ReAct agent. Think step by step. When you need to use a tool, use it. After observing tool results, continue reasoning or respond to the user.";
+/// Follows the Thought → Action → Observation pattern. Prepend as the first
+/// message in `ReActState::messages` when building state so the LLM reasons
+/// before acting and analyzes tool results. Callers can use a custom system
+/// message instead; ThinkNode does not inject this automatically.
+///
+/// See [docs/rust-langgraph/17-react-prompt-practices.md] for prompt design
+/// and alternatives (e.g. domain-specific or thought/action/observation splits).
+pub const REACT_SYSTEM_PROMPT: &str = r#"You are an agent that follows the ReAct pattern (Reasoning + Acting).
+
+RULES:
+1. Always start with THOUGHT: analyze the user's request and what information you need.
+2. Use ACTION: call tools when you need more information, or provide a direct FINAL_ANSWER when you have enough.
+3. After each tool result (OBSERVATION), reason about what you learned and decide the next step.
+4. Be thorough but concise in your reasoning.
+5. When using tool data, cite or summarize it clearly in your final answer.
+
+PHASES:
+- THOUGHT: Reason about what the user needs, what you already have, and what tools could help.
+- ACTION: Execute one tool at a time, or give FINAL_ANSWER with your complete response.
+- OBSERVATION: After seeing tool output, analyze it and either call another tool or answer.
+
+Explain your reasoning clearly and use tools when they can help. Do not make up facts; use tool results."#;

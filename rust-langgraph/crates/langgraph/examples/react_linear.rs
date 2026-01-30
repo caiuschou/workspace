@@ -8,7 +8,7 @@
 
 use langgraph::{
     ActNode, CompiledStateGraph, Message, MockLlm, MockToolSource, ObserveNode, ReActState,
-    StateGraph, ThinkNode,
+    REACT_SYSTEM_PROMPT, StateGraph, ThinkNode,
 };
 
 #[tokio::main]
@@ -29,7 +29,10 @@ async fn main() {
     let compiled: CompiledStateGraph<ReActState> = graph.compile().expect("valid graph");
 
     let state = ReActState {
-        messages: vec![Message::user(input)],
+        messages: vec![
+            Message::system(REACT_SYSTEM_PROMPT),
+            Message::user(input),
+        ],
         tool_calls: vec![],
         tool_results: vec![],
     };

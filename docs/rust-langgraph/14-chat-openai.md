@@ -32,8 +32,8 @@ OpenAI 相关设计与 LangChain 的 Chat 模型体系对齐，便于从 LangCha
 | **单次调用 invoke ≈ invoke** | 消息进、助手内容 + 可选 tool_calls 出。 | `LlmClient::invoke(&[Message]) -> Result<LlmResponse, AgentError>`；`ChatOpenAI` 已实现。 |
 | **消息类型 Message** | System / User / Assistant，与 OpenAI 角色一致。 | `message.rs`：`Message::system/user/assistant`。 |
 | **响应类型 LlmResponse** | `content: String` + `tool_calls: Vec<ToolCall>`（含 name、arguments、id）。 | `llm/mod.rs`；由 `invoke` 返回。 |
-| **OpenAI 客户端 ChatOpenAI** | 调 OpenAI Chat Completions，实现 `LlmClient`。 | `llm/openai.rs`，需 feature `openai`。 |
-| **智谱客户端 ChatZhipu** | 调智谱 GLM Chat Completions（OpenAI 兼容），实现 `LlmClient`。 | `llm/zhipu.rs`，需 feature `openai`；`ZHIPU_API_KEY`、base `https://open.bigmodel.cn/api/paas/v4`。 |
+| **OpenAI 客户端 ChatOpenAI** | 调 OpenAI Chat Completions，实现 `LlmClient`。 | `llm/openai.rs`，需 feature `zhipu`。 |
+| **智谱客户端 ChatZhipu** | 调智谱 GLM Chat Completions（OpenAI 兼容），实现 `LlmClient`。 | `llm/zhipu.rs`，需 feature `zhipu`；`ZHIPU_API_KEY`、base `https://open.bigmodel.cn/api/paas/v4`。 |
 | **构造与配置** | 默认从环境变量读 key；支持自定义 config。 | `ChatOpenAI::new(model)`、`ChatOpenAI::with_config(config, model)`。 |
 | **工具调用 bind_tools ≈ with_tools** | 传入工具列表，API 可返回 tool_calls。 | `ChatOpenAI::with_tools(tools: Vec<ToolSpec>)`；请求中带 `tools`，响应解析为 `LlmResponse::tool_calls`。 |
 | **环境变量 OPENAI_API_KEY** | 默认 API key 来源。 | `Client::new()` 使用 `OpenAIConfig` 默认行为（async_openai）。 |
@@ -79,7 +79,7 @@ OpenAI 相关设计与 LangChain 的 Chat 模型体系对齐，便于从 LangCha
 | **抽象** | `LlmClient`：`invoke(messages) -> Result<LlmResponse, AgentError>`；`LlmResponse` 含 `content: String` 与 `tool_calls: Vec<ToolCall>`。 |
 | **实现** | `ChatOpenAI`、`ChatZhipu` 已实现 `LlmClient`，支持默认配置、可选 `with_config`、可选 `with_tools`。 |
 | **消息类型** | `Message` 枚举：`System(String)`、`User(String)`、`Assistant(String)`，与 OpenAI API 的 system/user/assistant 一一对应。 |
-| **代码位置** | `rust-langgraph/crates/langgraph/src/llm/`：`mod.rs`（trait 与导出）、`openai.rs`（ChatOpenAI）、`zhipu.rs`（ChatZhipu）、`mock.rs`（MockLlm）；需 feature `openai`。 |
+| **代码位置** | `rust-langgraph/crates/langgraph/src/llm/`：`mod.rs`（trait 与导出）、`openai.rs`（ChatOpenAI）、`zhipu.rs`（ChatZhipu）、`mock.rs`（MockLlm）；需 feature `zhipu`。 |
 
 即：**主类型为 ChatOpenAI**，另有 **ChatZhipu**（智谱 GLM）；命名与文档已与 LangChain 对齐。
 
@@ -111,8 +111,8 @@ OpenAI 相关设计与 LangChain 的 Chat 模型体系对齐，便于从 LangCha
 
 ## 依赖与 feature
 
-- **Feature**：`openai`（在 `crates/langgraph/Cargo.toml` 中声明）。  
-- **依赖**：`async-openai`（可选，仅当 `openai` 开启时），用于 Chat Completions。  
+- **Feature**：`zhipu`（智谱/OpenAI 兼容，在 `crates/langgraph/Cargo.toml` 中声明）。  
+- **依赖**：`async-openai`（可选，仅当 `zhipu` 开启时），用于 Chat Completions。  
 - **环境**：默认从 `OPENAI_API_KEY` 读 API key；或通过 `ChatOpenAI::with_config(config, model)` 传入自定义 `OpenAIConfig`（含 base URL 等）。
 
 ## 使用方式
@@ -126,13 +126,13 @@ OpenAI 相关设计与 LangChain 的 Chat 模型体系对齐，便于从 LangCha
 
 ### 编译与依赖
 
-启用 `openai` feature 后即可使用 `ChatOpenAI`（即当前文档中的 ChatOpenAI 实现）：
+启用 `zhipu` feature 后即可使用 `ChatOpenAI` / `ChatZhipu`（即当前文档中的实现）：
 
 ```bash
-cargo build --features openai
+cargo build --features zhipu
 ```
 
-依赖：`langgraph` crate 中已声明可选依赖 `async-openai`，仅当 `openai` 开启时链接。
+依赖：`langgraph` crate 中已声明可选依赖 `async-openai`，仅当 `zhipu` 开启时链接。
 
 ### 环境变量
 
@@ -149,7 +149,7 @@ cargo build --features openai
 示例（伪代码）：
 
 ```rust
-use langgraph::{Message, ChatOpenAI, LlmClient}; // 需 feature "openai"
+use langgraph::{Message, ChatOpenAI, LlmClient}; // 需 feature "zhipu"
 
 let messages = vec![
     Message::system("You are a helpful assistant."),
@@ -236,7 +236,7 @@ let think = ThinkNode::new(llm);
 
 ### 阶段 0 完成情况
 
-阶段 0 已全部完成：ChatOpenAI 为主类型（原 OpenAILlm 已重命名），`llm/mod.rs`、`llm/README.md`、crate 根 `lib.rs` 已导出并更新说明；编译通过（`cargo build --features openai`）。后续按需进行阶段 1（model profile）及以后。
+阶段 0 已全部完成：ChatOpenAI 为主类型（原 OpenAILlm 已重命名），`llm/mod.rs`、`llm/README.md`、crate 根 `lib.rs` 已导出并更新说明；编译通过（`cargo build --features zhipu`）。后续按需进行阶段 1（model profile）及以后。
 
 ### 方案交付状态
 

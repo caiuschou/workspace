@@ -19,8 +19,8 @@
 | 组件 | 说明 | 代码位置 |
 |------|------|----------|
 | **LlmClient** | `invoke(messages) -> LlmResponse`（content + tool_calls） | `llm/mod.rs` |
-| **ChatOpenAI** | 实现 LlmClient，调 OpenAI Chat Completions；`with_tools(tools)` | `llm/openai.rs`，feature `openai` |
-| **ChatZhipu** | 实现 LlmClient，智谱 GLM（OpenAI 兼容） | `llm/zhipu.rs`，feature `openai` |
+| **ChatOpenAI** | 实现 LlmClient，调 OpenAI Chat Completions；`with_tools(tools)` | `llm/openai.rs`，feature `zhipu` |
+| **ChatZhipu** | 实现 LlmClient，智谱 GLM（OpenAI 兼容） | `llm/zhipu.rs`，feature `zhipu` |
 | **MockLlm** | 固定响应、可配置 tool_calls，用于测试 | `llm/mock.rs` |
 | **ThinkNode** | 持 `Box<dyn LlmClient>`，读 messages、调 `invoke`、写 assistant + tool_calls | `react/think_node.rs` |
 | **ActNode** | 持 `Box<dyn ToolSource>`，读 tool_calls、`call_tool`、写 tool_results | `react/act_node.rs` |
@@ -58,7 +58,7 @@ Next::Continue（线性）→ 下一节点；Next::Node("think")（多轮）→ 
 - **ActNode** 持 `Box<dyn ToolSource>`：先用 **MockToolSource::get_time_example()**（或自定义 Mock），保证链路跑通。
 - **图**：线性链 **think → act → observe**，`ObserveNode::new()`。
 - **入口**：新增示例 **react_openai**（或扩展现有示例），从 args 读用户输入，构造 `ReActState { messages, .. }`，invoke，打印最终 messages。
-- **构建**：需 `--features openai`，环境变量 `OPENAI_API_KEY`（或智谱 `ZHIPU_API_KEY` 等）。
+- **构建**：需 `--features zhipu`，环境变量 `OPENAI_API_KEY`（或智谱 `ZHIPU_API_KEY` 等）。
 
 无需改 ThinkNode / ActNode / StateGraph 实现；只替换 LLM 与 ToolSource 的具体类型，并加一个可运行的示例。
 
@@ -129,7 +129,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-需 `cargo run -p langgraph --example react_zhipu --features openai -- "What time is it?"`，且 `ZHIPU_API_KEY` 已设置。
+需 `cargo run -p langgraph --example react_zhipu --features zhipu -- "What time is it?"`，且 `ZHIPU_API_KEY` 已设置。
 
 ### 带工具绑定（with_tools）
 
@@ -147,7 +147,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 |------|------|----------------|------|------|
 | 1 | 方案文档 | 本文档 15-llm-react-agent.md | 已完成 | 目标、现状、数据流、方案、使用方式、任务表 |
 | 2 | 更新 README 文档目录 | docs/rust-langgraph/README.md 增加 15-llm-react-agent 链接 | 已完成 | 与 13、14 并列 |
-| 3 | 最小示例 react_zhipu | 示例：ThinkNode(ChatZhipu) + ActNode(MockToolSource) + ObserveNode::new()，线性链 | 已完成 | `cargo run -p langgraph --example react_zhipu --features openai -- "What time is it?"`；需 ZHIPU_API_KEY |
+| 3 | 最小示例 react_zhipu | 示例：ThinkNode(ChatZhipu) + ActNode(MockToolSource) + ObserveNode::new()，线性链 | 已完成 | `cargo run -p langgraph --example react_zhipu --features zhipu -- "What time is it?"`；需 ZHIPU_API_KEY |
 | 4 | 示例带 with_tools | react_zhipu 中 ToolSource::list_tools → ChatZhipu::with_tools，Act 用同源 ToolSource | 已完成 | 保证模型返回 tool_calls，Act 能执行 |
 | 5 | 多轮示例（可选） | ObserveNode::with_loop + 条件边，或 react_zhipu_loop 示例 | 待办 | 见 13-react-agent-design §8.5 |
 | 6 | Think 接 list_tools（可选） | ThinkNode 构建 prompt 时调用 ToolSource::list_tools | 待办 | 13 文档 §8.6 任务 6.1 |

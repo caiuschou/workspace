@@ -84,6 +84,7 @@ McpToolSource 参考 gitlab 模式：`StdioClientTransport` + `mpsc` 收消息 +
 | 5.1 | react_mcp 示例 | `examples/react_mcp.rs`：McpToolSource 连接 mcp-filesystem-server；ReAct 图 think→act→observe；用户问「当前目录有哪些文件」 | 已完成 | 依赖 4.3, 3.8；用 MockLlm 返回 list_directory，`--features mcp` |
 | 5.2 | 示例文档 | example 顶部 doc 说明运行方式、环境变量（如 MCP_SERVER_COMMAND）、依赖的 MCP Server | 已完成 | 依赖 5.1 |
 | 5.3 | 文档同步 | implementation.md 任务表与本文对齐；本文任务表全部勾选完成 | 已完成 | 依赖 5.2 |
+| 5.4 | react_exa 示例 | `examples/react_exa.rs`：McpToolSource 经 mcp-remote 连接 Exa 托管 MCP（https://mcp.exa.ai/mcp）；ChatZhipu + 真实工具（web_search_exa 等）；`--features zhipu`（mcp 默认） | 已完成 | 需 npx/mcp-remote、ZHIPU_API_KEY；见 [Exa MCP](https://github.com/exa-labs/exa-mcp-server) |
 
 **表使用说明**：按阶段顺序执行；阶段 N 依赖阶段 N-1 的完成项。每项完成后在「状态」列改为「已完成」。
 
@@ -144,3 +145,4 @@ langgraph/tests/
 | 5 | 5.1 react_mcp 示例 | 已完成 |
 | 5 | 5.2 示例文档 | 已完成 |
 | 5 | 5.3 文档同步 | 已完成 |
+| 5 | 5.4 react_exa 示例 | 已完成 |

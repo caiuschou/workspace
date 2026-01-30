@@ -91,7 +91,13 @@ MCP 使用 JSON-RPC 2.0。与工具相关的方法：
 
 ## 5. 实现与任务
 
-详见 [implementation.md](implementation.md)：类型定义、模块划分、任务表与验收。
+详见 [implementation.md](implementation.md)：类型定义、模块划分、任务表与验收。开发计划与任务表见 [mcp-tool-devplan.md](mcp-tool-devplan.md)。
+
+**示例**：
+
+- **react_mcp**：McpToolSource 连接本地 stdio MCP（如 mcp-filesystem-server），`--features mcp`。
+- **react_mcp_gitlab**：连接 GitLab MCP，需 `GITLAB_TOKEN`，`--features mcp`。
+- **react_exa**：ReAct + Exa MCP（网络搜索），经 `npx mcp-remote https://mcp.exa.ai/mcp` 连接 Exa 托管 MCP；需 `ZHIPU_API_KEY`，`--features zhipu`（mcp 已默认开启）。见 [Exa MCP](https://github.com/exa-labs/exa-mcp-server)。
 
 依赖：[09-minimal-agent-design](../09-minimal-agent-design.md)、[11-state-graph-design](../11-state-graph-design.md)。与 [05-tools](../05-tools.md) 的关系：05 保留为「自建工具」实现；本方案通过 ToolSource + ToolRegistryAdapter 复用 05，同时用 MCP 作为推荐的工具扩展方式。
 

@@ -8,11 +8,15 @@ mod mock;
 
 #[cfg(feature = "openai")]
 mod openai;
+#[cfg(feature = "openai")]
+mod zhipu;
 
 pub use mock::MockLlm;
 
 #[cfg(feature = "openai")]
-pub use openai::OpenAILlm;
+pub use openai::ChatOpenAI;
+#[cfg(feature = "openai")]
+pub use zhipu::ChatZhipu;
 
 use async_trait::async_trait;
 
@@ -22,7 +26,7 @@ use crate::state::ToolCall;
 
 /// Response from an LLM completion: assistant message text and optional tool calls.
 ///
-/// **Interaction**: Returned by `LlmClient::complete()`; ThinkNode writes
+/// **Interaction**: Returned by `LlmClient::invoke()`; ThinkNode writes
 /// `content` into a new assistant message and `tool_calls` into `ReActState::tool_calls`.
 pub struct LlmResponse {
     /// Assistant message content (plain text).
@@ -34,11 +38,12 @@ pub struct LlmResponse {
 /// LLM client: given messages, returns assistant text and optional tool_calls.
 ///
 /// ThinkNode calls this to produce the next assistant message and any tool
-/// invocations. Implementations: `MockLlm` (fixed response), `OpenAILlm` (real API, feature `openai`).
+/// invocations. Implementations: `MockLlm` (fixed response), `ChatOpenAI` / `ChatZhipu` (real API, feature `openai`).
 ///
 /// **Interaction**: Used by ThinkNode; see 13-react-agent-design §4 and §8.2.
 #[async_trait]
 pub trait LlmClient: Send + Sync {
-    /// Complete one turn: read messages, return assistant content and optional tool_calls.
-    async fn complete(&self, messages: &[Message]) -> Result<LlmResponse, AgentError>;
+    /// Invoke one turn: read messages, return assistant content and optional tool_calls.
+    /// Aligns with LangChain's `invoke` / `ainvoke` (single-call API).
+    async fn invoke(&self, messages: &[Message]) -> Result<LlmResponse, AgentError>;
 }

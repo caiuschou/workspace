@@ -17,6 +17,8 @@ pub mod traits;
 pub use error::AgentError;
 pub use graph::{CompilationError, CompiledStateGraph, Next, Node, StateGraph};
 pub use llm::{LlmClient, LlmResponse, MockLlm};
+#[cfg(feature = "openai")]
+pub use llm::{ChatOpenAI, ChatZhipu};
 pub use message::Message;
 pub use state::{ReActState, ToolCall, ToolResult};
 pub use react::{ActNode, ObserveNode, ThinkNode};

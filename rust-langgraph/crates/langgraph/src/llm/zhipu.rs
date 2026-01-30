@@ -1,10 +1,10 @@
-//! OpenAI Chat Completions client implementing `LlmClient` (ChatOpenAI).
+//! Zhipu (智谱) GLM Chat Completions client implementing `LlmClient` (ChatZhipu).
 //!
-//! Uses the real OpenAI Chat Completions API. Requires `OPENAI_API_KEY` (or
+//! Uses Zhipu AI's OpenAI-compatible API. Requires `ZHIPU_API_KEY` (or
 //! explicit config). Optional tools can be set for function/tool calling;
 //! when present, the API may return `tool_calls` in the response.
 //!
-//! **Interaction**: Implements `LlmClient`; used by ThinkNode like `MockLlm`.
+//! **Interaction**: Implements `LlmClient`; used by ThinkNode like `ChatOpenAI`.
 //! Depends on `async_openai` (feature `openai`).
 
 use async_trait::async_trait;
@@ -26,27 +26,34 @@ use async_openai::{
     Client,
 };
 
-/// OpenAI Chat Completions client implementing `LlmClient` (aligns with LangChain ChatOpenAI).
+/// Zhipu API base URL (OpenAI-compatible).
+const ZHIPU_API_BASE: &str = "https://open.bigmodel.cn/api/paas/v4";
+
+/// Zhipu (智谱) GLM Chat Completions client implementing `LlmClient`.
 ///
-/// Uses `OPENAI_API_KEY` from the environment by default; or provide
-/// config via `ChatOpenAI::with_config`. Optionally set tools (e.g. from
-/// `ToolSource::list_tools()`) to enable tool_calls in the response.
+/// Uses `ZHIPU_API_KEY` from the environment by default; or provide
+/// config via `ChatZhipu::with_config`. Supports models such as
+/// `glm-4-plus`, `glm-4-flash`, `glm-4-long`. Optionally set tools
+/// to enable tool_calls in the response.
 ///
 /// **Interaction**: Implements `LlmClient`; used by ThinkNode.
-pub struct ChatOpenAI {
+pub struct ChatZhipu {
     client: Client<OpenAIConfig>,
     model: String,
     tools: Option<Vec<ToolSpec>>,
 }
 
-impl ChatOpenAI {
-    /// Build client with default config (API key from `OPENAI_API_KEY` env).
+impl ChatZhipu {
+    /// Build client with default config (API key from `ZHIPU_API_KEY` env,
+    /// base URL points to Zhipu open platform).
     pub fn new(model: impl Into<String>) -> Self {
-        Self {
-            client: Client::new(),
-            model: model.into(),
-            tools: None,
-        }
+        let api_key = std::env::var("ZHIPU_API_KEY").unwrap_or_default();
+        Self::with_config(
+            OpenAIConfig::new()
+                .with_api_base(ZHIPU_API_BASE)
+                .with_api_key(api_key),
+            model,
+        )
     }
 
     /// Build client with custom config (e.g. custom API key or base URL).
@@ -75,18 +82,20 @@ impl ChatOpenAI {
                     ))
                 }
                 Message::User(s) => {
-                    ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage::from(s.as_str()))
+                    ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage::from(
+                        s.as_str(),
+                    ))
                 }
-                Message::Assistant(s) => ChatCompletionRequestMessage::Assistant(
-                    (s.as_str()).into(),
-                ),
+                Message::Assistant(s) => {
+                    ChatCompletionRequestMessage::Assistant((s.as_str()).into())
+                }
             })
             .collect()
     }
 }
 
 #[async_trait]
-impl LlmClient for ChatOpenAI {
+impl LlmClient for ChatZhipu {
     async fn invoke(&self, messages: &[Message]) -> Result<LlmResponse, AgentError> {
         let openai_messages = Self::messages_to_request(messages);
         let mut args = CreateChatCompletionRequestArgs::default();
@@ -111,18 +120,18 @@ impl LlmClient for ChatOpenAI {
         }
 
         let request = args.build().map_err(|e| {
-            AgentError::ExecutionFailed(format!("OpenAI request build failed: {}", e))
+            AgentError::ExecutionFailed(format!("Zhipu request build failed: {}", e))
         })?;
 
         let response = self.client.chat().create(request).await.map_err(|e| {
-            AgentError::ExecutionFailed(format!("OpenAI API error: {}", e))
+            AgentError::ExecutionFailed(format!("Zhipu API error: {}", e))
         })?;
 
         let choice = response
             .choices
             .into_iter()
             .next()
-            .ok_or_else(|| AgentError::ExecutionFailed("OpenAI returned no choices".to_string()))?;
+            .ok_or_else(|| AgentError::ExecutionFailed("Zhipu returned no choices".to_string()))?;
 
         let msg = choice.message;
         let content = msg.content.unwrap_or_default();

@@ -44,7 +44,7 @@ impl Node<ReActState> for ThinkNode {
     /// Reads state.messages, calls LLM, appends assistant message and sets tool_calls.
     /// Returns Next::Continue to follow linear edge order (e.g. think → act).
     async fn run(&self, state: ReActState) -> Result<(ReActState, Next), AgentError> {
-        let response = self.llm.complete(&state.messages).await?;
+        let response = self.llm.invoke(&state.messages).await?;
         let mut messages = state.messages;
         messages.push(Message::Assistant(response.content));
         let new_state = ReActState {

@@ -10,7 +10,7 @@ use langgraph::{LlmClient, Message, MockLlm};
 async fn mock_llm_with_get_time_returns_content_and_one_tool_call() {
     let llm = MockLlm::with_get_time_call();
     let messages = vec![Message::user("What time is it?")];
-    let out = llm.complete(&messages).await.unwrap();
+    let out = llm.invoke(&messages).await.unwrap();
     assert_eq!(out.content, "I'll check the time.");
     assert_eq!(out.tool_calls.len(), 1);
     assert_eq!(out.tool_calls[0].name, "get_time");
@@ -22,7 +22,7 @@ async fn mock_llm_with_get_time_returns_content_and_one_tool_call() {
 async fn mock_llm_with_no_tool_calls_returns_content_and_empty_tool_calls() {
     let llm = MockLlm::with_no_tool_calls("Hello, no tools.");
     let messages = vec![Message::user("Hi")];
-    let out = llm.complete(&messages).await.unwrap();
+    let out = llm.invoke(&messages).await.unwrap();
     assert_eq!(out.content, "Hello, no tools.");
     assert!(out.tool_calls.is_empty());
 }
@@ -38,7 +38,7 @@ async fn mock_llm_new_custom_content_and_tool_calls() {
         }],
     );
     let messages = vec![Message::user("Search for x")];
-    let out = llm.complete(&messages).await.unwrap();
+    let out = llm.invoke(&messages).await.unwrap();
     assert_eq!(out.content, "Custom reply");
     assert_eq!(out.tool_calls.len(), 1);
     assert_eq!(out.tool_calls[0].name, "search");
@@ -49,7 +49,7 @@ async fn mock_llm_new_custom_content_and_tool_calls() {
 async fn mock_llm_ignores_input_messages_returns_fixed_response() {
     let llm = MockLlm::with_get_time_call();
     let empty: Vec<Message> = vec![];
-    let out = llm.complete(&empty).await.unwrap();
+    let out = llm.invoke(&empty).await.unwrap();
     assert_eq!(out.content, "I'll check the time.");
     assert_eq!(out.tool_calls[0].name, "get_time");
 }

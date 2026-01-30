@@ -26,7 +26,7 @@ pub struct MockLlm {
     content: String,
     /// Tool calls to return (or first call when stateful).
     tool_calls: Vec<ToolCall>,
-    /// When Some, first complete() returns (content, tool_calls), later returns (second_content, []).
+    /// When Some, first invoke() returns (content, tool_calls), later returns (second_content, []).
     call_count: Option<AtomicUsize>,
     /// Second response content (stateful mode).
     second_content: Option<String>,
@@ -69,7 +69,7 @@ impl MockLlm {
         }
     }
 
-    /// Build a stateful mock: first complete() returns get_time tool_call, second returns no tool_calls.
+    /// Build a stateful mock: first invoke() returns get_time tool_call, second returns no tool_calls.
     /// Used for multi-round ReAct tests (phase 5).
     pub fn first_tools_then_end() -> Self {
         Self {
@@ -99,7 +99,7 @@ impl MockLlm {
 
 #[async_trait]
 impl LlmClient for MockLlm {
-    async fn complete(&self, _messages: &[Message]) -> Result<LlmResponse, AgentError> {
+    async fn invoke(&self, _messages: &[Message]) -> Result<LlmResponse, AgentError> {
         let (content, tool_calls) = match &self.call_count {
             Some(c) => {
                 let n = c.fetch_add(1, Ordering::SeqCst);

@@ -67,7 +67,7 @@ fn extract_bun_blob(exe_path: &Path) -> Result<Vec<u8>> {
     match Object::parse(&buf)? {
         Object::PE(pe) => {
             for section in &pe.sections {
-                let is_bun = section.name[..4] == b".bun"
+                let is_bun = section.name[..4] == *b".bun"
                     && section.name[4..].iter().all(|&b| b == 0);
                 if is_bun {
                     let start = section.pointer_to_raw_data as usize;

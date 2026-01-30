@@ -1,4 +1,4 @@
-use governor::{clock::DefaultClock, state::InMemoryState, Quota, RateLimiter};
+use governor::{clock::DefaultClock, state::NotKeyed, state::InMemoryState, Quota, RateLimiter};
 use reqwest::Client as HttpClient;
 use std::num::NonZeroU32;
 use std::time::Duration;
@@ -9,7 +9,7 @@ use crate::error::{Result, ScraperError};
 /// HTTP client for scraping GitLab documentation
 pub struct DocScraperClient {
     http_client: HttpClient,
-    rate_limiter: RateLimiter<InMemoryState, DefaultClock>,
+    rate_limiter: RateLimiter<NotKeyed, InMemoryState, DefaultClock>,
     base_url: String,
     max_retries: u32,
 }
@@ -71,19 +71,21 @@ impl DocScraperClient {
                     return Ok(content);
                 }
                 Err(e) => {
-                    last_error = Some(e.clone());
-
                     // Don't retry on 404
-                    if matches!(e, ScraperError::HttpError(ref req_err) if req_err.status().map_or(false, |s| s.as_u16() == 404)) {
+                    let is_404 = matches!(e, ScraperError::HttpError(ref req_err) if req_err.status().map_or(false, |s| s.as_u16() == 404));
+                    if is_404 {
                         return Err(e);
                     }
+
+                    last_error = Some(e);
 
                     // Don't retry on last attempt
                     if attempt >= max_retries {
                         break;
                     }
 
-                    warn!("Request failed: {}, retrying in {:?}...", e, delay);
+                    let error_msg = last_error.as_ref().map(|e| e.to_string()).unwrap_or_default();
+                    warn!("Request failed: {}, retrying in {:?}...", error_msg, delay);
                     tokio::time::sleep(delay).await;
                     delay = std::cmp::min(delay * 2, Duration::from_secs(10));
                 }

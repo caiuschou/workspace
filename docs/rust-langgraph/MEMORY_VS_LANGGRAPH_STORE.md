@@ -63,3 +63,5 @@ rust-langgraph 在 `crates/langgraph/src/memory/` 下提供：
   2）新增一个 **Store** trait，提供 `put(namespace, key, value)`、`search(namespace, query?, limit)`，再为「仅键值」和「带向量索引」各做一个实现，从而与 LangGraph 的 BaseStore 在概念上对齐。
 
 上述对照基于当前（文档编写时）的 rust-langgraph 与 LangGraph 官方文档/实现；若某一侧 API 或模块划分有变更，以各自仓库与官方文档为准。
+
+**Rust 侧记忆设计**（以 Python LangGraph 为蓝本、Rust 代码风格）：见 [16-memory-design.md](16-memory-design.md)。

@@ -36,6 +36,7 @@
 | [mcp-integration/README.md](mcp-integration/README.md) | **用 MCP 替代 Tool 的最简集成**（ToolSource、MCP 客户端、实现说明见 [implementation](mcp-integration/implementation.md)） |
 | [05-tools.md](05-tools.md) | 工具调用系统 |
 | [06-memory-agent.md](06-memory-agent.md) | **记忆 Agent** |
+| [16-memory-design.md](16-memory-design.md) | **记忆设计**（以 Python LangGraph 为蓝本，Rust 代码风格：Checkpointer、Store、Config、任务表） |
 | [MEMORY_VS_LANGGRAPH_STORE.md](MEMORY_VS_LANGGRAPH_STORE.md) | rust-langgraph Memory 与 LangGraph MemoryStore 对照 |
 | [07-multi-agent.md](07-multi-agent.md) | 多 Agent 协作 |
 | [08-production.md](08-production.md) | 生产级实现 |

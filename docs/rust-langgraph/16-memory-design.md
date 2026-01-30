@@ -26,7 +26,7 @@ LangGraph 将记忆分为两层：
 
 - **对齐 Python 语义**：thread、checkpoint、channel_values、channel_versions、Store namespace 等概念一一对应。
 - **Rust 风格**：trait 抽象、泛型约束、显式错误类型、异步 API；类型一个文件、测试独立；注释英文。
-- **分阶段落地**：先短期记忆（Checkpointer + 图集成），再长期记忆（Store）；序列化与 reducer 复用 [10-reducer-design](10-reducer-design.md)。
+- **分阶段落地**：先短期记忆（Checkpointer + 图集成），再长期记忆（Store）；序列化与 reducer 复用 [10-reducer-design](10-reducer-design.md)。**持久化**：短期记忆用 SqliteSaver（3.6），长期记忆用 SqliteStore（5.2.2），与 Python `langgraph-checkpoint-sqlite` 对齐。
 - **向量/语义检索**：本方案采用**内存向量数据库**（进程内存储 embedding，余弦相似度检索），不依赖 Qdrant 等独立向量服务；适合开发、单机与小规模部署，进程退出不持久化。
 
 ---
@@ -189,6 +189,27 @@ where
 - 默认实现可用 `serde_json` 或 `bincode`；若 state 含不可序列化类型，可预留 `Serializer` 注入（或后续加 EncryptedSerializer）。
 - Checkpointer 实现可持有 `Arc<dyn Serializer<S>>`，put 时先 serialize 再存；get 时取 bytes 再 deserialize 成 `Checkpoint<S>`。
 
+### 3.6 SqliteSaver（短期记忆持久化）
+
+与 Python `langgraph-checkpoint-sqlite` 的 SqliteSaver 对应：将 checkpoint 写入本地 SQLite，进程重启后仍可恢复；适合单机部署与开发调试。
+
+**表结构**：单表 `checkpoints`，主键为 `(thread_id, checkpoint_ns, checkpoint_id)`，state 以 BLOB 存序列化结果，元数据单独列以便 list/排序。
+
+```rust
+/// SQLite schema (logical). One row per checkpoint.
+///   checkpoints(thread_id, checkpoint_ns, checkpoint_id, ts, parent_id,
+///              payload BLOB, metadata_source TEXT, metadata_step INT, metadata_created_at INT)
+///   - payload: serialized Checkpoint (channel_values + channel_versions via Serializer)
+///   - metadata_*: CheckpointMetadata fields for list() and get_tuple
+```
+
+- **连接**：构造时传入数据库路径（如 `./data/checkpoints.db`）或 `:memory:` 做测试；使用 `sqlx::SqlitePool` 或 `rusqlite` 异步封装，保证 `Send + Sync`。
+- **put**：`INSERT OR REPLACE` 或按 thread 维护「当前」行并 INSERT 新行；生成 `checkpoint_id`（如 UUID 或 `thread_id::step`），将 `Checkpoint<S>` 经 `Serializer` 得到 `Vec<u8>` 写入 `payload`。
+- **get_tuple**：若 `config.checkpoint_id` 有值则 `SELECT ... WHERE thread_id = ? AND checkpoint_id = ?`；否则 `SELECT ... WHERE thread_id = ? ORDER BY metadata_created_at DESC LIMIT 1`。取出的 `payload` 经 `Serializer::deserialize` 得到 `Checkpoint<S>`。
+- **list**：`SELECT checkpoint_id, metadata_* FROM checkpoints WHERE thread_id = ? AND checkpoint_ns = ?`，按 `before`/`after`（checkpoint_id 或时间）过滤，`LIMIT` 控制条数，返回 `Vec<CheckpointListItem>`。
+
+**依赖**：可选 `sqlx`（async）或 `rusqlite`；若用 `rusqlite`，需配合 `tokio::task::spawn_blocking` 在 invoke 中调用，避免阻塞运行时。迁移（建表/升级）可用 `sqlx::migrate!` 或手写 `CREATE TABLE IF NOT EXISTS`。
+
 ---
 
 ## 4. 图与 Checkpointer 的集成
@@ -314,7 +335,24 @@ struct InMemoryStoreInner {
 - **检索**：对 query 做 embedding，在进程内用余弦相似度做 top-k 检索，不依赖 Qdrant、Milvus 等独立服务。
 - **特点**：无额外部署、延迟低；进程退出后数据不持久化，适合开发与单机/小规模；若需持久化可后续接 Lance 或 SQLite+向量扩展等。
 
-### 5.3 图与 Store 的集成
+#### 5.2.2 SqliteStore（长期记忆持久化）
+
+与 InMemoryStore 同实现 Store trait，但将 key-value 写入本地 SQLite，进程重启后数据保留；适合单机生产或需要跨进程共享配置的场景。
+
+**表结构**：单表 `store_kv`，主键为 `(namespace, key)`，value 存 JSON 文本；可选第二张表存向量用于语义 search（见下）。
+
+```rust
+/// SQLite schema (logical).
+///   store_kv(ns_0, ns_1, ..., key, value TEXT)  -- namespace 用多列或单列 JSON 存储
+/// 简化：namespace 序列化为单列，如 ns TEXT = json_encode(namespace), key TEXT, value TEXT.
+///   PRIMARY KEY (ns, key)
+```
+
+- **put/get/list**：`INSERT OR REPLACE` / `SELECT value WHERE ns = ? AND key = ?` / `SELECT key FROM store_kv WHERE ns = ?`。value 为 `serde_json::Value` 的 `to_string()` 结果。
+- **search**：初版可做「无语义」检索：`list(namespace)` 后在内存中按 `query` 做 key 前缀或 value 包含过滤，返回前 `limit` 条；与 InMemoryStore 的 fallback 一致。后续可加 `store_vectors(ns, key, embedding BLOB)` 与 SQLite 向量扩展（如 sqlite-vec）做语义 search。
+- **连接与迁移**：构造时传入 DB 路径；可与 SqliteSaver 共用同一 DB（不同表）或单独文件（如 `./data/store.db`），按部署需求选择。
+
+### 5.4 图与 Store 的集成
 
 - 编译：`compile_with_store(store: Arc<dyn Store>)` 或 `compile(checkpointer, store)`，图持有 `Option<Arc<dyn Store>>`。
 - 节点内使用：通过 `RunnableConfig::user_id` 拼 namespace，在节点中调用 `store.search(namespace, query, limit)`，将结果注入系统提示或上下文。Store 与 state 解耦，不写入 checkpoint，仅在图节点中读写。
@@ -333,15 +371,18 @@ crates/langgraph/src/
 │   ├── checkpoint.rs    // Checkpoint, CheckpointMetadata, CheckpointSource, CheckpointListItem
 │   ├── checkpointer.rs   // Checkpointer trait, CheckpointError
 │   ├── memory_saver.rs   // MemorySaver<S>
+│   ├── sqlite_saver.rs   // SqliteSaver<S>（持久化 Checkpointer，见 3.6）
 │   ├── serializer.rs    // Serializer trait, JsonSerializer or default impl
 │   ├── store.rs          // Store trait, StoreError, StoreSearchHit
-│   └── in_memory_store.rs // InMemoryStore
+│   ├── in_memory_store.rs // InMemoryStore
+│   └── sqlite_store.rs   // SqliteStore（持久化 Store，见 5.2.2）
 ├── graph/
 │   ├── compiled.rs      // 增加 invoke(state, config)、compile_with_checkpointer
 │   └── ...
 ```
 
 - **memory** 不依赖 **graph**；**graph** 依赖 **memory**（config、checkpointer、serializer）。Store 可选依赖，由编译或节点注入。
+- **SqliteSaver / SqliteStore**：可选依赖 `sqlx` 或 `rusqlite`；若以 feature 开关（如 `sqlite`）提供，未开启时可不编译 sqlite_saver / sqlite_store。
 
 ---
 
@@ -358,13 +399,13 @@ crates/langgraph/src/
 
 ## 8. 小结与任务表
 
-- **短期记忆**：RunnableConfig（thread_id, checkpoint_id, checkpoint_ns）+ Checkpoint\<S\> + Checkpointer trait + MemorySaver + Serializer；图 compile 时注入 checkpointer，invoke 时传 config，自动读/写 checkpoint。
-- **长期记忆**：Store trait（namespace + put/get/list/search）+ InMemoryStore；图或节点持有 Store，按 user_id 等拼 namespace 做跨会话读写与检索；**语义检索采用内存向量数据库**（进程内 embedding + 余弦相似度），不依赖外部向量服务。
+- **短期记忆**：RunnableConfig（thread_id, checkpoint_id, checkpoint_ns）+ Checkpoint\<S\> + Checkpointer trait + MemorySaver + **SqliteSaver** + Serializer；图 compile 时注入 checkpointer，invoke 时传 config，自动读/写 checkpoint。
+- **长期记忆**：Store trait（namespace + put/get/list/search）+ InMemoryStore + **SqliteStore**；图或节点持有 Store，按 user_id 等拼 namespace 做跨会话读写与检索；**语义检索采用内存向量数据库**（进程内 embedding + 余弦相似度），不依赖外部向量服务；持久化可选 SqliteStore，语义 search 可后续接 SQLite 向量扩展。
 - **Rust 风格**：trait 与类型分文件、错误类型显式、异步 API；注释英文；测试独立。
 
 | 序号 | 任务 | 交付物 / 子项 | 状态 | 说明 |
 |------|------|----------------|------|------|
-| 1 | 设计文档 | 本文档 16-memory-design.md | 已完成 | 以 Python LangGraph 为蓝本，Rust 风格 |
+| 1 | 设计文档 | 本文档 16-memory-design.md | 已完成 | 以 Python LangGraph 为蓝本，Rust 风格；含 SQLite 持久化方案（3.6、5.2.2） |
 | 2 | RunnableConfig | memory/config.rs | 已完成 | thread_id, checkpoint_id, checkpoint_ns, user_id |
 | 3 | Checkpoint / Metadata | memory/checkpoint.rs | 已完成 | Checkpoint\<S\>, CheckpointMetadata, CheckpointSource, CheckpointListItem |
 | 4 | CheckpointError | memory/checkpointer.rs | 已完成 | CheckpointError 变体 |
@@ -375,5 +416,7 @@ crates/langgraph/src/
 | 9 | Store trait + StoreError | memory/store.rs | 已完成 | put, get, list, search；Namespace, StoreSearchHit |
 | 10 | InMemoryStore | memory/in_memory_store.rs | 已完成 | 进程内 HashMap；语义 search 用内存向量存储（embedding + 余弦相似度） |
 | 11 | 文档与 README | README.md、MEMORY_VS_LANGGRAPH_STORE.md | 已完成 | 增加 16-memory-design 链接与对照说明 |
+| 12 | SqliteSaver | memory/sqlite_saver.rs | 已完成 | 持久化 Checkpointer；SQLite 表 checkpoints；可选 feature `sqlite` |
+| 13 | SqliteStore | memory/sqlite_store.rs | 已完成 | 持久化 Store；SQLite 表 store_kv；put/get/list；search 初版为 key/value 过滤 |
 
 实现时按上表推进，每项完成后在「状态」列改为「已完成」，并在代码处补充注释引用本文（如 `16-memory-design.md`）。

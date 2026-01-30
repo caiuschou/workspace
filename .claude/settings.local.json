@@ -13,7 +13,11 @@
       "Bash(git clone:*)",
       "Bash(ls:*)",
       "mcp__zread__search_doc",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(gcc:*)",
+      "Bash(choco install:*)",
+      "Bash(export:*)",
+      "Bash(setx:*)"
     ],
     "additionalDirectories": [
       "/mnt/c/Users/heycj/dev/workspace/docs"

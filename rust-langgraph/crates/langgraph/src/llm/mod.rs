@@ -6,16 +6,16 @@
 
 mod mock;
 
-#[cfg(feature = "openai")]
+#[cfg(feature = "zhipu")]
 mod openai;
-#[cfg(feature = "openai")]
+#[cfg(feature = "zhipu")]
 mod zhipu;
 
 pub use mock::MockLlm;
 
-#[cfg(feature = "openai")]
+#[cfg(feature = "zhipu")]
 pub use openai::ChatOpenAI;
-#[cfg(feature = "openai")]
+#[cfg(feature = "zhipu")]
 pub use zhipu::ChatZhipu;
 
 use async_trait::async_trait;
@@ -38,7 +38,7 @@ pub struct LlmResponse {
 /// LLM client: given messages, returns assistant text and optional tool_calls.
 ///
 /// ThinkNode calls this to produce the next assistant message and any tool
-/// invocations. Implementations: `MockLlm` (fixed response), `ChatOpenAI` / `ChatZhipu` (real API, feature `openai`).
+/// invocations. Implementations: `MockLlm` (fixed response), `ChatOpenAI` / `ChatZhipu` (real API, feature `zhipu`).
 ///
 /// **Interaction**: Used by ThinkNode; see 13-react-agent-design §4 and §8.2.
 #[async_trait]

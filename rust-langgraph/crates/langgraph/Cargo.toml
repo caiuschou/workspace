@@ -12,7 +12,7 @@ path = "src/lib.rs"
 [[example]]
 name = "react_zhipu"
 path = "examples/react_zhipu.rs"
-required-features = ["openai"]
+required-features = ["zhipu"]
 
 [[example]]
 name = "react_mcp"
@@ -24,10 +24,16 @@ name = "react_mcp_gitlab"
 path = "examples/react_mcp_gitlab.rs"
 required-features = ["mcp"]
 
+[[example]]
+name = "react_exa"
+path = "examples/react_exa.rs"
+required-features = ["zhipu"]
+
 [features]
-default = []
-openai = ["dep:async-openai", "dep:dotenv"]
+default = ["mcp"]
 mcp = ["dep:mcp_client", "dep:mcp_core"]
+# 智谱 GLM（async-openai 兼容 API）
+zhipu = ["dep:async-openai", "dep:dotenv"]
 
 [dependencies]
 tokio = { workspace = true }
@@ -35,9 +41,9 @@ async-trait = { workspace = true }
 thiserror = { workspace = true }
 serde_json = "1.0"
 
-# Optional: real OpenAI API client for LlmClient (enable with feature "openai").
+# Optional: OpenAI-compatible API for LlmClient (enable with feature "zhipu"; used by ChatZhipu/ChatOpenAI).
 async-openai = { version = "0.32", optional = true, features = ["chat-completion"] }
-# Optional: load .env for examples (enable with feature "openai").
+# Optional: load .env for examples (enable with feature "zhipu").
 dotenv = { workspace = true, optional = true }
 # Optional: MCP client for ToolSource (enable with feature "mcp").
 mcp_client = { path = "../../../crates/mcp-client", optional = true }

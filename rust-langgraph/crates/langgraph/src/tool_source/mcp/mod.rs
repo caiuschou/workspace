@@ -23,7 +23,7 @@ pub use session::{McpSession, McpSessionError};
 /// `tools/call`. Used by ReAct's ActNode and by LLM `with_tools`.
 ///
 /// **Interaction**: Implements `ToolSource`; used by ActNode and by examples
-/// that pass tools to ChatZhipu/ChatOpenAI. Holds `McpSession` behind Mutex
+/// that pass tools to ChatZhipu/ChatOpenAI. Holds `McpSession` behind Mutex (feature `zhipu`).
 /// for interior mutability (ToolSource uses `&self`).
 pub struct McpToolSource {
     session: Mutex<McpSession>,

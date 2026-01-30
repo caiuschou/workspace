@@ -5,7 +5,7 @@
 //! when present, the API may return `tool_calls` in the response.
 //!
 //! **Interaction**: Implements `LlmClient`; used by ThinkNode like `MockLlm`.
-//! Depends on `async_openai` (feature `openai`).
+//! Depends on `async_openai` (feature `zhipu`).
 
 use async_trait::async_trait;
 

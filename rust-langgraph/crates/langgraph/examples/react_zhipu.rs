@@ -17,8 +17,8 @@
 //! ## Usage
 //!
 //! ```bash
-//! cargo run -p langgraph --example react_zhipu --features openai -- "What time is it?"
-//! cargo run -p langgraph --example react_zhipu --features openai -- "3+5 equals?"
+//! cargo run -p langgraph --example react_zhipu --features zhipu -- "What time is it?"
+//! cargo run -p langgraph --example react_zhipu --features zhipu -- "3+5 equals?"
 //! ```
 
 use langgraph::{

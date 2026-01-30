@@ -136,4 +136,5 @@ McpContext
 | [README.md](README.md) | MCP 替代 Tool 的方案概述 |
 | [implementation.md](implementation.md) | Tools 实现的类型、模块、任务表 |
 | [resource-integration.md](resource-integration.md) | Resources 整合方案与任务表 |
+| [context-optimization.md](context-optimization.md) | MCP 多工具场景下的上下文优化方案（RAG-MCP 等） |
 | **overview.md**（本文） | 整合总览 |

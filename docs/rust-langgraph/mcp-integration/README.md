@@ -2,7 +2,7 @@
 
 在 [09-minimal-agent-design](../09-minimal-agent-design.md) 的扩展路径中，S4/S5 涉及「工具」：ReAct 调工具、多工具协作。本文给出**用 MCP（Model Context Protocol）作为工具来源、代替自建 Tool 生态**的最简集成方案：Agent 不直接依赖 `Tool` trait 与 `ToolRegistry`，改为通过 MCP 协议从 MCP Server 获取工具列表并执行调用。
 
-**本目录**：方案概述（本文）+ [implementation.md](implementation.md)（实现说明与任务表）。
+**本目录**：方案概述（本文）+ [implementation.md](implementation.md)（实现说明与任务表）+ [context-optimization.md](context-optimization.md)（多工具上下文优化方案）。
 
 ---
 

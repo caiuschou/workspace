@@ -482,8 +482,30 @@ async fn maybe_send_chat(
         }
         for (i, part) in reply.parts.iter().enumerate() {
             match part.part_type.as_str() {
-                "tool" => {
-                    info!(part_index = i, tool_name = ?part.tool_name, "assistant part tool");
+                "tool" | "tool_call" => {
+                    info!(part_index = i, tool_name = ?part.tool_name, finished = ?part.finished, "assistant part tool call");
+                }
+                "tool_result" => {
+                    info!(part_index = i, tool_name = ?part.tool_name, tool_call_id = ?part.tool_call_id, is_error = ?part.is_error, "assistant part tool result");
+                }
+                "reasoning" => {
+                    if let Some(r) = part.reasoning.as_ref().filter(|s| !s.is_empty()) {
+                        let max_len = 500;
+                        let preview: String = r.chars().take(max_len).collect();
+                        let suffix = if r.len() > max_len { "\n..." } else { "" };
+                        info!("assistant part[{}] reasoning:\n---\n{}{}\n---", i, preview, suffix);
+                    } else {
+                        info!(part_index = i, "assistant part reasoning");
+                    }
+                }
+                "image" | "image_url" => {
+                    info!(part_index = i, image_url = ?part.image_url, "assistant part image");
+                }
+                "binary" => {
+                    info!(part_index = i, "assistant part binary");
+                }
+                "finish" => {
+                    info!(part_index = i, finish_reason = ?part.finish_reason, "assistant part finish");
                 }
                 _ => {
                     if let Some(t) = part.text.as_ref().filter(|s| !s.is_empty()) {
@@ -501,8 +523,13 @@ async fn maybe_send_chat(
     Ok((Some(session), assistant_reply))
 }
 
-/// Polls until an assistant message appears or timeout.
+/// Polls until an assistant message with content appears or timeout.
 /// Returns the assistant message when found.
+///
+/// Each iteration calls `session_list_messages` (GET /session/{id}/message), so the session
+/// module will log "received message list count=N" once per poll. That log can therefore appear
+/// many times in sequence (every 2 seconds) until the assistant reply has content; it is not
+/// a duplicate, but the same list being fetched repeatedly during polling.
 async fn wait_for_assistant_response(
     client: &Client,
     session_id: &str,

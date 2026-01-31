@@ -106,8 +106,9 @@ impl ServerHandle {
     /// Returns the process ID.
     pub fn pid(&self) -> u32 { ... }
 
-    /// Gracefully shuts down the server (SIGTERM, then SIGKILL if needed).
-    pub async fn shutdown(&self) -> Result<(), Error> { ... }
+    /// Gracefully shuts down the server (SIGTERM on Unix, taskkill on Windows).
+    /// Best-effort: errors (e.g. process already exited) are ignored.
+    pub fn shutdown(&self) { ... }
 }
 ```
 

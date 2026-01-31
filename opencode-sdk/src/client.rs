@@ -40,6 +40,11 @@ impl Client {
         &self.base_url
     }
 
+    /// Returns the underlying HTTP client (for internal API modules).
+    pub(crate) fn http(&self) -> &ReqwestClient {
+        &self.http
+    }
+
     /// Performs a GET request to the health endpoint.
     ///
     /// Use this to verify the server is running and check its version.

@@ -11,7 +11,8 @@ static mut LOG_FILE_GUARD: Option<tracing_appender::non_blocking::WorkerGuard> =
 ///
 /// Log file: `{dir}/opencode-sdk.log` (default: current directory or `~/.local/share/opencode-sdk`)
 ///
-/// Set `RUST_LOG` for level (e.g. `RUST_LOG=opencode_sdk=debug`).
+/// Default level is `opencode_sdk=debug` when `RUST_LOG` is not set; set `RUST_LOG` to override
+/// (e.g. `RUST_LOG=opencode_sdk=info` to reduce noise).
 pub fn init_logger(log_dir: Option<PathBuf>) {
     let dir = log_dir.unwrap_or_else(|| {
         std::env::var("XDG_DATA_HOME")
@@ -34,7 +35,7 @@ pub fn init_logger(log_dir: Option<PathBuf>) {
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
     let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("opencode_sdk=info"));
+        .unwrap_or_else(|_| EnvFilter::new("opencode_sdk=debug"));
 
     tracing_subscriber::registry()
         .with(filter)

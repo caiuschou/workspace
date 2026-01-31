@@ -30,15 +30,15 @@
 | 要素 | Python 侧 | langgraph-rust 实现 | 是否一致 |
 |------|------------|----------------------|----------|
 | **State** | 应用状态，可有 reducer/channel | 图泛型 `S: Clone + Send + Sync + 'static`，由调用方定义（如 `AgentState`、`ReActState`）；无内置 reducer，等价于「应用状态」 | ✅ 一致 |
-| **StateGraph** | 图 = 节点 + 边 | `StateGraph::<S>::new()`，`add_node(id, Box<dyn Node<S>>)`，`add_edge(to_id)` 顺序构成链（首节点即入口，末节点后为 END），`compile()` / `compile_with_checkpointer()` → `CompiledStateGraph<S>` | ✅ 一致 |
+| **StateGraph** | 图 = 节点 + 边 | `StateGraph::<S>::new()`，`add_node(id, Box<dyn Node<S>>)`，`add_edge(from, to)` 显式建边，`add_sequence` / `set_entry_point` / `set_finish_point` 便捷方法，`compile()` / `compile_with_checkpointer()` → `CompiledStateGraph<S>` | ✅ 一致 |
 | **Node** | `(state) -> state_updates` | `Node::run(&self, state: S) -> Result<(S, Next), AgentError>`：返回**新 state** 与 **Next**（`Continue` / `Node(id)` / `End`），用于条件边与结束。`Agent` 作为节点时通过 blanket impl 返回 `(state, Next::Continue)` | ✅ 一致（返回 updates + 路由） |
-| **Edge** | `add_edge( from, to )`、`add_conditional_edges` | 线性边：`add_edge("id")` 顺序即 START→…→END。条件边：由节点 `run` 返回 `Next::Node(id)` 或 `Next::End`，由 `CompiledStateGraph::invoke` 根据 `Next` 选择下一节点或结束 | ✅ 一致 |
+| **Edge** | `add_edge(from, to)`、`add_conditional_edges` | 显式边：`add_edge(START, "id")`、`add_edge("id", END)`、`add_sequence(&["a","b"])`。条件边：由节点 `run` 返回 `Next::Node(id)` 或 `Next::End`，由 `CompiledStateGraph::invoke` 根据 `Next` 选择下一节点或结束 | ✅ 一致 |
 | **invoke** | `invoke(input, config)` | `CompiledStateGraph::invoke(state: S, config: Option<RunnableConfig>) -> Result<S, AgentError>`；调用方 invoke 前写入 state，invoke 后从返回值读取 state | ✅ 一致 |
 | **config / thread_id** | config 中常用 `thread_id` | `RunnableConfig { thread_id, checkpoint_id, checkpoint_ns, user_id }`，与 `compile_with_checkpointer` 配合时 invoke 后按 `thread_id` 持久化 checkpoint | ✅ 一致 |
 
 ### 实现细节
 
-- **边类型**：条件边通过 `Next::Node(id)` / `Next::End` 实现，与 Python 的 conditional edges 对应；线性边由 `add_edge` 顺序定义。
+- **边类型**：条件边通过 `Next::Node(id)` / `Next::End` 实现，与 Python 的 conditional edges 对应；显式边由 `add_edge(from, to)`、`add_sequence` 定义，与 Python API 对齐。
 - **State 的 reducer/channel**：核心未内置 reducer；若需「channel + reducer」语义，由应用在 state 类型内自行实现（如 `ReActState` 的 messages/tool_calls/tool_results）。
 - **Checkpoint/thread**：已实现；`Checkpointer`、`RunnableConfig::thread_id`、`invoke` 后保存，见 `memory/` 与 `compiled.rs`。
 
@@ -58,6 +58,7 @@
 
 ## 相关文档
 
+- [langgraph-rust-add-edge-from-scheme.md](langgraph-rust-add-edge-from-scheme.md) — 边支持 `add_edge(from, to)` 的改造方案。
 - [agora/docs/langgraph-agent-messaging-design.md](../agora/docs/langgraph-agent-messaging-design.md) — 在 langgraph-rust 上做消息能力的约定。
 - [docs/langgraph-agent/README.md](langgraph-agent/README.md) — Python LangGraph 概念与用法。
 
@@ -66,6 +67,7 @@
 | 日期 | 更新内容 |
 |------|----------|
 | 2025-01-31 | 将 langgraph-rust 克隆至 thirdparty/langgraph-rust；阅读源码，新增「源代码对照」、修正节点接口描述、更新「实现与设计对照」结论。 |
+| 2025-01-31 | 实现 add_edge(from, to)：边 API 与 Python 对齐，更新「源代码对照」表格。 |
 
 | 序号 | 任务 | 状态 | 备注 |
 |------|------|------|------|

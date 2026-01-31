@@ -2,58 +2,12 @@
 //!
 //! Create sessions and send messages to AI assistants.
 
+mod message;
+
 use crate::client::Client;
 use crate::Error;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
-
-/// Parses message list from API response. Handles wrapped format {messages: [...]}.
-fn parse_message_list(body: &str) -> Result<Vec<MessageListItem>, Error> {
-    let wrapped: serde_json::Value = serde_json::from_str(body)?;
-    let raw: Vec<serde_json::Value> = wrapped
-        .get("messages")
-        .and_then(|v| v.as_array())
-        .cloned()
-        .or_else(|| wrapped.as_array().cloned())
-        .unwrap_or_default();
-
-    let mut items = Vec::new();
-    for v in raw {
-        if let Ok(item) = parse_message_item(&v) {
-            items.push(item);
-        }
-    }
-    Ok(items)
-}
-
-fn parse_message_item(v: &serde_json::Value) -> Result<MessageListItem, Error> {
-    let (id, role) = if let Some(info) = v.get("info") {
-        (
-            info.get("id").and_then(|x| x.as_str()).unwrap_or("").to_string(),
-            info.get("role").and_then(|x| x.as_str()).unwrap_or("").to_string(),
-        )
-    } else {
-        (
-            v.get("id").and_then(|x| x.as_str()).unwrap_or("").to_string(),
-            v.get("role").and_then(|x| x.as_str()).unwrap_or("").to_string(),
-        )
-    };
-
-    let parts = v
-        .get("parts")
-        .and_then(|p| p.as_array())
-        .map(|arr| {
-            arr.iter()
-                .filter_map(|p| serde_json::from_value(p.clone()).ok())
-                .collect()
-        })
-        .unwrap_or_default();
-
-    Ok(MessageListItem {
-        info: MessageInfo { id, role },
-        parts,
-    })
-}
 
 /// Session created by the server.
 #[derive(Debug, Clone, Deserialize)]
@@ -384,7 +338,7 @@ impl Client {
 
         let items: Vec<MessageListItem> = serde_json::from_str(&body).unwrap_or_else(|_| {
             debug!("fallback parse_message_list");
-            parse_message_list(&body).unwrap_or_default()
+            message::parse_message_list(&body).unwrap_or_default()
         });
         // "received message list": we just fetched the session's message list from the server
         // (GET /session/{id}/message or /messages). This log can appear multiple times in sequence

@@ -5,7 +5,7 @@
 use crate::client::Client;
 use crate::Error;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tracing::{debug, info};
 
 /// Parses message list from API response. Handles wrapped format {messages: [...]}.
 fn parse_message_list(body: &str) -> Result<Vec<MessageListItem>, Error> {
@@ -66,36 +66,72 @@ pub struct Session {
     pub title: Option<String>,
 }
 
-/// Part of a message (text, tool call, etc.).
+/// Part of a message. Aligns with server ContentPart: text, reasoning, image, binary, tool call, tool result, finish.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Part {
-    /// Part type (e.g. "text", "tool").
+    /// Part ID (e.g. "prt_...").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    /// Part type: "text", "reasoning", "image", "binary", "tool_call", "tool_result", "finish", etc.
     #[serde(rename = "type")]
     pub part_type: String,
     /// Text content for text parts.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
-    /// Tool name for tool parts.
+    /// Reasoning content (ReasoningContent).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reasoning: Option<String>,
+    /// Image URL for image parts (ImageURLContent).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image_url: Option<String>,
+    /// Raw/binary content (BinaryContent).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<serde_json::Value>,
+    /// Tool name for tool call/result parts.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_name: Option<String>,
-    /// Tool input for tool parts.
+    /// Tool input for tool call parts.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_input: Option<serde_json::Value>,
-    /// Tool output for tool parts.
+    /// Tool output for tool result parts.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_output: Option<serde_json::Value>,
+    /// Tool call ID (for ToolResult).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool_call_id: Option<String>,
+    /// Whether the tool call is finished (for ToolCall).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub finished: Option<bool>,
+    /// Metadata (e.g. for ToolResult).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+    /// Whether the tool result is an error (for ToolResult).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_error: Option<bool>,
+    /// Finish reason: "end_turn", "max_tokens", "tool_use", "canceled", "error", "permission_denied" (for Finish).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub finish_reason: Option<String>,
 }
 
 impl Part {
     /// Creates a text part.
     pub fn text(content: impl Into<String>) -> Self {
         Self {
+            id: None,
             part_type: "text".to_string(),
             text: Some(content.into()),
+            reasoning: None,
+            image_url: None,
+            content: None,
             tool_name: None,
             tool_input: None,
             tool_output: None,
+            tool_call_id: None,
+            finished: None,
+            metadata: None,
+            is_error: None,
+            finish_reason: None,
         }
     }
 }
@@ -146,6 +182,102 @@ impl MessageListItem {
             .filter_map(|p| p.text.as_deref())
             .collect::<Vec<_>>()
             .join("\n")
+    }
+}
+
+/// Max length of content preview in receive logs.
+const PART_PREVIEW_LEN: usize = 120;
+
+/// Logs a single part when received (type, id, and brief content summary).
+/// Uses DEBUG level so that when the caller is polling (e.g. wait_for_assistant_response),
+/// INFO only shows "received message list count=N" per poll; set RUST_LOG=debug to see each part.
+fn log_part_received(index: usize, part: &Part) {
+    let id = part.id.as_deref().unwrap_or("-");
+    let ty = part.part_type.as_str();
+    match ty {
+        "text" => {
+            let len = part.text.as_ref().map(|s| s.len()).unwrap_or(0);
+            let preview = part
+                .text
+                .as_deref()
+                .map(|s| {
+                    if s.len() <= PART_PREVIEW_LEN {
+                        s.to_string()
+                    } else {
+                        format!("{}...", s.chars().take(PART_PREVIEW_LEN).collect::<String>())
+                    }
+                })
+                .unwrap_or_default();
+            debug!(
+                part_index = index,
+                part_id = %id,
+                part_type = %ty,
+                len = len,
+                preview = %preview,
+                "received part: text"
+            );
+        }
+        "reasoning" => {
+            let len = part.reasoning.as_ref().map(|s| s.len()).unwrap_or(0);
+            let preview = part
+                .reasoning
+                .as_deref()
+                .map(|s| {
+                    if s.len() <= PART_PREVIEW_LEN {
+                        s.to_string()
+                    } else {
+                        format!("{}...", s.chars().take(PART_PREVIEW_LEN).collect::<String>())
+                    }
+                })
+                .unwrap_or_default();
+            debug!(
+                part_index = index,
+                part_id = %id,
+                part_type = %ty,
+                len = len,
+                preview = %preview,
+                "received part: reasoning"
+            );
+        }
+        "image" | "image_url" => {
+            debug!(part_index = index, part_id = %id, part_type = %ty, url = ?part.image_url, "received part: image");
+        }
+        "binary" => {
+            debug!(part_index = index, part_id = %id, part_type = %ty, "received part: binary");
+        }
+        "tool_call" | "tool" => {
+            debug!(
+                part_index = index,
+                part_id = %id,
+                part_type = %ty,
+                tool_name = ?part.tool_name,
+                finished = ?part.finished,
+                "received part: tool call"
+            );
+        }
+        "tool_result" => {
+            debug!(
+                part_index = index,
+                part_id = %id,
+                part_type = %ty,
+                tool_name = ?part.tool_name,
+                tool_call_id = ?part.tool_call_id,
+                is_error = ?part.is_error,
+                "received part: tool result"
+            );
+        }
+        "finish" => {
+            debug!(part_index = index, part_id = %id, part_type = %ty, finish_reason = ?part.finish_reason, "received part: finish");
+        }
+        "step-start" => {
+            debug!(part_index = index, part_id = %id, part_type = %ty, "received part: step-start");
+        }
+        "step-finish" => {
+            debug!(part_index = index, part_id = %id, part_type = %ty, "received part: step-finish");
+        }
+        _ => {
+            debug!(part_index = index, part_id = %id, part_type = %ty, "received part: unknown type");
+        }
     }
 }
 
@@ -206,6 +338,8 @@ impl Client {
     /// Lists messages in a session.
     ///
     /// Tries both /message and /messages as different OpenCode versions may use either.
+    /// When used for polling (e.g. `wait_for_assistant_response` in open.rs), this is called
+    /// every 2 seconds until the assistant message has content; each call logs "received message list".
     pub async fn session_list_messages(
         &self,
         session_id: &str,
@@ -252,7 +386,24 @@ impl Client {
             debug!("fallback parse_message_list");
             parse_message_list(&body).unwrap_or_default()
         });
-        debug!(count = items.len(), "session_list_messages");
+        // "received message list": we just fetched the session's message list from the server
+        // (GET /session/{id}/message or /messages). This log can appear multiple times in sequence
+        // when the caller is polling (e.g. wait_for_assistant_response in open.rs polls every 2s until
+        // the assistant message has content); each poll is a separate list fetch, so the same list is
+        // "received" repeatedly until the assistant reply is ready.
+        info!(count = items.len(), "received message list");
+        for (msg_index, item) in items.iter().enumerate() {
+            debug!(
+                msg_index,
+                message_id = %item.info.id,
+                role = %item.info.role,
+                parts_count = item.parts.len(),
+                "received message"
+            );
+            for (part_index, part) in item.parts.iter().enumerate() {
+                log_part_received(part_index, part);
+            }
+        }
         Ok(items)
     }
 }

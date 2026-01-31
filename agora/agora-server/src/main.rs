@@ -1,9 +1,8 @@
-//! Agora - Independent WebSocket Server
+//! Agora WebSocket Server
 //!
-//! A simple WebSocket server built with axum.
-//! Supports echo and bidirectional communication.
+//! A WebSocket server for Agent registration, discovery and message forwarding.
 //!
-//! Run: cargo run
+//! Run: cargo run -p agora-server
 //! Test with websocat: websocat ws://127.0.0.1:8080/ws
 
 use axum::{
@@ -20,7 +19,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 async fn main() {
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG").unwrap_or_else(|_| "agora=info,tower_http=info".into()),
+            std::env::var("RUST_LOG").unwrap_or_else(|_| "agora_server=info,tower_http=info".into()),
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -43,6 +42,7 @@ async fn handle_ws_upgrade(ws: WebSocketUpgrade) -> Response {
 }
 
 /// Handles an established WebSocket connection (echo server).
+/// TODO: Parse JSON `type` for register/list/send per docs.
 async fn handle_socket(mut socket: WebSocket) {
     tracing::info!("WebSocket client connected");
 

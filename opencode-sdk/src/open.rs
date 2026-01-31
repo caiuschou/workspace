@@ -17,6 +17,11 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::time::sleep;
 
+/// Poll interval when waiting for server to become ready.
+const SERVER_POLL_INTERVAL_MS: u64 = 500;
+/// Poll interval when waiting for assistant message.
+const MESSAGE_POLL_INTERVAL_MS: u64 = 2000;
+
 /// Options for `OpenCode::open`.
 ///
 /// Use the builder pattern for customization:
@@ -312,7 +317,11 @@ impl OpenCode {
 
         // 2. Health check - is server already running?
         info!("step 2: health check");
-        if check_server_healthy(&base_url, options.health_check_timeout_ms).await {
+        let health_client = ReqwestClient::builder()
+            .timeout(Duration::from_millis(options.health_check_timeout_ms))
+            .build()
+            .unwrap_or_else(|_| ReqwestClient::new());
+        if check_server_healthy(&base_url, &health_client).await {
             info!("server already running at {}", base_url);
             let client = Client::new(&base_url);
             let (session, assistant_reply) =
@@ -348,7 +357,7 @@ impl OpenCode {
 
         // 4. Poll until ready
         info!("step 4: poll until server ready");
-        let poll_interval = Duration::from_millis(500);
+        let poll_interval = Duration::from_millis(SERVER_POLL_INTERVAL_MS);
         let deadline = Duration::from_millis(options.startup_timeout_ms);
         let mut elapsed = Duration::ZERO;
 
@@ -356,7 +365,7 @@ impl OpenCode {
             sleep(poll_interval).await;
             elapsed += poll_interval;
 
-            if check_server_healthy(&base_url, options.health_check_timeout_ms).await {
+            if check_server_healthy(&base_url, &health_client).await {
                 info!(elapsed_ms = elapsed.as_millis(), "server ready");
                 let client = Client::new(&base_url);
                 let (session, assistant_reply) =
@@ -388,6 +397,131 @@ impl OpenCode {
     }
 }
 
+/// Logs assistant reply parts (text, tool calls, reasoning, etc.) at info level.
+fn log_assistant_reply(reply: &MessageListItem) {
+    info!(parts_count = reply.parts.len(), "assistant reply received");
+    let text = reply.text_content();
+    if !text.is_empty() {
+        const PREVIEW_LEN: usize = 2000;
+        let preview: String = text.chars().take(PREVIEW_LEN).collect();
+        let truncated = text.len() > PREVIEW_LEN;
+        info!("assistant reply text (len={}, truncated={}):\n---\n{}\n---", text.len(), truncated, preview);
+    } else {
+        info!("assistant reply has no text content");
+    }
+    for (i, part) in reply.parts.iter().enumerate() {
+        match part.part_type.as_str() {
+            "tool" | "tool_call" => {
+                info!(part_index = i, tool_name = ?part.tool_name, finished = ?part.finished, "assistant part tool call");
+            }
+            "tool_result" => {
+                info!(part_index = i, tool_name = ?part.tool_name, tool_call_id = ?part.tool_call_id, is_error = ?part.is_error, "assistant part tool result");
+            }
+            "reasoning" => {
+                if let Some(r) = part.reasoning.as_ref().filter(|s| !s.is_empty()) {
+                    const LEN: usize = 500;
+                    let preview: String = r.chars().take(LEN).collect();
+                    let suffix = if r.len() > LEN { "\n..." } else { "" };
+                    info!("assistant part[{}] reasoning:\n---\n{}{}\n---", i, preview, suffix);
+                } else {
+                    info!(part_index = i, "assistant part reasoning");
+                }
+            }
+            "image" | "image_url" => {
+                info!(part_index = i, image_url = ?part.image_url, "assistant part image");
+            }
+            "binary" => {
+                info!(part_index = i, "assistant part binary");
+            }
+            "finish" => {
+                info!(part_index = i, finish_reason = ?part.finish_reason, "assistant part finish");
+            }
+            _ => {
+                if let Some(t) = part.text.as_ref().filter(|s| !s.is_empty()) {
+                    const LEN: usize = 500;
+                    let preview: String = t.chars().take(LEN).collect();
+                    let suffix = if t.len() > LEN { "\n..." } else { "" };
+                    info!("assistant part[{}] {}:\n---\n{}{}\n---", i, part.part_type, preview, suffix);
+                } else {
+                    info!(part_index = i, part_type = %part.part_type, "assistant part (no text)");
+                }
+            }
+        }
+    }
+}
+
+/// Sends message with streaming: spawns event subscription, sends, waits for reply, aborts event task.
+async fn run_with_stream(
+    client: &Client,
+    directory: Option<&Path>,
+    session_id: &str,
+    content: &str,
+    wait_for_response_ms: u64,
+) -> Result<Option<MessageListItem>, Error> {
+    let client_clone = client.clone();
+    let dir = directory.map(|p| p.to_path_buf());
+    let session_id_clone = session_id.to_string();
+
+    let event_handle = tokio::spawn(async move {
+        let dir_ref = dir.as_deref();
+        let _ = event::subscribe_and_stream(
+            &client_clone,
+            dir_ref,
+            &session_id_clone,
+            |text| {
+                info!("assistant stream: {}", text);
+                print!("{}", text);
+                let _ = std::io::Write::flush(&mut std::io::stdout());
+            },
+        )
+        .await;
+    });
+
+    client
+        .session_send_message_async(
+            session_id,
+            directory,
+            SendMessageRequest {
+                parts: vec![Part::text(content)],
+            },
+        )
+        .await?;
+    info!("message sent (streaming)");
+
+    let reply = wait_for_assistant_response(client, session_id, directory, wait_for_response_ms).await?;
+    // In stream_output mode, the event task subscribes to SSE and logs/prints text deltas.
+    // Once we have the full reply, we abort it; this is expected.
+    event_handle.abort();
+    Ok(reply)
+}
+
+/// Sends message without streaming; optionally waits for reply.
+async fn run_without_stream(
+    client: &Client,
+    directory: Option<&Path>,
+    session_id: &str,
+    content: &str,
+    wait_for_response_ms: u64,
+) -> Result<Option<MessageListItem>, Error> {
+    client
+        .session_send_message_async(
+            session_id,
+            directory,
+            SendMessageRequest {
+                parts: vec![Part::text(content)],
+            },
+        )
+        .await?;
+    info!("message sent");
+
+    if wait_for_response_ms > 0 {
+        info!(timeout_ms = wait_for_response_ms, "step: wait for assistant response");
+        wait_for_assistant_response(client, session_id, directory, wait_for_response_ms).await
+    } else {
+        Ok(None)
+    }
+}
+
 /// Creates session and sends message when chat_content is provided.
 /// Waits for AI response when wait_for_response_ms > 0.
 /// When stream_output is true, subscribes to events and logs text deltas in real-time.
@@ -416,109 +550,13 @@ async fn maybe_send_chat(
     let session_id = session.id.clone();
 
     let assistant_reply = if stream_output && wait_for_response_ms > 0 {
-        let client_clone = client.clone();
-        let dir = directory.map(|p| p.to_path_buf());
-        let session_id_clone = session_id.clone();
-
-        let event_handle = tokio::spawn(async move {
-            let dir_ref = dir.as_deref();
-            let _ = event::subscribe_and_stream(
-                &client_clone,
-                dir_ref,
-                &session_id_clone,
-                |text| {
-                    info!("assistant stream: {}", text);
-                    print!("{}", text);
-                    let _ = std::io::Write::flush(&mut std::io::stdout());
-                },
-            )
-            .await;
-        });
-
-        client
-            .session_send_message_async(
-                &session_id,
-                directory,
-                SendMessageRequest {
-                    parts: vec![Part::text(content)],
-                },
-            )
-            .await?;
-        info!("message sent (streaming)");
-
-        let reply = wait_for_assistant_response(client, &session_id, directory, wait_for_response_ms).await?;
-        event_handle.abort();
-        reply
+        run_with_stream(client, directory, &session_id, content, wait_for_response_ms).await?
     } else {
-        client
-            .session_send_message_async(
-                &session_id,
-                directory,
-                SendMessageRequest {
-                    parts: vec![Part::text(content)],
-                },
-            )
-            .await?;
-        info!("message sent");
-
-        if wait_for_response_ms > 0 {
-            info!(timeout_ms = wait_for_response_ms, "step: wait for assistant response");
-            wait_for_assistant_response(client, &session_id, directory, wait_for_response_ms).await?
-        } else {
-            None
-        }
+        run_without_stream(client, directory, &session_id, content, wait_for_response_ms).await?
     };
 
     if let Some(ref reply) = assistant_reply {
-        info!(parts_count = reply.parts.len(), "assistant reply received");
-        let text = reply.text_content();
-        if !text.is_empty() {
-            let max_len = 2000usize;
-            let preview: String = text.chars().take(max_len).collect();
-            let truncated = text.len() > max_len;
-            info!("assistant reply text (len={}, truncated={}):\n---\n{}\n---", text.len(), truncated, preview);
-        } else {
-            info!("assistant reply has no text content");
-        }
-        for (i, part) in reply.parts.iter().enumerate() {
-            match part.part_type.as_str() {
-                "tool" | "tool_call" => {
-                    info!(part_index = i, tool_name = ?part.tool_name, finished = ?part.finished, "assistant part tool call");
-                }
-                "tool_result" => {
-                    info!(part_index = i, tool_name = ?part.tool_name, tool_call_id = ?part.tool_call_id, is_error = ?part.is_error, "assistant part tool result");
-                }
-                "reasoning" => {
-                    if let Some(r) = part.reasoning.as_ref().filter(|s| !s.is_empty()) {
-                        let max_len = 500;
-                        let preview: String = r.chars().take(max_len).collect();
-                        let suffix = if r.len() > max_len { "\n..." } else { "" };
-                        info!("assistant part[{}] reasoning:\n---\n{}{}\n---", i, preview, suffix);
-                    } else {
-                        info!(part_index = i, "assistant part reasoning");
-                    }
-                }
-                "image" | "image_url" => {
-                    info!(part_index = i, image_url = ?part.image_url, "assistant part image");
-                }
-                "binary" => {
-                    info!(part_index = i, "assistant part binary");
-                }
-                "finish" => {
-                    info!(part_index = i, finish_reason = ?part.finish_reason, "assistant part finish");
-                }
-                _ => {
-                    if let Some(t) = part.text.as_ref().filter(|s| !s.is_empty()) {
-                        let max_len = 500;
-                        let preview: String = t.chars().take(max_len).collect();
-                        let suffix = if t.len() > max_len { "\n..." } else { "" };
-                        info!("assistant part[{}] {}:\n---\n{}{}\n---", i, part.part_type, preview, suffix);
-                    } else {
-                        info!(part_index = i, part_type = %part.part_type, "assistant part (no text)");
-                    }
-                }
-            }
-        }
+        log_assistant_reply(reply);
     }
     Ok((Some(session), assistant_reply))
 }
@@ -536,7 +574,7 @@ async fn wait_for_assistant_response(
     directory: Option<&Path>,
     timeout_ms: u64,
 ) -> Result<Option<MessageListItem>, Error> {
-    let poll_interval = Duration::from_millis(2000);
+    let poll_interval = Duration::from_millis(MESSAGE_POLL_INTERVAL_MS);
     let deadline = Duration::from_millis(timeout_ms);
     let mut elapsed = Duration::ZERO;
     let mut poll_count = 0u32;
@@ -568,16 +606,9 @@ async fn wait_for_assistant_response(
 }
 
 /// Checks if the OpenCode server is responding at the given base URL.
-async fn check_server_healthy(base_url: &str, timeout_ms: u64) -> bool {
-    debug!(%base_url, %timeout_ms, "health check");
+async fn check_server_healthy(base_url: &str, client: &ReqwestClient) -> bool {
+    debug!(%base_url, "health check");
     let url = format!("{}/global/health", base_url);
-    let client = match ReqwestClient::builder()
-        .timeout(Duration::from_millis(timeout_ms))
-        .build()
-    {
-        Ok(c) => c,
-        Err(_) => return false,
-    };
 
     let ok = match client.get(&url).send().await {
         Ok(res) => res.status().is_success(),

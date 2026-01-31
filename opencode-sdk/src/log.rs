@@ -5,15 +5,17 @@
 use std::path::PathBuf;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
-static mut LOG_FILE_GUARD: Option<tracing_appender::non_blocking::WorkerGuard> = None;
-
 /// Initializes logging to stdout and file.
+///
+/// Returns the guard. Caller must hold it to keep file logging active; dropping
+/// the guard stops the file writer. If you don't need file logging to persist,
+/// you can ignore the return value (stdout logging will still work).
 ///
 /// Log file: `{dir}/opencode-sdk.log` (default: current directory or `~/.local/share/opencode-sdk`)
 ///
 /// Default level is `opencode_sdk=debug` when `RUST_LOG` is not set; set `RUST_LOG` to override
 /// (e.g. `RUST_LOG=opencode_sdk=info` to reduce noise).
-pub fn init_logger(log_dir: Option<PathBuf>) {
+pub fn init_logger(log_dir: Option<PathBuf>) -> Option<tracing_appender::non_blocking::WorkerGuard> {
     let dir = log_dir.unwrap_or_else(|| {
         std::env::var("XDG_DATA_HOME")
             .map(PathBuf::from)
@@ -26,7 +28,7 @@ pub fn init_logger(log_dir: Option<PathBuf>) {
 
     if let Err(e) = std::fs::create_dir_all(&dir) {
         eprintln!("opencode-sdk: failed to create log dir {:?}: {}", dir, e);
-        return;
+        return None;
     }
     let log_file = dir.join("opencode-sdk.log");
     eprintln!("opencode-sdk: log file: {}", log_file.display());
@@ -48,7 +50,5 @@ pub fn init_logger(log_dir: Option<PathBuf>) {
         )
         .init();
 
-    unsafe {
-        LOG_FILE_GUARD = Some(guard);
-    }
+    Some(guard)
 }

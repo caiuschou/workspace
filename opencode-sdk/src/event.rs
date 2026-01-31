@@ -52,14 +52,17 @@ where
                     }
                 }
             }
-            Err(_e) => break,
+            Err(e) => {
+                debug!(error = %e, "event stream error, stopping");
+                break;
+            }
         }
     }
     Ok(())
 }
 
 /// Extracts text delta from event JSON if it matches our session.
-fn extract_text_delta(v: &serde_json::Value, session_id: &str) -> Option<String> {
+pub(crate) fn extract_text_delta(v: &serde_json::Value, session_id: &str) -> Option<String> {
     let ev_session = v
         .get("sessionID")
         .or(v.get("sessionId"))
@@ -80,4 +83,57 @@ fn extract_text_delta(v: &serde_json::Value, session_id: &str) -> Option<String>
         return None;
     }
     Some(text.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Given event JSON with matching session_id and properties.text,
+    /// When extract_text_delta is called,
+    /// Then returns the text.
+    #[test]
+    fn extract_text_delta_matching_session_properties_text() {
+        let v = serde_json::json!({
+            "sessionID": "ses_123",
+            "properties": { "text": "hello" }
+        });
+        assert_eq!(extract_text_delta(&v, "ses_123"), Some("hello".to_string()));
+    }
+
+    /// Given event JSON with non-matching session_id,
+    /// When extract_text_delta is called,
+    /// Then returns None.
+    #[test]
+    fn extract_text_delta_non_matching_session_returns_none() {
+        let v = serde_json::json!({
+            "sessionID": "ses_other",
+            "properties": { "text": "hello" }
+        });
+        assert_eq!(extract_text_delta(&v, "ses_123"), None);
+    }
+
+    /// Given event JSON with properties.content as text source,
+    /// When extract_text_delta is called,
+    /// Then returns the content.
+    #[test]
+    fn extract_text_delta_properties_content() {
+        let v = serde_json::json!({
+            "sessionId": "ses_1",
+            "properties": { "content": "world" }
+        });
+        assert_eq!(extract_text_delta(&v, "ses_1"), Some("world".to_string()));
+    }
+
+    /// Given event JSON with empty text,
+    /// When extract_text_delta is called,
+    /// Then returns None.
+    #[test]
+    fn extract_text_delta_empty_text_returns_none() {
+        let v = serde_json::json!({
+            "sessionID": "ses_1",
+            "properties": { "text": "" }
+        });
+        assert_eq!(extract_text_delta(&v, "ses_1"), None);
+    }
 }

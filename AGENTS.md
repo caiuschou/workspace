@@ -24,6 +24,7 @@
 - 一定要上网搜索资料，研究，包括最佳实践
 - AI 对话过程使用中文
 - 不用读取 archive 的所有内容
+- https://github.com/caiuschou/langgraph-rust
 
 # 文档
 

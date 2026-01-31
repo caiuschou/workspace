@@ -40,6 +40,7 @@ OpenCode 采用客户端-服务器架构：
 
 | 文档 | 描述 |
 |------|------|
+| [Serve API 接口文档](../opencode-serve-api/README.md) | 按模块拆分的 REST 接口详细文档（便于查找） |
 | [安装指南](installation.md) | 安装和配置 OpenCode |
 | [SDK 参考](sdk.md) | TypeScript/JavaScript SDK 完整指南 |
 | [提供商配置](providers.md) | 配置各种 AI 提供商 |

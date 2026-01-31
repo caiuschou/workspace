@@ -27,6 +27,11 @@
 - 不用读取 archive 的所有内容
 - https://github.com/caiuschou/langgraph-rust
   - 代码在 thirdparty/langgraph-rust（不提交，见 .gitignore）
+- thridparty 下常用项目，没有就去clone
+  - langchain
+  - langgraph
+  - opencode
+  - langgraph-rust
 
 # 文档
 

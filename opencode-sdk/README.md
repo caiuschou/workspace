@@ -11,7 +11,8 @@ Rust SDK for [OpenCode Server](https://opencodecn.com/docs/server) API.
 使用前调用 `init_logger`，日志会同时输出到控制台和文件（默认 `~/.local/share/opencode-sdk/opencode-sdk.log`）：
 
 ```rust
-opencode_sdk::init_logger(None);  // 或 init_logger(Some(path))
+// 返回值 guard 需持有以保持文件日志；若不关心可忽略
+let _guard = opencode_sdk::init_logger(None);  // 或 init_logger(Some(path))
 ```
 
 设置 `RUST_LOG=opencode_sdk=debug` 可查看详细日志。

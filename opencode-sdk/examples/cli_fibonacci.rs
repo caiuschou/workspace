@@ -17,7 +17,7 @@ fn opencode_command() -> String {
 
 #[tokio::main]
 async fn main() -> Result<(), opencode_sdk::Error> {
-    init_logger(None);
+    let _guard = init_logger(None); // Hold guard to keep file logging active
 
     // Ensure project directory exists
     std::fs::create_dir_all(PROJECT_DIR).expect("create project dir");

@@ -25,7 +25,7 @@ members = [
     # "mcp-impls/gitlab-mcp/crates/mcp-client",
     # "mcp-impls/gitlab-mcp/crates/api-doc-scraper",
 ]
-exclude = ["agora"]
+exclude = ["agora", "opencode-sdk"]
 
 [workspace.package]
 version = "0.1.0"

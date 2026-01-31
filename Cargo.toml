@@ -1,30 +1,29 @@
 [workspace]
 resolver = "3"
+# Members that depend on deleted mcp-core/mcp-server/mcp-client are commented out.
+# Uncomment when those crates are restored or deps are updated.
 members = [
-    "crates/mcp-core",
-    "crates/mcp-server",
-    "crates/mcp-client",
-    "rust-langgraph/crates/langgraph",
-    "rust-langgraph/crates/langgraph-react",
-    "examples/mcp-filesystem-client",
-    "examples/mcp-filesystem-server",
-    "examples/http-client",
-    "examples/http-server",
-    "examples/websocket-server",
-    "examples/websocket-client",
-    "examples/sse-compat-server",
-    "examples/prompts-server",
-    "examples/tasks-server",
-    "examples/logging-server",
-    "examples/chat-openai",
-    "examples/chat-zhipu",
-    "mcp-impls/github-mcp/crates/mcp-server",
-    "mcp-impls/zoekt-mcp/crates/mcp-server",
-    "mcp-impls/gitlab-mcp/crates/mcp-server",
-    "mcp-impls/gitlab-mcp/crates/mcp-client",
-    "mcp-impls/gitlab-mcp/crates/api-doc-scraper",
     "crates/workspace-api",
     "tools/bun-unpack",
+    # "rust-langgraph/crates/langgraph",
+    # "rust-langgraph/crates/langgraph-react",
+    # "examples/mcp-filesystem-client",
+    # "examples/mcp-filesystem-server",
+    # "examples/http-client",
+    # "examples/http-server",
+    # "examples/websocket-server",
+    # "examples/websocket-client",
+    # "examples/sse-compat-server",
+    # "examples/prompts-server",
+    # "examples/tasks-server",
+    # "examples/logging-server",
+    # "examples/chat-openai",
+    # "examples/chat-zhipu",
+    # "mcp-impls/github-mcp/crates/mcp-server",
+    # "mcp-impls/zoekt-mcp/crates/mcp-server",
+    # "mcp-impls/gitlab-mcp/crates/mcp-server",
+    # "mcp-impls/gitlab-mcp/crates/mcp-client",
+    # "mcp-impls/gitlab-mcp/crates/api-doc-scraper",
 ]
 
 [workspace.package]
@@ -34,10 +33,6 @@ authors = ["Your Name <your.email@example.com>"]
 license = "MIT"
 
 [workspace.dependencies]
-mcp_core = { path = "crates/mcp-core" }
-mcp_server = { path = "crates/mcp-server" }
-mcp_client = { path = "crates/mcp-client" }
-
 # 异步运行时
 tokio = { version = "1.0", features = ["full"] }
 async-trait = "0.1"

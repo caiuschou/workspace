@@ -26,6 +26,7 @@
 - AI 对话过程使用中文
 - 不用读取 archive 的所有内容
 - https://github.com/caiuschou/langgraph-rust
+  - 代码在 thirdparty/langgraph-rust（不提交，见 .gitignore）
 
 # 文档
 

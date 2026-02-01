@@ -15,12 +15,11 @@ use crate::session::{CreateSessionRequest, MessageListItem, Part, SendMessageReq
 use reqwest::Client as ReqwestClient;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use tokio::time::sleep;
+use tokio::sync::oneshot;
+use tokio::time::{sleep, timeout};
 
 /// Poll interval when waiting for server to become ready.
 const SERVER_POLL_INTERVAL_MS: u64 = 500;
-/// Poll interval when waiting for assistant message.
-const MESSAGE_POLL_INTERVAL_MS: u64 = 2000;
 
 /// Options for `OpenCode::open`.
 ///
@@ -450,7 +449,23 @@ fn log_assistant_reply(reply: &MessageListItem) {
     }
 }
 
-/// Sends message with streaming: spawns event subscription, sends, waits for reply, aborts event task.
+/// Fetches the last assistant message with content in one request (no polling).
+fn fetch_last_assistant_message(
+    messages: &[MessageListItem],
+) -> Option<MessageListItem> {
+    let last_assistant = messages
+        .iter()
+        .rev()
+        .find(|m| m.info.role.eq_ignore_ascii_case("assistant"))?;
+    let has_content = !last_assistant.text_content().is_empty() || !last_assistant.parts.is_empty();
+    if has_content {
+        Some(last_assistant.clone())
+    } else {
+        None
+    }
+}
+
+/// Sends message with streaming: subscribes to SSE, sends, waits for completion via stream (no polling), then fetches reply once.
 async fn run_with_stream(
     client: &Client,
     directory: Option<&Path>,
@@ -458,13 +473,14 @@ async fn run_with_stream(
     content: &str,
     wait_for_response_ms: u64,
 ) -> Result<Option<MessageListItem>, Error> {
+    let (tx, rx) = oneshot::channel::<()>();
     let client_clone = client.clone();
     let dir = directory.map(|p| p.to_path_buf());
     let session_id_clone = session_id.to_string();
 
     let event_handle = tokio::spawn(async move {
         let dir_ref = dir.as_deref();
-        let _ = event::subscribe_and_stream(
+        let _ = event::subscribe_and_stream_until_done(
             &client_clone,
             dir_ref,
             &session_id_clone,
@@ -475,6 +491,7 @@ async fn run_with_stream(
             },
         )
         .await;
+        let _ = tx.send(());
     });
 
     client
@@ -488,14 +505,25 @@ async fn run_with_stream(
         .await?;
     info!("message sent (streaming)");
 
-    let reply = wait_for_assistant_response(client, session_id, directory, wait_for_response_ms).await?;
-    // In stream_output mode, the event task subscribes to SSE and logs/prints text deltas.
-    // Once we have the full reply, we abort it; this is expected.
-    event_handle.abort();
-    Ok(reply)
+    let timeout_duration = Duration::from_millis(wait_for_response_ms);
+    match timeout(timeout_duration, rx).await {
+        Ok(Ok(())) | Ok(Err(_)) => {
+            event_handle.abort();
+            let messages = client.session_list_messages(session_id, directory).await?;
+            info!(count = messages.len(), "received message list (after SSE completion)");
+            Ok(fetch_last_assistant_message(&messages))
+        }
+        Err(_) => {
+            event_handle.abort();
+            info!(timeout_ms = wait_for_response_ms, "wait for SSE completion timeout");
+            Err(Error::WaitResponseTimeout {
+                timeout_ms: wait_for_response_ms,
+            })
+        }
+    }
 }
 
-/// Sends message without streaming; optionally waits for reply.
+/// Sends message without streaming; optionally waits for reply via SSE completion (no polling).
 async fn run_without_stream(
     client: &Client,
     directory: Option<&Path>,
@@ -515,8 +543,40 @@ async fn run_without_stream(
     info!("message sent");
 
     if wait_for_response_ms > 0 {
-        info!(timeout_ms = wait_for_response_ms, "step: wait for assistant response");
-        wait_for_assistant_response(client, session_id, directory, wait_for_response_ms).await
+        info!(timeout_ms = wait_for_response_ms, "step: wait for assistant response (SSE completion)");
+        let (tx, rx) = oneshot::channel::<()>();
+        let client_clone = client.clone();
+        let dir = directory.map(|p| p.to_path_buf());
+        let session_id_clone = session_id.to_string();
+
+        let event_handle = tokio::spawn(async move {
+            let dir_ref = dir.as_deref();
+            let _ = event::subscribe_and_stream_until_done(
+                &client_clone,
+                dir_ref,
+                &session_id_clone,
+                |_| {},
+            )
+            .await;
+            let _ = tx.send(());
+        });
+
+        let timeout_duration = Duration::from_millis(wait_for_response_ms);
+        match timeout(timeout_duration, rx).await {
+            Ok(Ok(())) | Ok(Err(_)) => {
+                event_handle.abort();
+                let messages = client.session_list_messages(session_id, directory).await?;
+                info!(count = messages.len(), "received message list (after SSE completion)");
+                Ok(fetch_last_assistant_message(&messages))
+            }
+            Err(_) => {
+                event_handle.abort();
+                info!(timeout_ms = wait_for_response_ms, "wait for SSE completion timeout");
+                Err(Error::WaitResponseTimeout {
+                    timeout_ms: wait_for_response_ms,
+                })
+            }
+        }
     } else {
         Ok(None)
     }
@@ -559,50 +619,6 @@ async fn maybe_send_chat(
         log_assistant_reply(reply);
     }
     Ok((Some(session), assistant_reply))
-}
-
-/// Polls until an assistant message with content appears or timeout.
-/// Returns the assistant message when found.
-///
-/// Each iteration calls `session_list_messages` (GET /session/{id}/message), so the session
-/// module will log "received message list count=N" once per poll. That log can therefore appear
-/// many times in sequence (every 2 seconds) until the assistant reply has content; it is not
-/// a duplicate, but the same list being fetched repeatedly during polling.
-async fn wait_for_assistant_response(
-    client: &Client,
-    session_id: &str,
-    directory: Option<&Path>,
-    timeout_ms: u64,
-) -> Result<Option<MessageListItem>, Error> {
-    let poll_interval = Duration::from_millis(MESSAGE_POLL_INTERVAL_MS);
-    let deadline = Duration::from_millis(timeout_ms);
-    let mut elapsed = Duration::ZERO;
-    let mut poll_count = 0u32;
-
-    while elapsed < deadline {
-        sleep(poll_interval).await;
-        elapsed += poll_interval;
-        poll_count += 1;
-
-        let messages = client.session_list_messages(session_id, directory).await?;
-        let roles: Vec<&str> = messages.iter().map(|m| m.info.role.as_str()).collect();
-        debug!(count = messages.len(), ?roles);
-        let last_assistant = messages
-            .iter()
-            .rev()
-            .find(|m| m.info.role.eq_ignore_ascii_case("assistant"));
-        if let Some(msg) = last_assistant {
-            let has_content = !msg.text_content().is_empty() || !msg.parts.is_empty();
-            if has_content {
-                info!(poll_count, elapsed_ms = elapsed.as_millis(), parts = msg.parts.len(), "assistant message with content found");
-                return Ok(Some(msg.clone()));
-            }
-            debug!(poll_count, "assistant message found but empty, continuing to poll");
-        }
-    }
-
-    info!(poll_count, timeout_ms, "wait for assistant timeout");
-    Err(Error::WaitResponseTimeout { timeout_ms })
 }
 
 /// Checks if the OpenCode server is responding at the given base URL.

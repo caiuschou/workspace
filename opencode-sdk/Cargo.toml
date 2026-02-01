@@ -22,3 +22,5 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
 eventsource-stream = "0.2"
 futures = "0.3"
+regex = "1"
+dirs = "5"

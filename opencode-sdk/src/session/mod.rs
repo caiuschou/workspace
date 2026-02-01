@@ -320,6 +320,36 @@ impl Client {
         items
     }
 
+    /// Gets the file changes (diff) for a session, optionally for a specific message.
+    ///
+    /// `GET /session/{sessionID}/diff`. Returns an array of diff items (structure is server-defined).
+    pub async fn session_diff(
+        &self,
+        session_id: &str,
+        directory: Option<&std::path::Path>,
+        message_id: Option<&str>,
+    ) -> Result<serde_json::Value, Error> {
+        let url = format!("{}/session/{}/diff", self.base_url(), session_id);
+        let mut req = self.http().get(&url);
+
+        if let Some(dir) = directory {
+            if let Some(s) = dir.to_str() {
+                req = req.query(&[("directory", s)]);
+            }
+        }
+        if let Some(msg_id) = message_id {
+            req = req.query(&[("messageID", msg_id)]);
+        }
+
+        let response = req.send().await?;
+        let body = response.text().await?;
+        let value: serde_json::Value = serde_json::from_str(&body).unwrap_or_else(|_| {
+            debug!("session_diff: response not JSON, wrapping as array");
+            serde_json::json!([])
+        });
+        Ok(value)
+    }
+
     async fn session_list_messages_at(
         &self,
         url: &str,

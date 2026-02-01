@@ -333,11 +333,13 @@
 - **摘要**: Get session messages
 - **说明**: Retrieve all messages in a session, including user prompts and AI responses.
 
+**兼容性**：部分 OpenCode 版本使用 `GET /session/{sessionID}/messages`（复数）作为路径。客户端可依次尝试两者以兼容不同版本。
+
 **请求参数**
 
 | 位置 | 参数名 | 类型 | 必填 | 说明 |
 |------|--------|------|------|------|
-| query | `directory` | string | 可选 |  |
+| query | `directory` | string | 可选 | 指定工作目录 |
 | path | `sessionID` | string | **必填** | Session ID |
 | query | `limit` | number | 可选 |  |
 

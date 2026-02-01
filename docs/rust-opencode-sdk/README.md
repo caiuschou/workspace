@@ -78,7 +78,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 | 文档 | 描述 |
 |------|------|
 | [核心概念](concepts.md) | OpenCode 核心概念说明 |
-| [架构设计](architecture.md) | 项目结构和设计模式 |
+| [架构设计](architecture.md) | 架构索引；详见 [architecture/](architecture/README.md) 子文档 |
 | [OpenCode::open 设计](open-method-design.md) | 自动启动 serve 的 `open` 方法设计 |
 | [API 参考](api-reference.md) | 完整 API 文档 |
 | [类型定义](types.md) | 所有数据类型 |

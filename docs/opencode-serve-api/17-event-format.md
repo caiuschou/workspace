@@ -339,7 +339,7 @@
 
 ## 12. 日志文件路径
 
-opencode-sdk 写入的日志文件默认路径见 [opencode-sdk 日志配置](../../rust-opencode-sdk/README.md)：
+opencode-sdk 写入的日志文件默认路径见 [opencode-sdk 日志配置](../../opencode-sdk/README.md)：
 
 - 默认：`$HOME/.local/share/opencode-sdk/opencode-sdk.log`（或 `$XDG_DATA_HOME/opencode-sdk/opencode-sdk.log`）
 - 可通过 `init_logger(Some(dir))` 指定目录，文件名为 `opencode-sdk.log`

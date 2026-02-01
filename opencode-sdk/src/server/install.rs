@@ -126,6 +126,20 @@ fn try_curl_install(runner: &dyn CommandRunner) -> Option<String> {
 }
 
 #[cfg(windows)]
+fn check_windows_default_path() -> Option<String> {
+    let home = std::env::var("USERPROFILE").ok()?;
+    let path = std::path::Path::new(&home).join(".opencode").join("bin").join("opencode.exe");
+    if path.exists() {
+        info!(
+            path = %path.display(),
+            "opencode found at Windows default path, skip install"
+        );
+        return Some(path.to_string_lossy().into_owned());
+    }
+    None
+}
+
+#[cfg(windows)]
 fn try_choco_install(runner: &dyn CommandRunner) -> Option<String> {
     info!("try install: choco");
     let check = runner.run("choco", &["--version"]);

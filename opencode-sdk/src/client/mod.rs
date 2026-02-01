@@ -1,16 +1,20 @@
 //! HTTP client for OpenCode Server API.
 
+mod builder;
+
 use crate::Error;
 use reqwest::Client as ReqwestClient;
 use std::time::Duration;
+
+pub use builder::ClientBuilder;
 
 /// OpenCode Server API client.
 ///
 /// Provides type-safe access to all OpenCode Server endpoints.
 #[derive(Debug, Clone)]
 pub struct Client {
-    base_url: String,
-    http: ReqwestClient,
+    pub(crate) base_url: String,
+    pub(crate) http: ReqwestClient,
 }
 
 impl Client {
@@ -35,6 +39,8 @@ impl Client {
         ClientBuilder {
             base_url: base_url.into(),
             timeout: Some(Duration::from_secs(30)),
+            pool_max_idle_per_host: None,
+            pool_idle_timeout: None,
         }
     }
 
@@ -54,7 +60,7 @@ impl Client {
     pub async fn health(&self) -> Result<HealthResponse, Error> {
         let url = format!("{}/global/health", self.base_url);
         let response = self.http.get(&url).send().await?;
-        let health: crate::HealthResponse = response.json().await?;
+        let health: HealthResponse = response.json().await?;
         Ok(health)
     }
 
@@ -66,43 +72,6 @@ impl Client {
         let response = self.http.post(&url).send().await?;
         let result: bool = response.json().await?;
         Ok(result)
-    }
-
-}
-
-/// Builder for configuring the OpenCode client.
-#[derive(Debug)]
-pub struct ClientBuilder {
-    base_url: String,
-    timeout: Option<Duration>,
-}
-
-impl ClientBuilder {
-    /// Sets the request timeout.
-    pub fn timeout(mut self, timeout: Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-
-    /// Builds the client. Panics if reqwest client build fails.
-    /// Prefer [`try_build`](Self::try_build) when you need to handle errors.
-    pub fn build(self) -> Client {
-        self.try_build().expect("reqwest client build")
-    }
-
-    /// Builds the client, returning an error if reqwest client build fails.
-    pub fn try_build(self) -> Result<Client, crate::Error> {
-        let mut builder = ReqwestClient::builder();
-        if let Some(timeout) = self.timeout {
-            builder = builder.timeout(timeout);
-        }
-        let http = builder
-            .build()
-            .map_err(|e| crate::Error::ClientBuildFailed(e.to_string()))?;
-        Ok(Client {
-            base_url: self.base_url,
-            http,
-        })
     }
 }
 

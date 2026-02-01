@@ -2,9 +2,10 @@
 //!
 //! Starts the OpenCode server as a detached process via `opencode serve`.
 
+use super::runner::{CommandRunner, DefaultCommandRunner};
 use crate::error::Error;
+use std::process::Child;
 use tracing::info;
-use std::process::{Child, Command, Stdio};
 
 /// Options for starting the server.
 #[derive(Debug, Clone)]
@@ -21,7 +22,7 @@ pub struct SpawnOptions<'a> {
     pub working_directory: Option<&'a std::path::Path>,
 }
 
-/// Spawns the OpenCode server process.
+/// Spawns the OpenCode server process (uses default `CommandRunner`).
 ///
 /// Returns the child process handle. The process is spawned with null stdio
 /// and will continue running independently after this function returns.
@@ -30,8 +31,18 @@ pub struct SpawnOptions<'a> {
 ///
 /// Returns `Error::SpawnFailed` if the process could not be started.
 pub fn spawn_server(opts: SpawnOptions<'_>) -> Result<Child, Error> {
+    spawn_server_with_runner(opts, &DefaultCommandRunner)
+}
+
+/// Spawns the OpenCode server process using the given `CommandRunner`.
+///
+/// Use this to inject a mock runner in tests.
+pub fn spawn_server_with_runner(
+    opts: SpawnOptions<'_>,
+    runner: &dyn CommandRunner,
+) -> Result<Child, Error> {
     info!(command = %opts.command, port = opts.port, hostname = %opts.hostname, "spawning opencode serve");
-    let mut args = vec![
+    let mut args: Vec<String> = vec![
         "serve".to_string(),
         "--port".to_string(),
         opts.port.to_string(),
@@ -39,16 +50,9 @@ pub fn spawn_server(opts: SpawnOptions<'_>) -> Result<Child, Error> {
         opts.hostname.to_string(),
     ];
     args.extend(opts.extra_args.iter().cloned());
+    let args_refs: Vec<&str> = args.iter().map(String::as_str).collect();
 
-    let mut cmd = Command::new(opts.command);
-    cmd.args(&args)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
-
-    if let Some(cwd) = opts.working_directory {
-        cmd.current_dir(cwd);
-    }
-
-    cmd.spawn().map_err(Error::SpawnFailed)
+    runner
+        .spawn(opts.command, &args_refs, opts.working_directory)
+        .map_err(Error::SpawnFailed)
 }

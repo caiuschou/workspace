@@ -3,9 +3,9 @@
 //! Uses `which` on Unix/macOS and `where` on Windows to find the opencode binary in PATH.
 //! Accepts absolute paths directly.
 
+use super::runner::{CommandRunner, DefaultCommandRunner};
 use std::path::Path;
 use tracing::debug;
-use std::process::Command;
 
 /// Result of command availability check.
 #[derive(Debug, Clone)]
@@ -16,7 +16,7 @@ pub struct DetectResult {
     pub path: Option<String>,
 }
 
-/// Checks if a command is available.
+/// Checks if a command is available (uses default `CommandRunner`).
 ///
 /// If `command` is an absolute path, checks that the file exists and is executable.
 /// Otherwise uses `which` (Unix) or `where` (Windows) to find it in PATH.
@@ -25,6 +25,13 @@ pub struct DetectResult {
 ///
 /// * `command` - Command name (e.g. "opencode") or absolute path (e.g. "/usr/local/bin/opencode")
 pub fn detect_command(command: &str) -> DetectResult {
+    detect_command_with(command, &DefaultCommandRunner)
+}
+
+/// Checks if a command is available using the given `CommandRunner`.
+///
+/// Use this to inject a mock runner in tests.
+pub fn detect_command_with(command: &str, runner: &dyn CommandRunner) -> DetectResult {
     let path = Path::new(command);
 
     if path.is_absolute() {
@@ -44,10 +51,10 @@ pub fn detect_command(command: &str) -> DetectResult {
     }
 
     #[cfg(unix)]
-    let output = Command::new("which").arg(command).output();
+    let output = runner.run("which", &[command]);
 
     #[cfg(windows)]
-    let output = Command::new("where").arg(command).output();
+    let output = runner.run("where", &[command]);
 
     #[cfg(not(any(unix, windows)))]
     let output: Result<std::process::Output, _> = Err(std::io::Error::new(

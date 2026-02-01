@@ -21,6 +21,7 @@ pub mod open;
 pub mod path_vcs;
 pub mod permission;
 pub mod project;
+pub mod project_directory;
 pub mod provider;
 pub mod pty;
 pub mod question;
@@ -32,13 +33,16 @@ pub use api_log::LogEntryRequest;
 pub use client::{Client, HealthResponse};
 pub use error::Error;
 pub use event::{subscribe_and_stream, subscribe_and_stream_until_done, subscribe_global_events};
+pub use file::{FileEntry, FileStatus};
 pub use log::init_logger;
 pub use open::{OpenCode, OpenOptions, OpenResult, ServerHandle};
 pub use permission::PermissionReplyRequest;
 pub use project::{Project, UpdateProjectRequest};
+pub use project_directory::ProjectDirectory;
+pub use server::{CommandRunner, DefaultCommandRunner};
 pub use provider::{OAuthAuthorizeRequest, OAuthCallbackRequest};
 pub use pty::{CreatePtyRequest, UpdatePtyRequest};
 pub use session::{
-    CreateSessionRequest, MessageInfo, MessageListItem, Part, SendMessageRequest, Session,
-    SessionListParams,
+    CreateSessionRequest, DiffItem, MessageInfo, MessageListItem, Part, SendMessageRequest,
+    Session, SessionListParams,
 };

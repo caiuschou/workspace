@@ -62,11 +62,7 @@ impl OpenCode {
     pub async fn open(options: OpenOptions) -> Result<OpenResult, Error> {
         info!("OpenCode::open started");
         let base_url = format!("http://{}:{}", options.hostname, options.port);
-        let working_dir = options
-            .project_path
-            .as_ref()
-            .or(options.working_directory.as_ref())
-            .map(|p| p.as_path());
+        let working_dir = options.working_dir();
 
         debug!(
             base_url = %base_url,
@@ -87,6 +83,7 @@ impl OpenCode {
                 server: None,
                 session,
                 assistant_reply,
+                project_directory: options.project_directory().clone(),
             });
         }
 
@@ -132,6 +129,7 @@ impl OpenCode {
                 server: None,
                 session,
                 assistant_reply,
+                project_directory: options.project_directory().clone(),
             });
         }
 
@@ -169,6 +167,7 @@ impl OpenCode {
                     server: Some(ServerHandle::new(pid)),
                     session,
                     assistant_reply,
+                    project_directory: options.project_directory().clone(),
                 });
             }
         }

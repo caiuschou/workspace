@@ -1,9 +1,17 @@
 //! OpenOptions, OpenResult, and ServerHandle for OpenCode::open.
 
 use crate::client::Client;
+use crate::project_directory::ProjectDirectory;
 use crate::server::kill_by_pid;
 use crate::session::{MessageListItem, Session};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+
+/// Default health check timeout (ms) when probing for existing server.
+pub const DEFAULT_HEALTH_CHECK_TIMEOUT_MS: u64 = 3_000;
+/// Default max time (ms) to wait for server to become ready after spawn.
+pub const DEFAULT_STARTUP_TIMEOUT_MS: u64 = 30_000;
+/// Default max time (ms) to wait for AI response after sending chat_content (5 minutes).
+pub const DEFAULT_WAIT_FOR_RESPONSE_MS: u64 = 300_000;
 
 /// Options for `OpenCode::open`.
 ///
@@ -40,7 +48,7 @@ pub struct OpenOptions {
 
     /// Project directory. Used as cwd when spawning serve, and as `directory`
     /// query param for session API calls.
-    pub project_path: Option<PathBuf>,
+    pub project_directory: ProjectDirectory,
 
     /// Initial chat message. When set, a session is created and this message
     /// is sent after opening. The created session is returned.
@@ -67,13 +75,13 @@ impl Default for OpenOptions {
             auto_start: true,
             command: "opencode".to_string(),
             server_args: Vec::new(),
-            health_check_timeout_ms: 3000,
-            startup_timeout_ms: 30_000,
-            project_path: None,
+            health_check_timeout_ms: DEFAULT_HEALTH_CHECK_TIMEOUT_MS,
+            startup_timeout_ms: DEFAULT_STARTUP_TIMEOUT_MS,
+            project_directory: ProjectDirectory::none(),
             chat_content: None,
             working_directory: None,
             auto_install: true,
-            wait_for_response_ms: 300_000, // 5 minutes
+            wait_for_response_ms: DEFAULT_WAIT_FOR_RESPONSE_MS,
             stream_output: false,
         }
     }
@@ -124,8 +132,20 @@ impl OpenOptions {
 
     /// Sets the project directory. Used as cwd when spawning serve and for session API.
     pub fn project_path(mut self, path: impl Into<PathBuf>) -> Self {
-        self.project_path = Some(path.into());
+        self.project_directory = ProjectDirectory::from_path(path);
         self
+    }
+
+    /// Returns the project directory (for API calls and spawn cwd).
+    pub fn project_directory(&self) -> &ProjectDirectory {
+        &self.project_directory
+    }
+
+    /// Returns the effective working directory: project_directory or working_directory.
+    pub fn working_dir(&self) -> Option<&Path> {
+        self.project_directory
+            .as_path()
+            .or(self.working_directory.as_deref())
     }
 
     /// Sets the initial chat message. When provided, a session is created and
@@ -199,4 +219,6 @@ pub struct OpenResult {
     /// Last assistant message (agent reply) when chat_content was provided and we waited.
     /// Contains text parts and tool call parts (tool_name, tool_input, tool_output).
     pub assistant_reply: Option<MessageListItem>,
+    /// Project directory used for this open (for API calls: pass `.project_directory.as_path()`).
+    pub project_directory: ProjectDirectory,
 }

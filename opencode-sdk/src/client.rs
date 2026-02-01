@@ -16,6 +16,9 @@ pub struct Client {
 impl Client {
     /// Creates a new client for the given base URL.
     ///
+    /// Panics if the underlying reqwest client fails to build (e.g. TLS init).
+    /// For fallible construction use [`Client::builder`](Self::builder)(base_url).try_build().
+    ///
     /// # Example
     ///
     /// ```
@@ -54,6 +57,17 @@ impl Client {
         let health: crate::HealthResponse = response.json().await?;
         Ok(health)
     }
+
+    /// Disposes all OpenCode instances, releasing all resources.
+    ///
+    /// `POST /global/dispose`
+    pub async fn global_dispose(&self) -> Result<bool, Error> {
+        let url = format!("{}/global/dispose", self.base_url);
+        let response = self.http.post(&url).send().await?;
+        let result: bool = response.json().await?;
+        Ok(result)
+    }
+
 }
 
 /// Builder for configuring the OpenCode client.
@@ -70,17 +84,25 @@ impl ClientBuilder {
         self
     }
 
-    /// Builds the client.
+    /// Builds the client. Panics if reqwest client build fails.
+    /// Prefer [`try_build`](Self::try_build) when you need to handle errors.
     pub fn build(self) -> Client {
+        self.try_build().expect("reqwest client build")
+    }
+
+    /// Builds the client, returning an error if reqwest client build fails.
+    pub fn try_build(self) -> Result<Client, crate::Error> {
         let mut builder = ReqwestClient::builder();
         if let Some(timeout) = self.timeout {
             builder = builder.timeout(timeout);
         }
-        let http = builder.build().expect("reqwest client build");
-        Client {
+        let http = builder
+            .build()
+            .map_err(|e| crate::Error::ClientBuildFailed(e.to_string()))?;
+        Ok(Client {
             base_url: self.base_url,
             http,
-        }
+        })
     }
 }
 

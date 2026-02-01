@@ -15,7 +15,7 @@ Rust SDK for [OpenCode Server](https://opencodecn.com/docs/server) API.
 let _guard = opencode_sdk::init_logger(None);  // 或 init_logger(Some(path))
 ```
 
-设置 `RUST_LOG=opencode_sdk=debug` 可查看详细日志。
+设置 `RUST_LOG=opencode_sdk=debug` 可查看详细日志。需完整 SSE 事件 payload 时设置 `RUST_LOG=opencode_sdk::event=trace`。
 
 ### 连接已有 serve 或自动启动
 

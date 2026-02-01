@@ -72,7 +72,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     json_lines.push(next_line);
                 }
-                let json_str = json_lines.join("\n").trim();
+                let joined = json_lines.join("\n");
+                let json_str = joined.trim();
                 if json_str.is_empty() {
                     continue;
                 }

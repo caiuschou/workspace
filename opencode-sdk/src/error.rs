@@ -32,4 +32,12 @@ pub enum Error {
     /// Server did not become ready within timeout.
     #[error("opencode server at {url} did not become ready within {timeout_ms}ms")]
     StartupTimeout { url: String, timeout_ms: u64 },
+
+    /// Reqwest client build failed (e.g. TLS init issues).
+    #[error("client build failed: {0}")]
+    ClientBuildFailed(String),
+
+    /// SSE event stream error (e.g. connection closed, parse error).
+    #[error("event stream error: {0}")]
+    EventStream(String),
 }

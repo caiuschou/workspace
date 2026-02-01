@@ -8,7 +8,7 @@ use crate::Error;
 use serde::Serialize;
 use std::path::Path;
 
-/// Request body for permission reply.
+/// Request body for `POST /permission/{requestID}/reply`.
 #[derive(Debug, Clone, Serialize)]
 pub struct PermissionReplyRequest {
     /// Reply: "allow" or "deny".

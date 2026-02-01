@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// A single diff item from `GET /session/{sessionID}/diff` (file change).
+/// A single diff item from `GET /session/{sessionID}/diff` (file change: added, modified, deleted).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DiffItem {

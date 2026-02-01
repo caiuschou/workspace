@@ -8,7 +8,9 @@ use std::time::Duration;
 
 use super::Client;
 
-/// Builder for configuring the OpenCode client.
+/// Builder for configuring the OpenCode client (timeout, connection pool).
+///
+/// Obtain from [`Client::builder`]. Call [`build`](Self::build) or [`try_build`](Self::try_build) to create a [`Client`].
 #[derive(Debug)]
 pub struct ClientBuilder {
     pub(super) base_url: String,
@@ -42,13 +44,20 @@ impl ClientBuilder {
         self
     }
 
-    /// Builds the client. Panics if reqwest client build fails.
-    /// Prefer [`try_build`](Self::try_build) when you need to handle errors.
+    /// Builds the client.
+    ///
+    /// # Panics
+    ///
+    /// Panics if reqwest client build fails (e.g. TLS init). Prefer [`try_build`](Self::try_build) when you need to handle errors.
     pub fn build(self) -> Client {
         self.try_build().expect("reqwest client build")
     }
 
     /// Builds the client, returning an error if reqwest client build fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::ClientBuildFailed`] when reqwest client cannot be built.
     pub fn try_build(self) -> Result<Client, Error> {
         let mut builder = ReqwestClient::builder();
         if let Some(timeout) = self.timeout {

@@ -8,7 +8,7 @@ use crate::Error;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-/// Project information returned by the server.
+/// Project information returned by the server (`GET /project`, `GET /project/current`).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Project {
@@ -22,7 +22,7 @@ pub struct Project {
     pub commands: Option<serde_json::Value>,
 }
 
-/// Request body for PATCH /project/{projectID}.
+/// Request body for `PATCH /project/{projectID}`.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateProjectRequest {
@@ -41,6 +41,10 @@ impl Client {
     /// Lists all projects that have been opened with OpenCode.
     ///
     /// `GET /project`
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn project_list(
         &self,
         directory: Option<&Path>,
@@ -58,6 +62,10 @@ impl Client {
     /// Gets the currently active project.
     ///
     /// `GET /project/current`
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn project_current(
         &self,
         directory: Option<&Path>,
@@ -73,6 +81,10 @@ impl Client {
     /// Updates project properties (name, icon, commands).
     ///
     /// `PATCH /project/{projectID}`
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn project_update(
         &self,
         project_id: &str,

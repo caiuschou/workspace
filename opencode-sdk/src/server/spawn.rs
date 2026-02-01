@@ -7,7 +7,7 @@ use crate::error::Error;
 use std::process::Child;
 use tracing::info;
 
-/// Options for starting the server.
+/// Options for starting the server via [`spawn_server`].
 #[derive(Debug, Clone)]
 pub struct SpawnOptions<'a> {
     /// Command to execute (e.g. "opencode" or "/usr/local/bin/opencode").

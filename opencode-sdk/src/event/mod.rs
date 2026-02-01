@@ -24,8 +24,12 @@ const SSE_STREAM_TIMEOUT_SECS: u64 = 3600;
 
 /// Subscribes to global event stream (GET /global/event).
 ///
-/// Yields raw JSON event payloads. Use this for global-level events
-/// (e.g. instance lifecycle) as opposed to instance-level GET /event.
+/// Yields raw JSON event payloads to `on_event`. Use this for global-level events
+/// (e.g. instance lifecycle) as opposed to instance-level [`connect_sse`].
+///
+/// # Errors
+///
+/// Returns `Err` when the HTTP request fails or the stream cannot be established.
 pub async fn subscribe_global_events<F>(
     client: &Client,
     mut on_event: F,
@@ -63,8 +67,13 @@ where
     Ok(())
 }
 
-/// Streams events and invokes `on_text` for each text delta belonging to the session.
-/// Returns when the stream ends or errors.
+/// Streams instance-level events and invokes `on_text` for each text delta belonging to the session.
+///
+/// Returns when the stream ends or errors. For session completion detection, use [`subscribe_and_stream_until_done`].
+///
+/// # Errors
+///
+/// Returns `Err` when the connection fails or an event parse error occurs.
 pub async fn subscribe_and_stream<F>(
     client: &Client,
     directory: Option<&Path>,
@@ -99,8 +108,14 @@ where
 }
 
 /// Streams events, invokes `on_text` for each text delta, and returns when a completion
-/// event is seen or the stream ends. Use this instead of polling to know when the
-/// assistant reply is done.
+/// event is seen or the stream ends.
+///
+/// Use this instead of polling to know when the assistant reply is done. Called by
+/// [`OpenCode::open`](crate::OpenCode::open) when `chat_content` and `stream_output` are set.
+///
+/// # Errors
+///
+/// Returns `Err` when the connection fails or an event parse error occurs.
 pub async fn subscribe_and_stream_until_done<F>(
     client: &Client,
     directory: Option<&Path>,

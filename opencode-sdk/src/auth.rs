@@ -12,6 +12,10 @@ impl Client {
     /// Sets authentication credentials for a provider.
     ///
     /// `PUT /auth/{providerID}`. Pass the credential body as JSON.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn auth_set(
         &self,
         provider_id: &str,

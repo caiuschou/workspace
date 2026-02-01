@@ -7,14 +7,14 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, Env
 
 /// Initializes logging to stdout and file.
 ///
+/// Logs to both stdout and `{dir}/opencode-sdk.log`. Default dir: `~/.local/share/opencode-sdk` or `.` if `HOME` is unset.
+///
 /// Returns the guard. Caller must hold it to keep file logging active; dropping
 /// the guard stops the file writer. If you don't need file logging to persist,
 /// you can ignore the return value (stdout logging will still work).
 ///
-/// Log file: `{dir}/opencode-sdk.log` (default: current directory or `~/.local/share/opencode-sdk`)
-///
-/// Default level is `opencode_sdk=debug` when `RUST_LOG` is not set; set `RUST_LOG` to override
-/// (e.g. `RUST_LOG=opencode_sdk=info` to reduce noise).
+/// Default level is `opencode_sdk=debug` when `RUST_LOG` is not set. Override with
+/// `RUST_LOG=opencode_sdk=info` to reduce noise.
 pub fn init_logger(log_dir: Option<PathBuf>) -> Option<tracing_appender::non_blocking::WorkerGuard> {
     let dir = log_dir.unwrap_or_else(|| {
         std::env::var("XDG_DATA_HOME")

@@ -13,15 +13,19 @@ pub const DEFAULT_STARTUP_TIMEOUT_MS: u64 = 30_000;
 /// Default max time (ms) to wait for AI response after sending chat_content (5 minutes).
 pub const DEFAULT_WAIT_FOR_RESPONSE_MS: u64 = 300_000;
 
-/// Options for `OpenCode::open`.
+/// Options for [`OpenCode::open`](crate::OpenCode::open).
 ///
-/// Use the builder pattern for customization:
-/// ```ignore
-/// OpenCode::open(
-///     OpenOptions::default()
-///         .project_path("/path/to/project")
-///         .chat_content("分析这段代码")
-/// )
+/// Use the builder pattern: `OpenOptions::default().project_path(...).chat_content(...)`.
+///
+/// # Examples
+///
+/// ```
+/// use opencode_sdk::OpenOptions;
+///
+/// let opts = OpenOptions::default()
+///     .project_path("/path/to/project")
+///     .chat_content("Analyze this code")
+///     .port(4096);
 /// ```
 #[derive(Debug, Clone)]
 pub struct OpenOptions {
@@ -182,7 +186,8 @@ impl OpenOptions {
 
 /// Handle to a server process started by this SDK.
 ///
-/// Use [`ServerHandle::shutdown`] to gracefully terminate the server.
+/// Returned in [`OpenResult::server`] when [`OpenCode::open`](crate::OpenCode::open) spawns the server.
+/// Use [`shutdown`](Self::shutdown) to gracefully terminate the server.
 #[derive(Debug)]
 pub struct ServerHandle {
     pid: u32,
@@ -207,7 +212,7 @@ impl ServerHandle {
     }
 }
 
-/// Result of `OpenCode::open`.
+/// Result of [`OpenCode::open`](crate::OpenCode::open).
 #[derive(Debug)]
 pub struct OpenResult {
     /// Connected client.

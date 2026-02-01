@@ -8,7 +8,7 @@ use crate::Error;
 use serde::Serialize;
 use std::path::Path;
 
-/// Request body for POST /log.
+/// Request body for `POST /log` (write log entry to server).
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LogEntryRequest {
@@ -27,6 +27,10 @@ impl Client {
     /// Writes a log entry to the server.
     ///
     /// `POST /log`
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn log_write(
         &self,
         directory: Option<&Path>,

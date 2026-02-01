@@ -10,7 +10,18 @@ pub use builder::ClientBuilder;
 
 /// OpenCode Server API client.
 ///
-/// Provides type-safe access to all OpenCode Server endpoints.
+/// Provides type-safe access to all OpenCode Server endpoints. Construct with
+/// [`Client::new`] or [`Client::builder`]. Use session methods (e.g. [`Client::session_create`])
+/// and event functions ([`crate::event::subscribe_and_stream`]) for chat flows.
+///
+/// # Examples
+///
+/// ```
+/// use opencode_sdk::Client;
+///
+/// let client = Client::new("http://127.0.0.1:4096");
+/// assert_eq!(client.base_url(), "http://127.0.0.1:4096");
+/// ```
 #[derive(Debug, Clone)]
 pub struct Client {
     pub(crate) base_url: String,
@@ -19,6 +30,8 @@ pub struct Client {
 
 impl Client {
     /// Creates a new client for the given base URL.
+    ///
+    /// # Panics
     ///
     /// Panics if the underlying reqwest client fails to build (e.g. TLS init).
     /// For fallible construction use [`Client::builder`](Self::builder)(base_url).try_build().
@@ -34,7 +47,7 @@ impl Client {
         Self::builder(base_url).build()
     }
 
-    /// Returns a builder for configuring the client.
+    /// Returns a builder for configuring the client (timeout, pool settings).
     pub fn builder(base_url: impl Into<String>) -> ClientBuilder {
         ClientBuilder {
             base_url: base_url.into(),
@@ -57,6 +70,10 @@ impl Client {
     /// Performs a GET request to the health endpoint.
     ///
     /// Use this to verify the server is running and check its version.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn health(&self) -> Result<HealthResponse, Error> {
         let url = format!("{}/global/health", self.base_url);
         let response = self.http.get(&url).send().await?;
@@ -67,6 +84,10 @@ impl Client {
     /// Disposes all OpenCode instances, releasing all resources.
     ///
     /// `POST /global/dispose`
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn global_dispose(&self) -> Result<bool, Error> {
         let url = format!("{}/global/dispose", self.base_url);
         let response = self.http.post(&url).send().await?;
@@ -75,9 +96,9 @@ impl Client {
     }
 }
 
-/// Response from `/global/health`.
+/// Response from `GET /global/health`.
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct HealthResponse {
-    /// Server version string.
+    /// Server version string (e.g. `"0.1.0"`).
     pub version: String,
 }

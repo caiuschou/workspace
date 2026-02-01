@@ -3,6 +3,8 @@
 use thiserror::Error;
 
 /// Errors that can occur when using the OpenCode SDK.
+///
+/// Most API methods return `Result<T, Error>`. Use `?` to propagate or match on variants.
 #[derive(Error, Debug)]
 pub enum Error {
     /// HTTP request failed.

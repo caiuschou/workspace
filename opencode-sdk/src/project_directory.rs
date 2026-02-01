@@ -8,8 +8,18 @@ use std::path::{Path, PathBuf};
 
 /// Project directory for API calls.
 ///
-/// Use `none()` for server's cwd; use `from_path(path)` for an explicit project.
-/// Pass `.as_path()` to API methods that accept `directory: Option<&Path>`.
+/// Use [`none`](Self::none) for server's cwd; use [`from_path`](Self::from_path) for an explicit project.
+/// Pass [`as_path`](Self::as_path) to API methods that accept `directory: Option<&Path>`.
+///
+/// # Examples
+///
+/// ```
+/// use opencode_sdk::ProjectDirectory;
+///
+/// let none = ProjectDirectory::none();
+/// let proj = ProjectDirectory::from_path("/path/to/project");
+/// assert!(proj.as_path().is_some());
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct ProjectDirectory(Option<PathBuf>);
 

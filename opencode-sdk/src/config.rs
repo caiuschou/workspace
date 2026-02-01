@@ -11,7 +11,11 @@ use std::path::Path;
 impl Client {
     /// Gets the current OpenCode configuration.
     ///
-    /// `GET /config`
+    /// `GET /config`. Returns JSON with config fields.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn config_get(
         &self,
         directory: Option<&Path>,
@@ -27,6 +31,10 @@ impl Client {
     /// Updates OpenCode configuration.
     ///
     /// `PATCH /config`. Pass a JSON value with the fields to update.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn config_patch(
         &self,
         directory: Option<&Path>,
@@ -43,6 +51,10 @@ impl Client {
     /// Lists configured AI providers and their default models.
     ///
     /// `GET /config/providers`
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn config_providers(
         &self,
         directory: Option<&Path>,

@@ -149,9 +149,15 @@ impl Client {
 
     /// Creates a new session, optionally in the given project directory.
     ///
+    /// `POST /session`. Returns the created [`Session`] with id. Use with [`session_send_message_async`](Self::session_send_message_async) or event streaming.
+    ///
     /// # Arguments
     ///
     /// * `directory` - Project directory (absolute path). Omit to use server's cwd.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn session_create(
         &self,
         directory: Option<&std::path::Path>,
@@ -171,8 +177,12 @@ impl Client {
 
     /// Sends a message to a session (async, returns immediately).
     ///
-    /// Uses `POST /session/{id}/prompt_async` - the AI response is processed
-    /// in the background. Use `session_send_message` for streaming response.
+    /// Uses `POST /session/{id}/prompt_async` — the AI response is processed
+    /// in the background. Subscribe to [`subscribe_and_stream_until_done`](crate::event::subscribe_and_stream_until_done) to receive text deltas.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or the response is not successful.
     pub async fn session_send_message_async(
         &self,
         session_id: &str,

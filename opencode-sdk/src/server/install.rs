@@ -9,8 +9,12 @@ use tracing::{debug, info};
 
 /// Attempts to install OpenCode using available package managers (uses default `CommandRunner`).
 ///
-/// Tries: npm install -g opencode, then brew, then curl script.
+/// Tries in order: `npm install -g opencode-ai`, then `brew install`, then curl install script.
 /// Returns the path to opencode if installation succeeded.
+///
+/// # Errors
+///
+/// Returns [`Error::InstallFailed`] when no install method succeeds.
 pub fn install_opencode() -> Result<String, Error> {
     install_opencode_with_runner(&DefaultCommandRunner)
 }

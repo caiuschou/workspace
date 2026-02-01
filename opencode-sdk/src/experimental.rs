@@ -1,4 +1,7 @@
 //! Experimental API for OpenCode Server.
+//!
+//! Tool IDs, tool list, MCP resources, and worktree management.
+//! This module is unstable; endpoints may change.
 
 use crate::client::Client;
 use crate::request::RequestBuilderExt;

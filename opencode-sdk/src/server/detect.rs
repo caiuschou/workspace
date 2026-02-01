@@ -8,6 +8,8 @@ use std::path::Path;
 use tracing::debug;
 
 /// Result of command availability check.
+///
+/// Returned by [`detect_command`] and [`detect_command_with`].
 #[derive(Debug, Clone)]
 pub struct DetectResult {
     /// Whether the command is available.

@@ -8,14 +8,14 @@ use crate::Error;
 use serde::Serialize;
 use std::path::Path;
 
-/// Request for OAuth authorize.
+/// Request body for `POST /provider/{providerID}/oauth/authorize`.
 #[derive(Debug, Clone, Serialize)]
 pub struct OAuthAuthorizeRequest {
     /// Auth method index.
     pub method: u32,
 }
 
-/// Request for OAuth callback.
+/// Request body for `POST /provider/{providerID}/oauth/callback`.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OAuthCallbackRequest {

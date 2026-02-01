@@ -6,7 +6,7 @@ use crate::Error;
 use serde::Serialize;
 use std::path::Path;
 
-/// Request body for creating a PTY session.
+/// Request body for `POST /pty` (create PTY session).
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreatePtyRequest {
@@ -27,7 +27,7 @@ pub struct CreatePtyRequest {
     pub env: Option<serde_json::Value>,
 }
 
-/// Request body for updating a PTY session.
+/// Request body for `PUT /pty/{ptyID}` (update PTY session).
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdatePtyRequest {

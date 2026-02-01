@@ -9,7 +9,9 @@ use std::path::Path;
 
 use super::SSE_STREAM_TIMEOUT_SECS;
 
-/// Single SSE event with raw data (JSON string). Used by `connect_sse` stream.
+/// Single SSE event with raw data (JSON string).
+///
+/// Yielded by the stream returned from [`connect_sse`]. Parse `data` as JSON for event payloads.
 #[derive(Debug)]
 pub struct SseEvent {
     /// Raw event data (typically JSON).
@@ -20,6 +22,12 @@ pub struct SseEvent {
 ///
 /// Each item is `Ok(SseEvent)` with raw data or `Err(Error)` on stream error.
 /// Consumers parse `ev.data` as JSON and handle completion/text deltas.
+/// Used internally by [`subscribe_and_stream`](crate::event::subscribe_and_stream) and
+/// [`subscribe_and_stream_until_done`](crate::event::subscribe_and_stream_until_done).
+///
+/// # Errors
+///
+/// Returns `Err` when the HTTP request fails or the response is not successful.
 pub async fn connect_sse(
     client: &Client,
     directory: Option<&Path>,

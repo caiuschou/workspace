@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// A file or directory entry from `GET /file` (Serve API 12-file).
+/// A file or directory entry from `GET /file`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FileEntry {
@@ -17,7 +17,7 @@ pub struct FileEntry {
     pub size: Option<u64>,
 }
 
-/// A file status entry from `GET /file/status` (git status).
+/// A file status entry from `GET /file/status` (git status: modified, added, deleted).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FileStatus {

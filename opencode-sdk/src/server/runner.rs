@@ -6,7 +6,9 @@ use std::io;
 use std::path::Path;
 use std::process::{Child, Output};
 
-/// Runs a command and returns its output (for detection and install steps).
+/// Abstraction for running commands (used by detect, install, spawn).
+///
+/// Implement for tests to inject a mock. Default implementation: [`DefaultCommandRunner`].
 pub trait CommandRunner: Send + Sync {
     /// Runs `cmd` with `args` and returns the output.
     fn run(&self, cmd: &str, args: &[&str]) -> io::Result<Output>;
@@ -16,6 +18,8 @@ pub trait CommandRunner: Send + Sync {
 }
 
 /// Default implementation using `std::process::Command`.
+///
+/// Used by [`detect_command`](crate::server::detect_command), [`install_opencode`](crate::server::install_opencode), and [`spawn_server`](crate::server::spawn_server).
 #[derive(Debug, Clone, Default)]
 pub struct DefaultCommandRunner;
 

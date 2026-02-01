@@ -14,7 +14,11 @@ pub use types::{FileEntry, FileStatus};
 impl Client {
     /// Lists files and directories at the given path in the project.
     ///
-    /// `GET /file?path=...`. Returns an array of file/directory entries.
+    /// `GET /file?path=...`. Returns an array of [`FileEntry`] items.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response cannot be parsed.
     pub async fn file_list(
         &self,
         path: &str,
@@ -37,6 +41,10 @@ impl Client {
     /// Reads file content at the given path.
     ///
     /// `GET /file/content?path=...`
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response JSON cannot be parsed.
     pub async fn file_content(
         &self,
         path: &str,
@@ -56,7 +64,11 @@ impl Client {
 
     /// Gets git status of all files in the project.
     ///
-    /// `GET /file/status`. Returns an array of file status entries.
+    /// `GET /file/status`. Returns an array of [`FileStatus`] entries.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the HTTP request fails or response cannot be parsed.
     pub async fn file_status(&self, directory: Option<&Path>) -> Result<Vec<FileStatus>, Error> {
         let url = format!("{}/file/status", self.base_url());
         let req = self.http().get(&url).with_directory(directory);

@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Session created by the server.
+/// Session created by the server (from `POST /session`).
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Session {
@@ -14,6 +14,8 @@ pub struct Session {
 }
 
 /// Part of a message. Aligns with server ContentPart: text, reasoning, image, binary, tool call, tool result, finish.
+///
+/// Create text parts with [`Part::text`]. Use in [`SendMessageRequest::parts`].
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Part {
@@ -62,7 +64,7 @@ pub struct Part {
 }
 
 impl Part {
-    /// Creates a text part.
+    /// Creates a text part for use in [`SendMessageRequest`].
     pub fn text(content: impl Into<String>) -> Self {
         Self {
             id: None,
@@ -83,7 +85,7 @@ impl Part {
     }
 }
 
-/// Request body for creating a session.
+/// Request body for `POST /session` (create session).
 #[derive(Debug, Clone, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateSessionRequest {
@@ -98,7 +100,9 @@ pub struct CreateSessionRequest {
     pub permission: Option<serde_json::Value>,
 }
 
-/// Request body for sending a message.
+/// Request body for `POST /session/{id}/prompt_async` and `POST /session/{id}/message`.
+///
+/// Create with [`SendMessageRequest::from_parts`] using [`Part::text`] parts.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SendMessageRequest {
@@ -125,7 +129,15 @@ pub struct SendMessageRequest {
 }
 
 impl SendMessageRequest {
-    /// Creates a request with the given parts; optional fields are None.
+    /// Creates a request with the given parts; optional fields are `None`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use opencode_sdk::{SendMessageRequest, Part};
+    ///
+    /// let req = SendMessageRequest::from_parts(vec![Part::text("Hello")]);
+    /// ```
     pub fn from_parts(parts: Vec<Part>) -> Self {
         Self {
             parts,
@@ -139,7 +151,7 @@ impl SendMessageRequest {
     }
 }
 
-/// Message in a session (minimal for polling).
+/// Message metadata in a session (id, role).
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MessageInfo {
@@ -149,7 +161,9 @@ pub struct MessageInfo {
     pub role: String,
 }
 
-/// Response item from GET /session/{id}/message.
+/// Response item from `GET /session/{id}/message` or `/messages`.
+///
+/// Use [`text_content`](Self::text_content) to extract all text from parts.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MessageListItem {
@@ -171,7 +185,7 @@ impl MessageListItem {
     }
 }
 
-/// Query params for listing sessions (used with directory from the main param).
+/// Query params for listing sessions (`GET /session`).
 #[derive(Debug, Clone, Default)]
 pub struct SessionListParams {
     /// Only return root sessions (no parentID).

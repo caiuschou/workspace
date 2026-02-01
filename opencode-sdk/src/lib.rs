@@ -1,6 +1,28 @@
-//! OpenCode SDK for Rust
+//! OpenCode SDK for Rust — type-safe HTTP client for the [OpenCode Server](https://opencodecn.com/docs/server) API.
 //!
-//! Type-safe HTTP client for [OpenCode Server](https://opencodecn.com/docs/server) API.
+//! # Quick start
+//!
+//! Use [`OpenCode::open`] to connect to or start the OpenCode server:
+//!
+//! ```rust,no_run
+//! use opencode_sdk::{OpenCode, OpenOptions};
+//!
+//! #[tokio::main]
+//! async fn main() -> Result<(), opencode_sdk::Error> {
+//!     let result = OpenCode::open(
+//!         OpenOptions::default()
+//!             .project_path("/path/to/project")
+//!             .chat_content("Hello")
+//!     ).await?;
+//!     println!("version: {}", result.client.health().await?.version);
+//!     if let Some(s) = result.server {
+//!         s.shutdown();
+//!     }
+//!     Ok(())
+//! }
+//! ```
+//!
+//! For direct API access, construct a [`Client`] with [`Client::new`] or [`Client::builder`].
 
 pub mod agent_skill;
 pub mod api_log;

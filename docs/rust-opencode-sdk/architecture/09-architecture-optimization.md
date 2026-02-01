@@ -9,7 +9,9 @@
 ```
 src/
 ├── lib.rs                 # 根 API、re-export
-├── client.rs              # Client + ClientBuilder，Global(01) health、global_dispose
+├── client/                 # Global(01) health、global_dispose
+│   ├── mod.rs             # Client、HealthResponse、impl Client
+│   └── builder.rs         # ClientBuilder、impl ClientBuilder
 ├── error.rs
 ├── log.rs                 # init_logger（SDK 侧日志）
 ├── open/                  # OpenCode::open 入口与编排
@@ -19,34 +21,43 @@ src/
 │   ├── health.rs          # check_server_healthy
 │   └── logging.rs         # log_assistant_reply、log_part
 ├── request.rs             # RequestBuilderExt::with_directory（统一 directory query）
+├── project_directory.rs   # ProjectDirectory 类型（R2.2）
 ├── server/                # 进程生命周期
-│   ├── mod.rs │ detect.rs │ install.rs │ spawn.rs │ shutdown.rs
+│   ├── mod.rs │ detect.rs │ install.rs │ runner.rs │ spawn.rs │ shutdown.rs
 ├── instance.rs            # (02) POST /instance/dispose
 ├── project.rs             # (03) GET /project, GET /project/current, PATCH /project/{id}
 ├── path_vcs.rs            # (04) GET /path, GET /vcs
 ├── config.rs              # (05) GET/PATCH /config, GET /config/providers
 ├── provider.rs            # (06) GET /provider, GET /provider/auth, OAuth authorize/callback
 ├── auth.rs                # (07) PUT /auth/{providerID}
-├── session/               # (08) 唯一能力层目录
-│   ├── mod.rs             # Session 类型与全部 session_* 方法
-│   └── message.rs         # Part、MessageListItem、parse_message_list 等
+├── session/               # (08) 能力层目录
+│   ├── mod.rs             # impl Client、re-export、log_part_received
+│   ├── types.rs           # Session、Part、CreateSessionRequest、SendMessageRequest、MessageInfo、MessageListItem、SessionListParams
+│   ├── message.rs         # parse_message_list 等
+│   └── diff.rs            # DiffItem、session_diff 响应类型
 ├── permission.rs          # (09) GET /permission, POST /permission/{id}/reply
 ├── question.rs            # (10) GET /question, reply, reject
 ├── command.rs             # (11) GET /command
-├── file.rs                # (12) GET /file, GET /file/content, GET /file/status
+├── file/                  # (12) GET /file, GET /file/content, GET /file/status
+│   ├── mod.rs             # impl Client：file_list、file_content、file_status
+│   └── types.rs           # FileEntry、FileStatus
 ├── find.rs                # (13) GET /find, GET /find/file, GET /find/symbol
 ├── lsp_mcp.rs             # (14) LSP/Formatter/MCP 状态与 MCP 增删、OAuth、connect/disconnect
 ├── agent_skill.rs         # (15) GET /agent, GET /skill
 ├── api_log.rs             # (16) POST /log（服务端写日志，与 log.rs 区分）
-├── event.rs               # (17) GET /event、GET /global/event，subscribe_* 与流式解析
+├── event/                 # (17) GET /event、GET /global/event，subscribe_* 与流式解析
+│   ├── mod.rs             # subscribe_*、subscribe_global_events、re-export
+│   ├── connect.rs         # connect_sse、SseEvent
+│   ├── completion.rs      # extract_completion
+│   └── delta.rs           # extract_text_delta
 ├── pty.rs                 # (18) PTY CRUD 与 pty_connect_url
 ├── tui.rs                 # (19) TUI 各类控制接口
 └── experimental.rs        # (20) tool/resource/worktree 等实验接口
 ```
 
 - **入口**：`open/` 目录承载 OpenCode、open() 编排；options、chat、health、logging 子模块分工。
-- **核心**：`client.rs` 承载 Client、ClientBuilder、health、global_dispose；`request.rs` 提供 `RequestBuilderExt::with_directory`，各 API 模块统一使用。
-- **能力层**：与 Serve API 01–20 一一对应；除 `session/` 为目录（mod + message）外，其余均为单文件 `impl Client`。
+- **核心**：`client/` 承载 Client（mod.rs）、ClientBuilder（builder.rs）、health、global_dispose；`request.rs` 提供 `RequestBuilderExt::with_directory`，各 API 模块统一使用。
+- **能力层**：与 Serve API 01–20 一一对应；`session/`、`file/`、`event/` 为目录（mod + 类型/子模块），其余为单文件 `impl Client`。
 
 ## 优化后的代码架构图
 
@@ -79,7 +90,7 @@ src/
                                         │
                                         ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│  Core: Client (client.rs)                                                        │
+│  Core: Client (client/)                                                          │
 │  ┌───────────────────────────────────────────────────────────────────────────┐   │
 │  │  base_url, http (reqwest), ClientBuilder → build() / try_build()           │   │
 │  └───────────────────────────────────────────────────────────────────────────┘   │
@@ -116,6 +127,8 @@ src/
 | **测试独立** | 单元测试拆分到单独目录（如 `tests/`）或同模块内 `#[cfg(test)] mod tests`。 | 遵循 AGENTS.md：测试独立、BDD 风格、用例方法有注释。 |
 | **新模块准入** | 新增能力模块（新 Serve API 对应）时，先单文件 `xxx.rs`；文件膨胀或类型增多再拆目录。 | 单文件内类型 ≥3 或文件 >300 行时，建议拆为 `xxx/mod.rs` + `xxx/types.rs` 等。 |
 
+**新增能力模块约定**：新增与 Serve API 对应的能力时，先以单文件 `xxx.rs` 实现 `impl Client` 与对应类型；在 `lib.rs` 中 `pub mod xxx` 并视需 re-export。单文件内类型 ≥3 或文件 >300 行时再拆为 `xxx/` 目录，`mod.rs` 仅做 re-export 与 `impl Client` 编排。详见 [06-extension-guide](06-extension-guide.md)。
+
 **目标结构示意（细颗粒度，与 [Serve API 模块](../../opencode-serve-api.md) 对应）：**
 
 下图为在现状基础上的**优化目标**；当前实现见上文「当前源码结构（现状）」。
@@ -150,10 +163,10 @@ src/
 |----|------|----------|
 | 入口 | `open.rs` 单文件 | 拆为 `open/`（mod、options、chat、health、logging） |
 | 公共请求 | 各模块重复拼接 `directory` | 新增 `request.rs`，`RequestBuilderExt::with_directory` |
-| Client | `client.rs` 含 Client + ClientBuilder | 可选拆出 `client_builder.rs` |
+| Client | `client/`（mod + builder） | 已完成：mod.rs（Client）、builder.rs（ClientBuilder） |
 | 能力层 | 多为单文件（仅 session/ 为目录） | 大文件或超 200 行按类型/职责拆成目录（file/、event/、lsp_mcp/ 等） |
-| session/ | mod + message | 可增 types.rs、diff.rs，具象化 diff 返回类型 |
-| file / event | file.rs、event.rs | 拆为 file/、event/，mod + types 或 connect/completion/delta |
+| session/ | mod + message + diff.rs | 已增 diff.rs（DiffItem），具象化 diff 返回类型 |
+| file / event | file/、event/ | 已完成：file/（mod + types），event/（mod + connect/completion/delta） |
 
 ## 优化原则
 
@@ -174,7 +187,7 @@ User / open()  →  Client + server  →  OpenCode Server (HTTP/SSE)
 ```
 
 - **入口层**：`OpenCode::open()`、`Client::new` / `ClientBuilder`。只做编排与配置，不承载业务细节。
-- **核心层**：`Client` 持有 HTTP 与 base_url；各 API 通过 `impl Client` 扩展，不修改 `client.rs` 核心。
+- **核心层**：`Client` 持有 HTTP 与 base_url；各 API 通过 `impl Client` 扩展，不修改 `client/` 核心。
 - **能力层**：与 [OpenCode Serve API](../../opencode-serve-api.md) 模块一一对应；**现状**为单文件为主（instance.rs、project.rs、…、experimental.rs），仅 `session/` 为目录；`server/` 封装 detect/install/spawn/shutdown，与 HTTP 无关。
 
 ### 边界优化方向
@@ -191,7 +204,7 @@ User / open()  →  Client + server  →  OpenCode Server (HTTP/SSE)
 ## 可扩展性优化
 
 - **新 API 以 `impl Client` 形式扩展**  
-  新端点放在独立模块（如 `project.rs`），在 `lib.rs` 中 re-export；不修改 `client.rs` 或其它 API 模块。参见 [06-extension-guide](06-extension-guide.md)。
+  新端点放在独立模块（如 `project.rs`），在 `lib.rs` 中 re-export；不修改 `client/` 或其它 API 模块。参见 [06-extension-guide](06-extension-guide.md)。
 
 - **类型与模块一一对应**  
   新请求/响应类型尽量单独文件或与对应 API 同模块，便于维护和测试。例如 `session_diff` 的返回类型可放在 `session/diff.rs` 或 `session/mod.rs`。

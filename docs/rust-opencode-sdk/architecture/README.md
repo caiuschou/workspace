@@ -67,10 +67,18 @@ opencode-sdk/
 ├── README.md               # Quick start guide
 ├── src/
 │   ├── lib.rs              # Public API exports
-│   ├── client.rs           # HTTP Client, health check, ClientBuilder
+│   ├── client/               # HTTP Client, health check, ClientBuilder
+│   │   ├── mod.rs            # Client, HealthResponse, impl Client
+│   │   └── builder.rs        # ClientBuilder, impl ClientBuilder
 │   ├── error.rs            # Error types (thiserror-based)
-│   ├── event.rs            # SSE event streaming and parsing
-│   ├── file.rs             # File/directory API (impl Client)
+│   ├── event/               # SSE event streaming and parsing
+│   │   ├── mod.rs           # subscribe_*、subscribe_global_events、re-export
+│   │   ├── connect.rs       # connect_sse、SseEvent
+│   │   ├── completion.rs    # extract_completion
+│   │   └── delta.rs         # extract_text_delta
+│   ├── file/                # File/directory API (impl Client)
+│   │   ├── mod.rs           # file_list、file_content、file_status
+│   │   └── types.rs         # FileEntry、FileStatus
 │   ├── log.rs              # Logging initialization (tracing)
 │   ├── open/               # OpenCode::open one-shot entry point
 │   │   ├── mod.rs          # OpenCode, open() orchestration, re-exports
@@ -111,9 +119,9 @@ SDK 的 Capability 层与 [OpenCode Serve API](../../opencode-serve-api.md) 的�
 | Provider / Auth | [06-provider](../../opencode-serve-api/06-provider.md), [07-auth](../../opencode-serve-api/07-auth.md) | `provider.rs`、`auth.rs` | 已实现 |
 | Session / Message | [08-session](../../opencode-serve-api/08-session.md) | `session/` | 已实现 |
 | Permission / Question / Command | 09–11 | `permission.rs`、`question.rs`、`command.rs` | 已实现 |
-| File 文件 | [12-file](../../opencode-serve-api/12-file.md) | `file.rs` | 已实现 |
+| File 文件 | [12-file](../../opencode-serve-api/12-file.md) | `file/` | 已实现 |
 | Find / LSP / MCP / Agent / Logging | 13–16 | `find.rs`、`lsp_mcp.rs`、`agent_skill.rs`、`api_log.rs` | 已实现 |
-| Event 事件 | [17-event](../../opencode-serve-api/17-event.md) | `event.rs` | 已实现 |
+| Event 事件 | [17-event](../../opencode-serve-api/17-event.md) | `event/` | 已实现 |
 | PTY / TUI / Experimental | 18–20 | `pty.rs`、`tui.rs`、`experimental.rs` | 已实现 |
 
 新增 API 时：在对应模块下按 [06-extension-guide](06-extension-guide.md) 扩展，类型与 Serve API 文档对齐。

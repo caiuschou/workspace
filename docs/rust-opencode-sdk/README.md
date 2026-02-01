@@ -92,7 +92,9 @@ opencode-rs/
 ├── README.md
 ├── src/
 │   ├── lib.rs              # 库入口
-│   ├── client.rs           # Client 主结构
+│   ├── client/               # Client 主结构
+│   │   ├── mod.rs            # Client, HealthResponse
+│   │   └── builder.rs        # ClientBuilder
 │   ├── config.rs           # 配置
 │   ├── error.rs            # 错误类型
 │   └── apis/

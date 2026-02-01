@@ -16,8 +16,8 @@
 | D1.3 | **opencode-serve-api 与 SDK 实现同步** | | 完成 | P2 |
 | D1.3.1 | 核对 [opencode-serve-api/README](../../opencode-serve-api/README.md) 状态列与 opencode-sdk 实现 | opencode-serve-api | 完成 | P2 |
 | D1.3.2 | 可选：编写脚本或 CI 步骤，从源码生成/校验状态列 | opencode-serve-api | 待办 | P2 |
-| D1.4 | [01-components](01-components.md)「SDK 与 Serve API 模块对应」表与源码、Serve API 文档一致 | 01-components | 待办 | P2 |
-| D1.5 | [08-roadmap](08-roadmap.md) 的 Additional APIs 表与当前实现状态一致（全部实现则更新说明） | 08-roadmap | 待办 | P2 |
+| D1.4 | [01-components](01-components.md)「SDK 与 Serve API 模块对应」表与源码、Serve API 文档一致 | 01-components | 完成 | P2 |
+| D1.5 | [08-roadmap](08-roadmap.md) 的 Additional APIs 表与当前实现状态一致（全部实现则更新说明） | 08-roadmap | 完成 | P2 |
 
 ## 2. 代码重构（Phase 1，高收益低风险）
 
@@ -51,13 +51,13 @@
 | R2.1.2 | 在 client.rs 中新增 `try_build() -> Result<Client, Error>`，内部用 `map_err` 替代 `expect` | 07-2.1 | 完成 | P1 |
 | R2.1.3 | 保留 `build()`，在文档中注明 panic 风险或标注 `#[deprecated]` 建议用 try_build | 07-2.1 | 完成 | P1 |
 | R2.1.4 | 调用处（如 OpenCode::open 内 Client::new）改为 `builder().try_build()?` 或保持 build 按需 | 07-2.1 | 完成 | P1 |
-| R2.2 | **引入 ProjectDirectory 类型（可选，breaking）** | 07-2.2, 09 | | P2 |
-| R2.2.1 | 定义 `ProjectDirectory(Option<PathBuf>)`，提供 `none()`、`from_path()`、`as_path()` | 07-2.2 | 待办 | P2 |
-| R2.2.2 | OpenOptions 中 project_path 改为或兼容 ProjectDirectory；OpenResult 与 API 方法签名逐步采用 | 07-2.2 | 待办 | P2 |
-| R2.3 | **file_list / file_status / session_diff 具象化返回类型** | 07-2.3, 08 | | P2 |
-| R2.3.1 | 定义 `FileEntry`（与 Serve API 12-file 一致），`file_list` 返回 `Result<Vec<FileEntry>, Error>` | 07-2.3 | 待办 | P2 |
-| R2.3.2 | 定义 `FileStatus`，`file_status` 返回 `Result<Vec<FileStatus>, Error>` | 07-2.3 | 待办 | P2 |
-| R2.3.3 | 定义 `DiffItem`，session_diff 返回 `Result<Vec<DiffItem>, Error>` | 07-2.3 | 待办 | P2 |
+| R2.2 | **引入 ProjectDirectory 类型（可选，breaking）** | 07-2.2, 09 | 完成 | P2 |
+| R2.2.1 | 定义 `ProjectDirectory(Option<PathBuf>)`，提供 `none()`、`from_path()`、`as_path()` | 07-2.2 | 完成 | P2 |
+| R2.2.2 | OpenOptions 中 project_path 改为或兼容 ProjectDirectory；OpenResult 与 API 方法签名逐步采用 | 07-2.2 | 完成 | P2 |
+| R2.3 | **file_list / file_status / session_diff 具象化返回类型** | 07-2.3, 08 | 完成 | P2 |
+| R2.3.1 | 定义 `FileEntry`（与 Serve API 12-file 一致），`file_list` 返回 `Result<Vec<FileEntry>, Error>` | 07-2.3 | 完成 | P2 |
+| R2.3.2 | 定义 `FileStatus`，`file_status` 返回 `Result<Vec<FileStatus>, Error>` | 07-2.3 | 完成 | P2 |
+| R2.3.3 | 定义 `DiffItem`，session_diff 返回 `Result<Vec<DiffItem>, Error>` | 07-2.3 | 完成 | P2 |
 | R3.1 | **event 全量 JSON 日志改为 trace/debug** | 07-3.1 | 完成 | P2 |
 | R3.1.1 | 将 event.rs 中每条 SSE 事件的全量 JSON 日志从 `info!` 改为 `trace!` 或 `debug!` | 07-3.1 | 完成 | P2 |
 | R3.1.2 | 在文档或 README 中说明：需完整 payload 时设置 `RUST_LOG=opencode_sdk::event=trace` | 07-3.1 | 完成 | P2 |
@@ -76,9 +76,9 @@
 | R4.1.6 | 删除根目录 `open.rs` 或改为 `pub use open::*`，确保 lib.rs 与现有调用兼容 | 07-4.1 | 完成 | P1 |
 | R4.2 | **session_list_messages 回退逻辑改为循环/表驱动** | 07-4.2 | 完成 | P2 |
 | R4.2.1 | 将 /message、/messages、无 directory 等尝试改为 `[(path, directory); N]` 循环，首次成功即返回 | 07-4.2 | 完成 | P2 |
-| R4.3 | **server 模块 CommandRunner trait（可选）** | 07-4.3 | | P3 |
-| R4.3.1 | 定义 `CommandRunner` trait（如 `fn run(&self, cmd: &str, args: &[&str]) -> Result<Output>`），默认实现用 `std::process::Command` | 07-4.3 | 待办 | P3 |
-| R4.3.2 | detect/install/spawn 通过参数或环境注入 CommandRunner，测试时可注入 mock | 07-4.3 | 待办 | P3 |
+| R4.3 | **server 模块 CommandRunner trait（可选）** | 07-4.3 | 完成 | P3 |
+| R4.3.1 | 定义 `CommandRunner` trait（如 `fn run(&self, cmd: &str, args: &[&str]) -> Result<Output>`），默认实现用 `std::process::Command` | 07-4.3 | 完成 | P3 |
+| R4.3.2 | detect/install/spawn 通过参数或环境注入 CommandRunner，测试时可注入 mock | 07-4.3 | 完成 | P3 |
 
 ## 4. 颗粒度要求与架构优化
 
@@ -86,21 +86,21 @@
 
 | 编号 | 任务 | 关联文档 | 状态 | 优先级 |
 |------|------|----------|------|--------|
-| A4.1 | 可选：Client 与 ClientBuilder 拆为 client.rs / client_builder.rs | 09 | 待办 | P3 |
-| A4.2 | **大文件按颗粒度拆目录** | 09 | | P2 |
-| A4.2.1 | event.rs 拆为 event/：mod.rs（subscribe_* re-export）、connect.rs（connect_sse）、completion.rs、delta.rs | 09 | 待办 | P2 |
-| A4.2.2 | file.rs 拆为 file/：mod.rs（impl Client）、types.rs（FileEntry, FileStatus，与 R2.3 协同） | 09 | 待办 | P2 |
-| A4.3 | **session/ 增加 types.rs、diff.rs** | 09, R2.3 | | P2 |
-| A4.3.1 | session/types.rs：Session、CreateSessionRequest 等请求/响应类型迁入或新建 | 09 | 待办 | P2 |
-| A4.3.2 | session/diff.rs：DiffItem 及 session_diff 响应类型（与 R2.3.3 协同），mod 中 diff 方法可调用 | 09 | 待办 | P2 |
-| A4.4 | **新增能力模块约定**：先单文件；类型≥3 或文件>300 行再拆目录，mod.rs 仅 re-export 与 impl Client | 09 | 待办 | P2 |
+| A4.1 | 可选：Client 与 ClientBuilder 拆为 client.rs / client_builder.rs | 09 | 完成 | P3 |
+| A4.2 | **大文件按颗粒度拆目录** | 09 | 完成 | P2 |
+| A4.2.1 | event.rs 拆为 event/：mod.rs（subscribe_* re-export）、connect.rs（connect_sse）、completion.rs、delta.rs | 09 | 完成 | P2 |
+| A4.2.2 | file.rs 拆为 file/：mod.rs（impl Client）、types.rs（FileEntry, FileStatus，与 R2.3 协同） | 09 | 完成 | P2 |
+| A4.3 | **session/ 增加 types.rs、diff.rs** | 09, R2.3 | 完成 | P2 |
+| A4.3.1 | session/types.rs：Session、CreateSessionRequest 等请求/响应类型迁入或新建 | 09 | 完成 | P2 |
+| A4.3.2 | session/diff.rs：DiffItem 及 session_diff 响应类型（与 R2.3.3 协同），mod 中 diff 方法可调用 | 09 | 完成 | P2 |
+| A4.4 | **新增能力模块约定**：先单文件；类型≥3 或文件>300 行再拆目录，mod.rs 仅 re-export 与 impl Client | 09 | 完成 | P2 |
 
 ## 5. 路线图与配置
 
 | 编号 | 任务 | 关联文档 | 状态 | 优先级 |
 |------|------|----------|------|--------|
-| M5.1 | 超时与重试抽到 Config 或 OpenOptions 扩展，减少魔法数字 | 08 | 待办 | P2 |
-| M5.2 | 连接池配置暴露（高并发场景可选） | 08 | 待办 | P3 |
+| M5.1 | 超时与重试抽到 Config 或 OpenOptions 扩展，减少魔法数字 | 08 | 完成 | P2 |
+| M5.2 | 连接池配置暴露（高并发场景可选） | 08 | 完成 | P3 |
 
 ## 6. 执行顺序建议
 

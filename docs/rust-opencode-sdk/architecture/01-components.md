@@ -6,7 +6,7 @@ SDK 能力层与 [OpenCode Serve API](../../opencode-serve-api.md) 按模块对�
 
 | 组件 | Serve API 模块 | 已实现接口 | 状态 |
 |------|----------------|------------|------|
-| client.rs | Global (01) | `GET /global/health`、`POST /global/dispose` | 已实现 |
+| client/ | Global (01) | `GET /global/health`、`POST /global/dispose` | 已实现 |
 | instance.rs | Instance (02) | POST /instance/dispose | 已实现 |
 | project.rs | Project (03) | GET /project, GET /project/current, PATCH /project/{id} | 已实现 |
 | path_vcs.rs | Path & VCS (04) | GET /path, GET /vcs | 已实现 |
@@ -14,9 +14,9 @@ SDK 能力层与 [OpenCode Serve API](../../opencode-serve-api.md) 按模块对�
 | provider.rs, auth.rs | Provider (06), Auth (07) | GET /provider, OAuth, PUT /auth/{id} | 已实现 |
 | session/ | Session / Message (08) | 创建/列表/消息/发送/diff 等 | 已实现 |
 | permission.rs, question.rs, command.rs | Permission, Question, Command (09–11) | GET/POST 对应接口 | 已实现 |
-| file.rs | File (12) | GET /file, GET /file/content, GET /file/status | 已实现 |
+| file/ | File (12) | GET /file, GET /file/content, GET /file/status | 已实现 |
 | find.rs, lsp_mcp.rs, agent_skill.rs, api_log.rs | Find, LSP/MCP, Agent, Logging (13–16) | 对应 GET/POST | 已实现 |
-| event.rs | Event (17) | GET /event、GET /global/event (SSE) | 已实现 |
+| event/ | Event (17) | GET /event、GET /global/event (SSE) | 已实现 |
 | pty.rs, tui.rs, experimental.rs | PTY, TUI, Experimental (18–20) | 对应 CRUD 与实验接口 | 已实现 |
 
 ---

@@ -1,6 +1,6 @@
 //! Auto-install OpenCode when not found.
 //!
-//! Tries in order: npm, brew, curl install script.
+//! Tries in order: npm, platform-specific methods (brew/curl on Unix; choco/scoop/powershell on Windows).
 
 use super::runner::{CommandRunner, DefaultCommandRunner};
 use crate::error::Error;
@@ -9,7 +9,8 @@ use tracing::{debug, info};
 
 /// Attempts to install OpenCode using available package managers (uses default `CommandRunner`).
 ///
-/// Tries in order: `npm install -g opencode-ai`, then `brew install`, then curl install script.
+/// Tries npm first (cross-platform), then platform-specific: brew/curl on Unix;
+/// choco, scoop, powershell download on Windows.
 /// Returns the path to opencode if installation succeeded.
 ///
 /// # Errors
@@ -23,20 +24,43 @@ pub fn install_opencode() -> Result<String, Error> {
 ///
 /// Use this to inject a mock runner in tests.
 pub fn install_opencode_with_runner(runner: &dyn CommandRunner) -> Result<String, Error> {
+    #[cfg(windows)]
+    if let Some(path) = check_windows_default_path() {
+        return Ok(path);
+    }
+
     if let Some(path) = try_npm_install(runner) {
         return Ok(path);
     }
-    if let Some(path) = try_brew_install(runner) {
-        return Ok(path);
+    #[cfg(windows)]
+    {
+        if let Some(path) = try_choco_install(runner) {
+            return Ok(path);
+        }
+        if let Some(path) = try_scoop_install(runner) {
+            return Ok(path);
+        }
+        if let Some(path) = try_powershell_install(runner) {
+            return Ok(path);
+        }
     }
-    if let Some(path) = try_curl_install(runner) {
-        return Ok(path);
+    #[cfg(not(windows))]
+    {
+        if let Some(path) = try_brew_install(runner) {
+            return Ok(path);
+        }
+        if let Some(path) = try_curl_install(runner) {
+            return Ok(path);
+        }
     }
-    Err(Error::InstallFailed(
-        "no install method available (tried npm, brew, curl). \
-         Install manually: npm install -g opencode-ai, or see https://opencode.ai/install"
-            .to_string(),
-    ))
+    #[cfg(windows)]
+    let msg = "no install method available (tried npm, choco, scoop, powershell). \
+         Install manually: choco install opencode, scoop install opencode, \
+         or npm install -g opencode-ai, or see https://opencode.ai/install";
+    #[cfg(not(windows))]
+    let msg = "no install method available (tried npm, brew, curl). \
+         Install manually: npm install -g opencode-ai, or see https://opencode.ai/install";
+    Err(Error::InstallFailed(msg.to_string()))
 }
 
 fn try_npm_install(runner: &dyn CommandRunner) -> Option<String> {
@@ -57,6 +81,7 @@ fn try_npm_install(runner: &dyn CommandRunner) -> Option<String> {
     None
 }
 
+#[cfg(not(windows))]
 fn try_brew_install(runner: &dyn CommandRunner) -> Option<String> {
     info!("try install: brew");
     let check = runner.run("brew", &["--version"]);
@@ -75,6 +100,7 @@ fn try_brew_install(runner: &dyn CommandRunner) -> Option<String> {
     None
 }
 
+#[cfg(not(windows))]
 fn try_curl_install(runner: &dyn CommandRunner) -> Option<String> {
     info!("try install: curl script");
     let check = runner.run("curl", &["--version"]);
@@ -96,5 +122,91 @@ fn try_curl_install(runner: &dyn CommandRunner) -> Option<String> {
         }
     }
     debug!("curl install failed");
+    None
+}
+
+#[cfg(windows)]
+fn try_choco_install(runner: &dyn CommandRunner) -> Option<String> {
+    info!("try install: choco");
+    let check = runner.run("choco", &["--version"]);
+    if !check.as_ref().map(|o| o.status.success()).unwrap_or(false) {
+        debug!("choco not available");
+        return None;
+    }
+    info!("choco available, running choco install opencode");
+    let out = runner.run("choco", &["install", "opencode", "-y"]);
+    if out.as_ref().map(|o| o.status.success()).unwrap_or(false) {
+        let detect = detect_command_with("opencode", runner);
+        if detect.available {
+            info!("choco install succeeded");
+            return detect.path;
+        }
+    }
+    debug!("choco install failed");
+    None
+}
+
+#[cfg(windows)]
+fn try_scoop_install(runner: &dyn CommandRunner) -> Option<String> {
+    info!("try install: scoop");
+    let check = runner.run("scoop", &["--version"]);
+    if !check.as_ref().map(|o| o.status.success()).unwrap_or(false) {
+        debug!("scoop not available");
+        return None;
+    }
+    info!("scoop available, running scoop install opencode");
+    let out = runner.run("scoop", &["install", "opencode"]);
+    if out.as_ref().map(|o| o.status.success()).unwrap_or(false) {
+        let detect = detect_command_with("opencode", runner);
+        if detect.available {
+            info!("scoop install succeeded");
+            return detect.path;
+        }
+    }
+    debug!("scoop install failed");
+    None
+}
+
+#[cfg(windows)]
+fn try_powershell_install(runner: &dyn CommandRunner) -> Option<String> {
+    info!("try install: powershell download");
+    let url = "https://github.com/anomalyco/opencode/releases/latest/download/opencode-windows-x64.zip";
+    let script = format!(
+        r#"
+$ErrorActionPreference = 'Stop'
+$installDir = Join-Path $env:USERPROFILE '.opencode\bin'
+$tempDir = Join-Path $env:TEMP ('opencode-install-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force -Path $installDir | Out-Null
+New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
+try {{
+  Invoke-WebRequest -Uri '{}' -OutFile (Join-Path $tempDir 'opencode.zip') -UseBasicParsing
+  Expand-Archive -Path (Join-Path $tempDir 'opencode.zip') -DestinationPath $tempDir -Force
+  $exe = Get-ChildItem -Path $tempDir -Recurse -Filter 'opencode.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($exe) {{
+    Copy-Item $exe.FullName -Destination (Join-Path $installDir 'opencode.exe') -Force
+    Write-Output (Join-Path $installDir 'opencode.exe')
+  }} else {{
+    throw 'opencode.exe not found in archive'
+  }}
+}} finally {{
+  Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+}}
+"#,
+        url
+    );
+    let out = runner.run("powershell", &["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", &script]);
+    if let Ok(o) = out {
+        if o.status.success() {
+            let stdout = String::from_utf8_lossy(&o.stdout);
+            let path = stdout.lines().next().map(str::trim).filter(|s| s.ends_with("opencode.exe"));
+            if let Some(p) = path {
+                if std::path::Path::new(p).exists() {
+                    info!("powershell download install succeeded");
+                    return Some(p.to_string());
+                }
+            }
+        }
+    }
+    debug!("powershell install failed");
     None
 }

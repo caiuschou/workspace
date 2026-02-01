@@ -1,6 +1,7 @@
 # Event 事件
 
-> [← 返回目录](README.md)
+> [← 返回目录](README.md)  
+> **事件 payload 详细格式**：[17-event-format.md](17-event-format.md)
 
 ---
 

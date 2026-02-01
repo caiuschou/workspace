@@ -5,6 +5,7 @@
 pub mod client;
 pub mod error;
 pub mod event;
+pub mod file;
 pub mod log;
 pub mod open;
 pub mod server;

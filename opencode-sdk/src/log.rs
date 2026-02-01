@@ -13,7 +13,7 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, Env
 /// the guard stops the file writer. If you don't need file logging to persist,
 /// you can ignore the return value (stdout logging will still work).
 ///
-/// Default level is `opencode_sdk=debug` when `RUST_LOG` is not set. Override with
+/// Default level is `opencode_sdk=trace` when `RUST_LOG` is not set. Override with
 /// `RUST_LOG=opencode_sdk=info` to reduce noise.
 pub fn init_logger(log_dir: Option<PathBuf>) -> Option<tracing_appender::non_blocking::WorkerGuard> {
     let dir = log_dir.unwrap_or_else(|| {
@@ -37,7 +37,7 @@ pub fn init_logger(log_dir: Option<PathBuf>) -> Option<tracing_appender::non_blo
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
     let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("opencode_sdk=debug"));
+        .unwrap_or_else(|_| EnvFilter::new("opencode_sdk=trace"));
 
     tracing_subscriber::registry()
         .with(filter)

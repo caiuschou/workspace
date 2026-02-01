@@ -102,5 +102,9 @@ async fn main() -> Result<(), opencode_sdk::Error> {
         server.shutdown();
     }
 
+    // Avoid blocking on WorkerGuard drop: with trace level, flushing to file can take long.
+    // Forgetting the guard lets the process exit immediately; stdout logs are already shown.
+    std::mem::forget(_guard);
+
     Ok(())
 }

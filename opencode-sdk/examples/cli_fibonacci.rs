@@ -57,6 +57,44 @@ async fn main() -> Result<(), opencode_sdk::Error> {
     let health = result.client.health().await?;
     println!("Server version: {}", health.version);
 
+    let project_path = std::path::Path::new(PROJECT_DIR);
+
+    // Session diff: file changes from this session
+    if let Some(session) = &result.session {
+        println!("\n--- Session diff (GET /session/{{id}}/diff) ---");
+        match result
+            .client
+            .session_diff(&session.id, Some(project_path), None)
+            .await
+        {
+            Ok(diff) => {
+                let pretty = serde_json::to_string_pretty(&diff).unwrap_or_else(|_| format!("{:?}", diff));
+                println!("{}", pretty);
+            }
+            Err(e) => println!("Session diff error: {}", e),
+        }
+    }
+
+    // File list: files/dirs in project root
+    println!("\n--- File list (GET /file?path=.) ---");
+    match result.client.file_list(".", Some(project_path)).await {
+        Ok(list) => {
+            let pretty = serde_json::to_string_pretty(&list).unwrap_or_else(|_| format!("{:?}", list));
+            println!("{}", pretty);
+        }
+        Err(e) => println!("File list error: {}", e),
+    }
+
+    // File status: git status in project
+    println!("\n--- File status (GET /file/status) ---");
+    match result.client.file_status(Some(project_path)).await {
+        Ok(status) => {
+            let pretty = serde_json::to_string_pretty(&status).unwrap_or_else(|_| format!("{:?}", status));
+            println!("{}", pretty);
+        }
+        Err(e) => println!("File status error: {}", e),
+    }
+
     println!("\nDone. Check {} for the generated Python file.", PROJECT_DIR);
 
     if let Some(server) = result.server {

@@ -36,12 +36,18 @@
 
 - **OperationId**: `global.health`
 - **摘要**: Get health
-- **说明**: Get health information about the OpenCode server.
+- **说明**: Get health information about the OpenCode server. 用于检查服务是否就绪及版本信息。
 
 **响应**
 
 | 状态码 | 说明 | 类型/引用 |
 |--------|------|-----------|
-| 200 | Health information | `object` |
+| 200 | Health information | `Health` |
+
+**响应体 (Health)**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `version` | string | 服务版本号 |
 
 ---

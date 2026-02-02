@@ -141,6 +141,28 @@ def gen_operation_md(path, method, op, components):
     return "\n".join(md)
 
 
+# 模块 SDK 实现状态：完成 | 部分 | 未完成（基于 opencode-sdk）
+MODULE_SDK_STATUS = {
+    "01-global": "部分",    # health 已实现
+    "08-session": "部分",   # create, prompt_async, message, diff 已实现
+    "12-file": "部分",      # list, status 已实现
+    "17-event": "完成",     # subscribe 已实现
+}
+
+# 各接口 SDK 实现状态：(method, path) -> 已实现 | 未实现
+# path 为 OpenAPI 格式，如 /session/{sessionID}/message
+ENDPOINT_SDK_STATUS = {
+    ("get", "/global/health"): "已实现",
+    ("get", "/event"): "已实现",
+    ("post", "/session"): "已实现",
+    ("post", "/session/{sessionID}/prompt_async"): "已实现",
+    ("get", "/session/{sessionID}/message"): "已实现",
+    ("get", "/session/{sessionID}/diff"): "已实现",
+    ("get", "/file"): "已实现",
+    ("get", "/file/status"): "已实现",
+}
+
+
 # 模块顺序与文件名（用于拆分文档、方便查找）
 GROUP_ORDER = [
     ("01-global", "Global 全局"),
@@ -277,15 +299,126 @@ def main():
     readme.append("")
     readme.append("---")
     readme.append("")
+    readme.append("## 按主题")
+    readme.append("")
+    readme.append("| 主题 | 说明 |")
+    readme.append("|------|------|")
+    readme.append("| [实时接口](21-realtime.md) | SSE 事件流、WebSocket、流式 AI 响应等实时能力汇总 |")
+    readme.append("")
+    readme.append("---")
+    readme.append("")
     readme.append("## 目录（按模块）")
     readme.append("")
+    readme.append("表格四列：**类别**（链接到该模块文档）、**接口**（METHOD 路径）、**描述**（接口用途）、**状态**（opencode-sdk 是否已实现）。")
+    readme.append("")
+    readme.append("| 类别 | 接口 | 描述 | 状态 |")
+    readme.append("|------|------|------|------|")
+
+    # 描述映射：OpenAPI 摘要 -> 简短中文（可选覆盖）
+    DESC_OVERRIDE = {
+        ("get", "/global/health"): "获取服务健康与版本",
+        ("get", "/global/event"): "订阅全局事件流（SSE）",
+        ("post", "/global/dispose"): "销毁所有 OpenCode 实例",
+        ("post", "/instance/dispose"): "销毁当前实例，释放资源",
+        ("get", "/project"): "列出已打开的项目",
+        ("get", "/project/current"): "获取当前活动项目",
+        ("patch", "/project/{projectID}"): "更新项目（name、icon、commands）",
+        ("get", "/path"): "获取当前工作目录与路径信息",
+        ("get", "/vcs"): "获取版本控制信息（如 git 分支）",
+        ("get", "/config"): "获取当前配置",
+        ("patch", "/config"): "更新配置",
+        ("get", "/config/providers"): "列出 providers 与默认模型",
+        ("get", "/provider"): "列出所有可用/已连接提供商",
+        ("get", "/provider/auth"): "获取各提供商认证方式",
+        ("post", "/provider/{providerID}/oauth/authorize"): "发起 OAuth 授权，获取授权 URL",
+        ("post", "/provider/{providerID}/oauth/callback"): "处理 OAuth 回调",
+        ("put", "/auth/{providerID}"): "设置某提供商的认证凭据",
+        ("get", "/session"): "列出会话（可按目录、标题、时间等筛选）",
+        ("post", "/session"): "创建新会话",
+        ("get", "/session/status"): "获取所有会话状态（active/idle/completed）",
+        ("get", "/session/{sessionID}"): "获取会话详情",
+        ("delete", "/session/{sessionID}"): "删除会话及全部数据",
+        ("patch", "/session/{sessionID}"): "更新会话（如 title）",
+        ("get", "/session/{sessionID}/children"): "获取从该会话 fork 出的子会话",
+        ("get", "/session/{sessionID}/todo"): "获取会话待办列表",
+        ("post", "/session/{sessionID}/init"): "初始化会话（分析项目并生成 AGENTS.md）",
+        ("post", "/session/{sessionID}/fork"): "在指定消息处 fork 出新会话",
+        ("post", "/session/{sessionID}/abort"): "中止正在运行的会话",
+        ("post", "/session/{sessionID}/share"): "创建可分享链接",
+        ("delete", "/session/{sessionID}/share"): "取消分享",
+        ("get", "/session/{sessionID}/diff"): "获取某条消息导致的文件变更",
+        ("post", "/session/{sessionID}/summarize"): "用 AI 总结会话",
+        ("get", "/session/{sessionID}/message"): "获取会话内消息列表",
+        ("post", "/session/{sessionID}/message"): "发送消息并流式返回 AI 响应",
+        ("post", "/session/{sessionID}/prompt_async"): "异步发送消息，立即返回",
+        ("get", "/session/{sessionID}/message/{messageID}"): "获取单条消息详情",
+        ("delete", "/session/{sessionID}/message/{messageID}/part/{partID}"): "删除消息中的某 part",
+        ("patch", "/session/{sessionID}/message/{messageID}/part/{partID}"): "更新消息中的某 part",
+        ("post", "/session/{sessionID}/revert"): "回滚某条消息",
+        ("post", "/session/{sessionID}/unrevert"): "恢复所有已回滚消息",
+        ("post", "/session/{sessionID}/permissions/{permissionID}"): "批准或拒绝权限请求",
+        ("post", "/session/{sessionID}/command"): "向会话发送命令由 AI 执行",
+        ("post", "/session/{sessionID}/shell"): "在会话上下文中执行 shell 命令",
+        ("get", "/permission"): "列出待处理权限请求",
+        ("post", "/permission/{requestID}/reply"): "批准或拒绝权限请求",
+        ("get", "/question"): "列出待回答问题",
+        ("post", "/question/{requestID}/reply"): "回答问题",
+        ("post", "/question/{requestID}/reject"): "拒绝问题",
+        ("get", "/command"): "列出所有可用命令",
+        ("get", "/file"): "列出指定路径下的文件与目录",
+        ("get", "/file/content"): "读取文件内容",
+        ("get", "/file/status"): "获取项目内文件 git 状态",
+        ("get", "/find"): "文本搜索（ripgrep）",
+        ("get", "/find/file"): "按名称或模式搜索文件/目录",
+        ("get", "/find/symbol"): "符号搜索（LSP）",
+        ("get", "/lsp"): "获取 LSP 服务状态",
+        ("get", "/formatter"): "获取 Formatter 状态",
+        ("get", "/mcp"): "获取 MCP 服务状态",
+        ("post", "/mcp"): "动态添加 MCP 服务",
+        ("post", "/mcp/{name}/auth"): "启动 MCP OAuth",
+        ("delete", "/mcp/{name}/auth"): "移除 MCP OAuth 凭据",
+        ("post", "/mcp/{name}/auth/authenticate"): "启动 MCP OAuth 并等待回调",
+        ("post", "/mcp/{name}/auth/callback"): "完成 MCP OAuth 回调",
+        ("post", "/mcp/{name}/connect"): "连接 MCP 服务",
+        ("post", "/mcp/{name}/disconnect"): "断开 MCP 服务",
+        ("get", "/agent"): "列出可用 AI 代理",
+        ("get", "/skill"): "列出可用技能",
+        ("post", "/log"): "向服务端写日志条目",
+        ("get", "/event"): "订阅服务端事件流（SSE）",
+        ("get", "/pty"): "列出 PTY 会话",
+        ("post", "/pty"): "创建 PTY 会话",
+        ("get", "/pty/{ptyID}"): "获取 PTY 会话详情",
+        ("put", "/pty/{ptyID}"): "更新 PTY 会话",
+        ("delete", "/pty/{ptyID}"): "移除并终止 PTY 会话",
+        ("get", "/pty/{ptyID}/connect"): "建立 WebSocket 连接与 PTY 交互",
+        ("post", "/tui/append-prompt"): "向输入框追加内容",
+        ("post", "/tui/clear-prompt"): "清空输入框",
+        ("post", "/tui/submit-prompt"): "提交当前输入",
+        ("post", "/tui/open-help"): "打开帮助对话框",
+        ("post", "/tui/open-sessions"): "打开会话选择对话框",
+        ("post", "/tui/open-models"): "打开模型选择对话框",
+        ("post", "/tui/open-themes"): "打开主题选择对话框",
+        ("post", "/tui/execute-command"): "执行 TUI 命令",
+        ("post", "/tui/show-toast"): "显示 toast 通知",
+        ("post", "/tui/select-session"): "切换到指定会话",
+        ("post", "/tui/publish"): "发布 TUI 事件",
+        ("get", "/tui/control/next"): "获取下一个 TUI 控制请求",
+        ("post", "/tui/control/response"): "提交对 TUI 控制请求的响应",
+        ("get", "/experimental/tool/ids"): "列出所有工具 ID",
+        ("get", "/experimental/tool"): "获取某 provider+model 的工具列表",
+        ("get", "/experimental/resource"): "获取 MCP 资源",
+        ("get", "/experimental/worktree"): "列出 worktree",
+        ("post", "/experimental/worktree"): "创建 worktree",
+        ("delete", "/experimental/worktree"): "删除 worktree",
+        ("post", "/experimental/worktree/reset"): "重置 worktree 分支",
+    }
 
     for slug, display_name, group_ops in ordered:
-        readme.append(f"### [{display_name}]({slug}.md)")
-        readme.append("")
-        for _, path, method, _ in group_ops:
-            readme.append(f"- `{method.upper()} {path}`")
-        readme.append("")
+        for _, path, method, op in group_ops:
+            key = (method.lower(), path)
+            desc = DESC_OVERRIDE.get(key) or (op.get("summary") or op.get("description") or "-")[:80]
+            status = ENDPOINT_SDK_STATUS.get(key, "未实现")
+            readme.append(f"| [{display_name}]({slug}.md) | `{method.upper()} {path}` | {desc} | {status} |")
 
     (out_dir / "README.md").write_text("\n".join(readme), encoding="utf-8")
     print(f"Written: {out_dir / 'README.md'}")
@@ -307,24 +440,33 @@ def main():
         path.write_text("\n".join(part), encoding="utf-8")
         print(f"Written: {path}")
 
-    # 保留单文件汇总（便于全文搜索）
-    single = []
-    single.append("# OpenCode Serve API 接口详细文档（汇总）")
-    single.append("")
-    single.append("> 本文件由脚本生成。**按模块查找请使用 [opencode-serve-api/README.md](opencode-serve-api/README.md) 目录。**")
-    single.append("")
-    single.append("---")
-    single.append("")
-    for slug, display_name, group_ops in ordered:
-        single.append(f"## {display_name}")
-        single.append("")
-        for _, path, method, op in group_ops:
-            single.append(gen_operation_md(path, method, op, components))
-            single.append("---")
-            single.append("")
+    # 生成 docs/opencode-serve-api.md 短索引（指向已拆分模块）
     single_path = Path(__file__).resolve().parent.parent / "docs" / "opencode-serve-api.md"
+    single = []
+    single.append("# OpenCode Serve API 文档")
+    single.append("")
+    single.append("> **接口已按模块拆分**，请使用下方链接查找。")
+    single.append("")
+    single.append("完整目录与接口列表：[opencode-serve-api/README.md](opencode-serve-api/README.md)")
+    single.append("")
+    single.append("## 模块索引")
+    single.append("")
+    single.append("> **状态**：基于 opencode-sdk 的实现情况。完成 = 主要接口已实现；部分 = 部分接口已实现；未完成 = 暂未实现。")
+    single.append("")
+    single.append("| 模块 | 文档 | 状态 |")
+    single.append("|------|------|------|")
+    for slug, display_name, _ in ordered:
+        status = MODULE_SDK_STATUS.get(slug, "未完成")
+        single.append(f"| {display_name} | [{slug}.md](opencode-serve-api/{slug}.md) | {status} |")
+    single.append("")
+    single.append("## 重新生成")
+    single.append("")
+    single.append("```bash")
+    single.append("python scripts/gen-opencode-api-docs.py [URL或openapi.json路径]")
+    single.append("```")
+    single.append("")
     single_path.write_text("\n".join(single), encoding="utf-8")
-    print(f"Written: {single_path} (single-file index)")
+    print(f"Written: {single_path} (index)")
 
 
 if __name__ == "__main__":

@@ -30,6 +30,9 @@ target
 # Cursor
 # IDE-specific files and worktree metadata
 .cursor/worktrees
+
+# Local Cargo config (machine-specific paths, e.g. MSVC)
+opencode-sdk/.cargo/
 .venv
 
 # Python

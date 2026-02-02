@@ -72,6 +72,7 @@ async fn run_send_and_wait(
         let dir_ref = dir.as_deref();
         match mode_clone {
             StreamMode::StreamToStdout => {
+                // Each `text` is the latest incremental chunk for this event, not full reply so far.
                 let _ = event::subscribe_and_stream_until_done(
                     &client_clone,
                     dir_ref,

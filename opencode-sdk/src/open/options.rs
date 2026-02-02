@@ -222,7 +222,8 @@ pub struct OpenResult {
     /// Session if `chat_content` was provided.
     pub session: Option<Session>,
     /// Last assistant message (agent reply) when chat_content was provided and we waited.
-    /// Contains text parts and tool call parts (tool_name, tool_input, tool_output).
+    /// Structure: [`MessageListItem`] with `info` (id, role) and `parts` (see [`Part`]).
+    /// Use `reply.text_content()` for plain text, or iterate `reply.parts` by `part_type` (e.g. "text", "tool", "tool_call", "tool_result").
     pub assistant_reply: Option<MessageListItem>,
     /// Project directory used for this open (for API calls: pass `.project_directory.as_path()`).
     pub project_directory: ProjectDirectory,

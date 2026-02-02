@@ -1,10 +1,14 @@
 //! Text delta extraction: extract_text_delta for SSE events.
 
-/// Extracts text delta from event JSON if it matches our session.
+/// Extracts the latest incremental text from event JSON if it matches our session.
 ///
-/// For OpenCode message.part.updated (see 17-event-format.md): prefers
-/// `properties.delta` (streaming increment), then `properties.part.text`,
-/// then `properties.text` / `properties.content`.
+/// Each event yields at most one string: the **new incremental content** for this event.
+/// Prefer `properties.delta` (streaming increment), then `properties.part.text`,
+/// then `properties.text` / `properties.content`. When the server sends `delta`, the result
+/// is exactly the new chunk; when it sends `part.text`/`text`/`content`, the result is
+/// whatever the server put in that field (increment or cumulative, server-dependent).
+///
+/// For OpenCode message.part.updated see 17-event-format.md.
 pub(crate) fn extract_text_delta(v: &serde_json::Value, session_id: &str) -> Option<String> {
     let props = v.get("properties").and_then(|p| p.as_object());
     let ev_session = v

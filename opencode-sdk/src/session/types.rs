@@ -15,20 +15,30 @@ pub struct Session {
 
 /// Part of a message. Aligns with server ContentPart: text, reasoning, image, binary, tool call, tool result, finish.
 ///
-/// Create text parts with [`Part::text`]. Use in [`SendMessageRequest::parts`].
+/// **Request:** Create text parts with [`Part::text`]. Use in [`SendMessageRequest::parts`].
+///
+/// **Response (agent reply):** Each part has a `part_type`; only some fields are set per type:
+///
+/// | `part_type`     | Meaning        | Relevant fields                          |
+/// |-----------------|----------------|------------------------------------------|
+/// | `"text"`        | Plain text     | `text`                                   |
+/// | `"reasoning"`   | Reasoning step| `reasoning`                              |
+/// | `"image"`      | Image          | `image_url`                              |
+/// | `"tool"` / `"tool_call"` / `"tool_result"` | Tool usage | `tool_name`, `tool_input`, `tool_output` |
+/// | `"finish"`     | Turn end       | `finish_reason`                          |
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Part {
     /// Part ID (e.g. "prt_...").
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
-    /// Part type: "text", "reasoning", "image", "binary", "tool_call", "tool_result", "finish", etc.
+    /// Part type: "text", "reasoning", "image", "binary", "tool", "tool_call", "tool_result", "finish", etc.
     #[serde(rename = "type")]
     pub part_type: String,
-    /// Text content for text parts.
+    /// Text content. Set for `part_type == "text"`. [`MessageListItem::text_content`] concatenates these.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
-    /// Reasoning content (ReasoningContent).
+    /// Reasoning content (ReasoningContent). Set for `part_type == "reasoning"`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reasoning: Option<String>,
     /// Image URL for image parts (ImageURLContent).
@@ -37,13 +47,13 @@ pub struct Part {
     /// Raw/binary content (BinaryContent).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<serde_json::Value>,
-    /// Tool name for tool call/result parts.
+    /// Tool name. Set for tool_call / tool_result parts.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_name: Option<String>,
-    /// Tool input for tool call parts.
+    /// Tool input (arguments). Set for tool_call parts.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_input: Option<serde_json::Value>,
-    /// Tool output for tool result parts.
+    /// Tool output (result). Set for tool_result parts.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_output: Option<serde_json::Value>,
     /// Tool call ID (for ToolResult).
@@ -163,19 +173,24 @@ pub struct MessageInfo {
 
 /// Response item from `GET /session/{id}/message` or `/messages`.
 ///
-/// Use [`text_content`](Self::text_content) to extract all text from parts.
+/// Used as assistant reply content: when you send a message and wait for the agent,
+/// the last assistant message is returned as [`OpenResult::assistant_reply`](crate::OpenResult::assistant_reply).
+/// Each message has `info` (id, role) and `parts` (text, tool calls, tool results, etc.).
+///
+/// Use [`text_content`](Self::text_content) to get all text from parts concatenated.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MessageListItem {
-    /// Message metadata.
+    /// Message metadata (id, role).
     pub info: MessageInfo,
-    /// Message parts (text, tool calls, etc.).
+    /// Response parts: text segments and tool call/result segments in order.
     #[serde(default)]
     pub parts: Vec<Part>,
 }
 
 impl MessageListItem {
-    /// Extracts all text from parts, concatenated.
+    /// Extracts all text from parts (only `part.text`), concatenated with newlines.
+    /// Does not include `reasoning` or other non-text fields.
     pub fn text_content(&self) -> String {
         self.parts
             .iter()

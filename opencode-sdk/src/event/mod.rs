@@ -69,6 +69,10 @@ where
 
 /// Streams instance-level events and invokes `on_text` for each text delta belonging to the session.
 ///
+/// Each time `on_text` is called, the argument is the **latest incremental content** for that event:
+/// one piece of new text (e.g. from `properties.delta`), not the full accumulated reply.
+/// Callbacks arrive in order; concatenating them yields the full assistant text for the turn.
+///
 /// Returns when the stream ends or errors. For session completion detection, use [`subscribe_and_stream_until_done`].
 ///
 /// # Errors
@@ -109,6 +113,9 @@ where
 
 /// Streams events, invokes `on_text` for each text delta, and returns when a completion
 /// event is seen or the stream ends.
+///
+/// Each `on_text` call receives the **latest incremental content** for that event (one new chunk),
+/// not the full reply so far. Chunks are delivered in order; concatenating them gives the full text.
 ///
 /// Use this instead of polling to know when the assistant reply is done. Called by
 /// [`OpenCode::open`](crate::OpenCode::open) when `chat_content` and `stream_output` are set.

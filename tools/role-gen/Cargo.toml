@@ -1,0 +1,16 @@
+[package]
+name = "role-gen"
+version = "0.1.0"
+edition = "2021"
+description = "LLM-based role tree generator: expand a root role (e.g. CEO) into a full hierarchy"
+
+[dependencies]
+langgraph = { git = "https://github.com/caiuschou/langgraph-rust", default-features = false, features = ["openai"] }
+async-openai = { version = "0.32", features = ["chat-completion"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+clap = { version = "4", features = ["derive"] }
+dotenv = "0.15"
+async-trait = "0.1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

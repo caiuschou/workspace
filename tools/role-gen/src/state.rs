@@ -6,13 +6,13 @@
 use serde::{Deserialize, Serialize};
 
 /// One node in the skill tree: a skill name and optional children (sub-skills).
-/// Used for recursive skill decomposition; leaf nodes (no children) get a dedicated 岗位.
+/// Used for recursive skill decomposition; leaf nodes (no children) get a dedicated position.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct SkillNode {
     /// Skill name.
     #[serde(default)]
     pub name: String,
-    /// Child skills (recursive split). Empty = leaf skill → create 岗位 for this skill.
+    /// Child skills (recursive split). Empty = leaf skill → create position for this skill.
     #[serde(default)]
     pub children: Vec<SkillNode>,
 }
@@ -20,10 +20,10 @@ pub struct SkillNode {
 /// One collaboration item: with which role, and what contents (list).
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct CollaborationItem {
-    /// 协同对象角色名称。
+    /// Collaborating role name.
     #[serde(default)]
     pub role: String,
-    /// 协同内容列表：具体事项、输入输出等。
+    /// Collaboration contents: specific items, input/output boundaries, etc.
     #[serde(default)]
     pub contents: Vec<String>,
 }
@@ -41,13 +41,13 @@ pub struct Role {
     /// Flattened skill list (derived from skill_tree for display). Kept for backward compat.
     #[serde(default)]
     pub skills: Vec<String>,
-    /// Skill tree: recursive structure; leaf skills get a dedicated 岗位.
+    /// Skill tree: recursive structure; leaf skills get a dedicated position.
     #[serde(default)]
     pub skill_tree: Vec<SkillNode>,
-    /// If Some(s), this role is a 岗位 dedicated to skill s (created for a leaf in parent's skill tree).
+    /// If Some(s), this role is a position dedicated to skill s (created for a leaf in parent's skill tree).
     #[serde(default)]
     pub is_position_for_skill: Option<String>,
-    /// 与其他角色的协同：列表，每项明确角色与内容列表。
+    /// Collaboration with other roles: list of role name and content items.
     #[serde(default)]
     pub collaboration: Vec<CollaborationItem>,
     #[serde(default)]

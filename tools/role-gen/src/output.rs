@@ -14,7 +14,7 @@ fn format_skill_tree_lines(tree: &[SkillNode], prefix: &str, depth: usize) -> Ve
         if node.name.trim().is_empty() {
             continue;
         }
-        lines.push(format!("{}  技能树 {}: {}", prefix, indent, node.name.trim()));
+        lines.push(format!("{}  Skill tree {}: {}", prefix, indent, node.name.trim()));
         lines.extend(format_skill_tree_lines(
             &node.children,
             prefix,
@@ -34,7 +34,7 @@ fn format_role_lines(roles: &[Role], id: &str, indent: u32) -> Vec<String> {
     let mut lines = Vec::new();
 
     let role_label = match &r.is_position_for_skill {
-        Some(s) => format!("{} (岗位·{})", r.name, s),
+        Some(s) => format!("{} (position·{})", r.name, s),
         None => r.name.clone(),
     };
     let desc = r.description.lines().next().unwrap_or("").trim();
@@ -42,12 +42,12 @@ fn format_role_lines(roles: &[Role], id: &str, indent: u32) -> Vec<String> {
 
     if !r.background.is_empty() {
         let bg = r.background.lines().next().unwrap_or("").trim();
-        lines.push(format!("{}  背景: {}", prefix, bg));
+        lines.push(format!("{}  Background: {}", prefix, bg));
     }
     for c in &r.collaboration {
-        let contents = c.contents.join("；");
+        let contents = c.contents.join("; ");
         lines.push(format!(
-            "{}  协同 与{}: {}",
+            "{}  Collaboration with {}: {}",
             prefix,
             c.role.trim(),
             contents.trim()
@@ -59,7 +59,7 @@ fn format_role_lines(roles: &[Role], id: &str, indent: u32) -> Vec<String> {
         for (i, obj) in r.objectives.iter().enumerate() {
             let sk = r.skills.get(i).map(|s| s.as_str()).unwrap_or("");
             lines.push(format!(
-                "{}  - 目标: {}  → 技能: {}",
+                "{}  - Objective: {}  → Skill: {}",
                 prefix,
                 obj.trim(),
                 sk.trim()
@@ -68,7 +68,7 @@ fn format_role_lines(roles: &[Role], id: &str, indent: u32) -> Vec<String> {
     } else if !r.skills.is_empty() {
         for sk in &r.skills {
             if !sk.trim().is_empty() {
-                lines.push(format!("{}  技能: {}", prefix, sk.trim()));
+                lines.push(format!("{}  Skill: {}", prefix, sk.trim()));
             }
         }
     }

@@ -12,6 +12,13 @@ use serde::Deserialize;
 
 use crate::state::{CollaborationItem, QueueItem, Role, RoleGenState, SkillNode};
 
+/// System prompt for the "Is that enough?" follow-up: ask LLM whether subordinates are sufficient.
+const SUBORDINATES_CHECK_SYSTEM: &str = r#"You are reviewing organizational role structure.
+Given a role and its current direct subordinates, determine if the list is sufficient.
+If sufficient, output only: {"subordinates": []}
+If not, output additional subordinates as JSON: {"subordinates": [{"name": "Role name", "brief": "One sentence on outcome"}, ...]}
+Output only valid JSON, no other text. Use English field names."#;
+
 /// JSON shape we ask the LLM to return for one role expansion.
 #[derive(Clone, Debug, Deserialize)]
 pub struct LlmRoleOutput {
@@ -23,10 +30,10 @@ pub struct LlmRoleOutput {
     /// Flat skills (legacy). If skill_tree is empty, we build tree from this (each skill = leaf).
     #[serde(default)]
     pub skills: Vec<String>,
-    /// Skill tree: recursive split; leaf skills get a dedicated 岗位.
+    /// Skill tree: recursive split; leaf skills get a dedicated position.
     #[serde(default)]
     pub skill_tree: Vec<SkillNode>,
-    /// 与其他角色的协同：列表，每项明确角色与内容列表。
+    /// Collaboration with other roles: list of role name and content items.
     #[serde(default)]
     pub collaboration: Vec<CollaborationItem>,
     #[serde(default)]
@@ -38,6 +45,13 @@ pub struct SubordinateSpec {
     pub name: String,
     #[serde(default)]
     pub brief: String,
+}
+
+/// Response from the "Is that enough?" check: optional additional subordinates.
+#[derive(Clone, Debug, Deserialize)]
+struct SubordinatesCheckOutput {
+    #[serde(default)]
+    pub subordinates: Vec<SubordinateSpec>,
 }
 
 /// Result of popping the next queue item: either queue empty, leaf added (no LLM), or item to expand.
@@ -84,7 +98,7 @@ async fn call_llm_for_role(
     item: &QueueItem,
 ) -> Result<String, AgentError> {
     let user_prompt = format!(
-        "针对角色「{}」生成描述与直接下属。仅输出一个 JSON 对象，格式见系统提示。",
+        "For role \"{}\", generate description and direct subordinates. Output only one JSON object per system prompt format.",
         item.role_name
     );
     let messages = [
@@ -102,6 +116,51 @@ async fn call_llm_for_role(
         let _ = std::io::stderr().flush();
     }
     Ok(response.content)
+}
+
+/// Asks LLM "Is that enough?" for the given role and current subordinates; returns
+/// any additional subordinates the LLM suggests. Merges into the caller's list.
+async fn call_llm_subordinates_check(
+    llm: &Arc<dyn langgraph::LlmClient>,
+    stream_print: bool,
+    role_name: &str,
+    current: &[SubordinateSpec],
+) -> Result<Vec<SubordinateSpec>, AgentError> {
+    let list_str = if current.is_empty() {
+        "(none)".to_string()
+    } else {
+        current
+            .iter()
+            .map(|s| format!("- {}: {}", s.name, s.brief))
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+    let user_prompt = format!(
+        "For role \"{}\", current direct subordinates:\n{}\n\nIs that enough? If not, supplement. If sufficient, output {{\"subordinates\": []}}. Output only one JSON object.",
+        role_name, list_str
+    );
+    let messages = [
+        Message::system(SUBORDINATES_CHECK_SYSTEM),
+        Message::user(user_prompt),
+    ];
+    let response = llm.invoke(&messages).await?;
+    if stream_print {
+        use std::io::Write;
+        let _ = std::io::stderr().write_fmt(format_args!(
+            "\n--- LLM [{}] Is that enough? ---\n{}\n---\n",
+            role_name,
+            response.content
+        ));
+        let _ = std::io::stderr().flush();
+    }
+    let json_str = extract_json_from_response(response.content.trim());
+    let out: SubordinatesCheckOutput = serde_json::from_str(json_str).map_err(|e| {
+        AgentError::ExecutionFailed(format!(
+            "Subordinates check parse error: {}; raw: {}",
+            e, response.content
+        ))
+    })?;
+    Ok(out.subordinates)
 }
 
 /// Strips optional ```json ... ``` wrapper and returns the inner JSON string.
@@ -187,7 +246,7 @@ fn normalize_skill_tree(out: &LlmRoleOutput) -> Vec<SkillNode> {
         .collect()
 }
 
-/// Collects leaf skill names from the tree (skills with no children → 岗位).
+/// Collects leaf skill names from the tree (skills with no children → position).
 fn collect_leaf_skills(tree: &[SkillNode]) -> Vec<String> {
     let mut leaves = Vec::new();
     for node in tree {
@@ -214,7 +273,7 @@ fn flatten_skill_tree(tree: &[SkillNode]) -> Vec<String> {
     out
 }
 
-/// Creates 岗位 roles for each leaf skill under this role and returns their ids.
+/// Creates position roles for each leaf skill under this role and returns their ids.
 fn create_positions_for_leaf_skills(
     state: &mut RoleGenState,
     parent_id: &str,
@@ -226,8 +285,8 @@ fn create_positions_for_leaf_skills(
         ids.push(pos_id.clone());
         state.roles.push(Role {
             id: pos_id,
-            name: format!("【岗位】{}", name),
-            description: format!("专门负责技能：{}", name),
+            name: format!("[Position] {}", name),
+            description: format!("Dedicated to skill: {}", name),
             background: String::new(),
             objectives: Vec::new(),
             skills: Vec::new(),
@@ -241,7 +300,7 @@ fn create_positions_for_leaf_skills(
     ids
 }
 
-/// Updates existing placeholder role or pushes a new role. Adds 岗位 for leaf skills.
+/// Updates existing placeholder role or pushes a new role. Adds positions for leaf skills.
 fn upsert_role(
     state: &mut RoleGenState,
     id: String,
@@ -325,7 +384,17 @@ impl ExpandNode {
         .await?;
         let content_trimmed = content.trim();
         let json_str = extract_json_from_response(content_trimmed);
-        let out = parse_llm_output(json_str, content_trimmed)?;
+        let mut out = parse_llm_output(json_str, content_trimmed)?;
+
+        // Ask LLM "Is that enough?" and merge any supplemental subordinates.
+        let supplement = call_llm_subordinates_check(
+            &self.llm,
+            self.stream_print,
+            &item.role_name,
+            &out.subordinates,
+        )
+        .await?;
+        out.subordinates.extend(supplement);
 
         let (id, is_placeholder) = resolve_role_id(&*state, &item);
         let subordinate_ids = enqueue_subordinates(state, &out, &id, item.depth + 1);
